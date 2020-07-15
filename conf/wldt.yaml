@@ -1,0 +1,20 @@
+#WLDT Configuration
+threadPoolSize: 5
+deviceNameSpace: it.unimore.dipi.things
+wldtBaseIdentifier: wldt
+wldtStartupTimeSeconds: 10
+
+#Active Protocol Modules List (enabled if DTDP Discovery is set to false)
+activeProtocolList:
+  - coap
+  - mqtt
+
+#Application Metrics
+applicationMetricsEnabled: false
+applicationMetricsReportingPeriodSeconds: 10
+metricsReporterList:
+  - csv
+  - graphite
+graphiteReporterAddress: "127.0.0.1"
+graphiteReporterPort: 2003
+graphitePrefix: "wldt"

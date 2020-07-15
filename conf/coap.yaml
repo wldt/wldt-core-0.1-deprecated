@@ -1,0 +1,8 @@
+cacheEnabled: false
+
+#Physical target CoAP Smart Object Description (used if WLDT-DTDPDiscovery is false)
+resourceDiscovery: true
+resourceList: null
+deviceAddress: 127.0.0.1
+devicePort: 5683
+deviceSecurePort: 5684

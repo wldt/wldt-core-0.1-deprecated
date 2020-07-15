@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.eclipse.californium:californium-legal:2.0.0-M18">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/californium/californium-legal/2.0.0-M18/californium-legal-2.0.0-M18.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/californium/californium-legal/2.0.0-M18/californium-legal-2.0.0-M18-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/californium/californium-legal/2.0.0-M18/californium-legal-2.0.0-M18-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
