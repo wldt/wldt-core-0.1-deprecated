@@ -18,7 +18,7 @@ or normalization for data and formats.
 Hereafter, the requirements that led the design and development of the WLDT framework are: 
 - i) Simplicity - with WLDT developers must have the possibility to easily create a new instance by using 
 existing modules or customizing the behavior according the need of their application scenario; 
-- ii) extensibility - while WLDT must be as simple and light as possible, 
+- ii) Extensibility - while WLDT must be as simple and light as possible, 
 the API should be also easily extendible in order to let programmers to personalize 
 the configuration and/or to add new features loading and executing multiple modules at the same times;
 - iii) Portability & Micorservice Readiness - a digital twin implemented through WLDT must 
