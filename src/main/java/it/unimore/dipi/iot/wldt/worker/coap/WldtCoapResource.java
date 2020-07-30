@@ -26,7 +26,7 @@ public class WldtCoapResource extends CoapResource {
 
     private static final String TAG = "[WLDT-CoAP-Resource]";
 
-    private static final Logger logger = LoggerFactory.getLogger(WldtDtdpProcess.class);
+    private static final Logger logger = LoggerFactory.getLogger(WldtCoapResource.class);
 
     private Random random;
 
@@ -36,7 +36,7 @@ public class WldtCoapResource extends CoapResource {
 
     private Map<String, CoapObserveRelation> observingMap;
 
-    private Map<String, CoapCachedData> resposeCache;
+    private Map<String, CoapCachedData> responseCache;
 
     private boolean coapCacheEnabled = false;
 
@@ -85,7 +85,7 @@ public class WldtCoapResource extends CoapResource {
     }
 
     private void initDataCache() {
-        this.resposeCache = new HashMap<String, CoapCachedData>();
+        this.responseCache = new HashMap<String, CoapCachedData>();
     }
 
     private String generateDeviceCoapEndpoint(){
@@ -111,7 +111,7 @@ public class WldtCoapResource extends CoapResource {
         //TODO Improve this block !
         if(exchange.getRequestCode().equals(CoAP.Code.GET) && this.coapCacheEnabled) {
 
-            CoapCachedData cachedData = this.resposeCache.get(exchange.advanced().getRequest().getURI());
+            CoapCachedData cachedData = this.responseCache.get(exchange.advanced().getRequest().getURI());
 
             if (cachedData != null) {
 
@@ -121,7 +121,7 @@ public class WldtCoapResource extends CoapResource {
                 }
                 else {
                     logger.debug("{} Cleaning Old Cached Data for {}", TAG, exchange.advanced().getRequest().getURI());
-                    this.resposeCache.remove(exchange.advanced().getRequest().getURI());
+                    this.responseCache.remove(exchange.advanced().getRequest().getURI());
                     proxyIncomingRequest(exchange);
                 }
             }
@@ -207,7 +207,7 @@ public class WldtCoapResource extends CoapResource {
         try{
             if(coapResponse != null){
                 logger.debug("{} Adding Response to cache for URI: {}", TAG, uri);
-                this.resposeCache.put(uri, new CoapCachedData(System.currentTimeMillis(), uri, coapResponse));
+                this.responseCache.put(uri, new CoapCachedData(System.currentTimeMillis(), uri, coapResponse));
             }
         }catch (Exception e){
             logger.error("{} Error Adding Response to Cache ! Error: {}", TAG, e.getLocalizedMessage());

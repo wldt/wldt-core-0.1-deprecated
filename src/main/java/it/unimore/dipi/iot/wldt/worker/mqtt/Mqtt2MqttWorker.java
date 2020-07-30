@@ -18,7 +18,7 @@ import java.io.IOException;
  */
 public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Void> {
 
-    private static final Logger logger = LoggerFactory.getLogger(WldtDtdpProcess.class);
+    private static final Logger logger = LoggerFactory.getLogger(Mqtt2MqttWorker.class);
 
     private static final String TAG = "[WLDT-MQTT-WORKER]";
 

@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class Coap2CoapWorker extends WldtWorker<Coap2CoapConfiguration, String, CoapCachedData> {
 
-    private static final Logger logger = LoggerFactory.getLogger(WldtDtdpProcess.class);
+    private static final Logger logger = LoggerFactory.getLogger(Coap2CoapWorker.class);
 
     private static final String TAG = "[WLDT-COAP-WORKER]";
 
