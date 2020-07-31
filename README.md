@@ -26,7 +26,7 @@ be able to run on any platform without changes and customization. Our goal is to
 with a strategic set of IoT-oriented features allowing the developer to easily create DT applications modeled 
 as independent software agents and packed as microservices.
 
-<img src="images/wldt_structure.png" width="50%">
+<img class="center" src="images/wldt_structure.png" width="50%">
 
 The core layer of the solution is the WLDT Engine designed 
 to handle and orchestrate available and active modules 
