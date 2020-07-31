@@ -295,6 +295,20 @@ private void emulateExternalGetRequest(int roundIndex) {
 
 The WLDT metric system provides by default two reporting option allowing the developer 
 to periodically save the metrics on a CSV file or to send them directly to a Graphite collector.
+An example of WldtConfiguration enabling both CSV and Graphite monitoring is the following: 
+
+```java
+WldtConfiguration wldtConfiguration = new WldtConfiguration();
+wldtConfiguration.setDeviceNameSpace("it.unimore.dipi.things");
+wldtConfiguration.setWldtBaseIdentifier("wldt");
+wldtConfiguration.setWldtStartupTimeSeconds(10);
+wldtConfiguration.setApplicationMetricsEnabled(true);
+wldtConfiguration.setApplicationMetricsReportingPeriodSeconds(10);
+wldtConfiguration.setMetricsReporterList(Arrays.asList("csv", "graphite"));
+wldtConfiguration.setGraphitePrefix("wldt");
+wldtConfiguration.setGraphiteReporterAddress("127.0.0.1");
+wldtConfiguration.setGraphiteReporterPort(2003);
+```
 
 ### Execute the new Worker
 
@@ -304,38 +318,120 @@ The class WldtConfiguration is used to configure the behavior of the WLDT framew
 ```java
 public static void main(String[] args)  {
 
-        try{
+    try{
 
-            //Manual creation of the WldtConfiguration
-            WldtConfiguration wldtConfiguration = new WldtConfiguration();
-            wldtConfiguration.setDeviceNameSpace("it.unimore.dipi.things");
-            wldtConfiguration.setWldtBaseIdentifier("it.unimore.dipi.iot.wldt.example.dummy");
-            wldtConfiguration.setWldtStartupTimeSeconds(10);
-            wldtConfiguration.setApplicationMetricsEnabled(true);
-            wldtConfiguration.setApplicationMetricsReportingPeriodSeconds(10);
-            wldtConfiguration.setMetricsReporterList(Collections.singletonList("csv"));
+        //Manual creation of the WldtConfiguration
+        WldtConfiguration wldtConfiguration = new WldtConfiguration();
+        wldtConfiguration.setDeviceNameSpace("it.unimore.dipi.things");
+        wldtConfiguration.setWldtBaseIdentifier("it.unimore.dipi.iot.wldt.example.dummy");
+        wldtConfiguration.setWldtStartupTimeSeconds(10);
+        wldtConfiguration.setApplicationMetricsEnabled(true);
+        wldtConfiguration.setApplicationMetricsReportingPeriodSeconds(10);
+        wldtConfiguration.setMetricsReporterList(Collections.singletonList("csv"));
 
-            //Init the Engine
-            WldtEngine wldtEngine = new WldtEngine(wldtConfiguration);
+        //Init the Engine
+        WldtEngine wldtEngine = new WldtEngine(wldtConfiguration);
 
-            //Init Dummy Worker with Cache
-            WldtDummyWorker wldtDummyWorker = new WldtDummyWorker(
-                    wldtEngine.getWldtId(),
-                    new DummyWorkerConfiguration(),
-                    new WldtCache<>(5, TimeUnit.SECONDS));
+        //Init Dummy Worker with Cache
+        WldtDummyWorker wldtDummyWorker = new WldtDummyWorker(
+                wldtEngine.getWldtId(),
+                new DummyWorkerConfiguration(),
+                new WldtCache<>(5, TimeUnit.SECONDS));
 
-            //Set a Processing Pipeline
-            wldtDummyWorker.addProcessingPipeline(WldtDummyWorker.DEFAULT_PROCESSING_PIPELINE, new ProcessingPipeline(new DummyProcessingStep()));
-            
-            //Add the New Worker
-            wldtEngine.addNewWorker(wldtDummyWorker);
-            
-            //Start workers
-            wldtEngine.startWorkers();
+        //Set a Processing Pipeline
+        wldtDummyWorker.addProcessingPipeline(WldtDummyWorker.DEFAULT_PROCESSING_PIPELINE, new ProcessingPipeline(new DummyProcessingStep()));
+        
+        //Add the New Worker
+        wldtEngine.addNewWorker(wldtDummyWorker);
+        
+        //Start workers
+        wldtEngine.startWorkers();
 
-        }catch (Exception | WldtConfigurationException e){
-            e.printStackTrace();
-        }
+    }catch (Exception | WldtConfigurationException e){
+        e.printStackTrace();
     }
+}
+```
+### Built-in MQTT-to-MQTT Mirroring
+
+The first built-in IoT dedicated worker is implemented through the class \code{Mqtt2MqttWorker} 
+providing a configurable way to automatically synchronize data between twins over MQTT. 
+The protocol is based on a Pub/Sub approach where categorization of data and resources 
+are inferred by topics definition (e.g., a device '01' can send a telemetry data for a resource 'abcd' 
+to the following topic /dev/01/res/abcd/). 
+An MQTT physical device can be at the same time a data producer 
+(e.g., to publish for example telemetry data) or a consumer (e.g., to receive external commands) 
+and the provided topics organization has been inspired by the categorization provided 
+by open source projects [Eclipse Hono](https://www.eclipse.org/hono/) 
+and [Ditto](https://www.eclipse.org/ditto/). 
+Developers can use up to four different types of topics 
+(also through a template placeholders like [Mustache](https://mustache.github.io/)) 
+to dynamically synchronize MQTT topics according to available device and resource information. 
+As illustrated in the following example, available topics typologies belong to: *telemetry*, *events* and 
+*command requests and responses* allowing the granular mirroring of a physical device trough topics mapping.
+
+The following example shows a WLDT implementation using the built-in MQTT to MQTT worker 
+to automatically create a digital twin of an existing MQTT physical object
+             
+```java             
+Mqtt2MqttConfiguration mqttConf = new Mqtt2MqttConfiguration();
+mqttConf.setOutgoingClientQoS(0);
+mqttConf.setDestinationBrokerAddress("127.0.0.1");
+mqttConf.setDestinationBrokerPort(1884);
+mqttConf.setDestinationBrokerBaseTopic("wldt");
+mqttConf.setDeviceId("id:97b904ada0f9");
+mqttConf.setDeviceTelemetryTopic("telemetry/{{device_id}}");
+mqttConf.setEventTopic("events/{{device_id}}");
+mqttConf.setBrokerAddress("127.0.0.1");
+mqttConf.setBrokerPort(1883);
+
+WldtEngine wldtEngine = new WldtEngine(new WldtConfiguration());
+wldtEngine.addNewWorker(
+	new WldtMqttWorker(
+	wldtEngine.getWldtId(), 
+	mqttConf));
+wldtEngine.startWorkers();
 ```
 
+### Built-in CoAP-to-CoAP Mirroring
+
+The second core built-in IoT worker is dedicated to the seamless mirroring 
+of standard CoAP physical objects. The CoAP protocol through the use of CoRE Link Format
+and CoRE Interface provides by default both 
+resource discovery and descriptions. It is possible for example to easily 
+understand if a resource is a sensor or an actuator and which RESTful 
+operations are allowed for an external client. 
+Therefore, a WLDT instance can be automatically attached 
+to a standard CoAP object without the need of any additional information. 
+As illustrated in the following example, the class ***Coap2CoapWorker*** implements 
+the logic to create and keep synchronized the two counterparts using standard 
+methods and resource discovery through the use of ``/.well-known/core'' URI in 
+order to retrieve the list of available resources and and mirror the corresponding digital replicas. 
+
+Executed steps are: 
+
+1) The WLDT instance sends a GET on the standard ``/.well-known/core'' URI in order to retrieve the list of available resources; 
+2) the object responds with available resources using CoRE Link Format and CoRE Interface; 
+3) the worker creates for the twin the digital copy of each resource keeping the same descriptive 
+attributes (e.g., id, URI, interface type, resource type, observability etc ...); 
+4) when an external client sends a CoAP Request to the WLDT it will forward the 
+request to the physical object with the same attributes and payload (if present); 
+5) the physical device handles the request and sends the response back to the digital 
+replica that forwards the response to the requesting external client. 
+The worker implements also a caching system that can be enabled through the 
+***Coap2CoapConfiguration*** class together with the information related to 
+the physical object network endpoint (IP address and ports for CoAP and CoAPs).
+
+The following example shows a WLDT implementation using the built-in CoAP to CoAP worker to automatically 
+create a digital twin of an existing CoAP physical object.
+
+```java  
+Coap2CoapConfiguration coapConf = new Coap2CoapConfiguration();
+coapConf.setResourceDiscovery(true);
+coapConf.setDeviceAddress("127.0.0.1");
+coapConf.setDevicePort(5683);
+
+WldtEngine wldtEngine = new WldtEngine(new WldtConfiguration());
+wldtEngine.addNewWorker(new Coap2CoapWorker(coapConf));
+wldtEngine.startWorkers();
+```
