@@ -387,7 +387,7 @@ mqttConf.setBrokerPort(1883);
 
 WldtEngine wldtEngine = new WldtEngine(new WldtConfiguration());
 wldtEngine.addNewWorker(
-	new WldtMqttWorker(
+	new Mqtt2MqttWorker(
 	wldtEngine.getWldtId(), 
 	mqttConf));
 wldtEngine.startWorkers();
