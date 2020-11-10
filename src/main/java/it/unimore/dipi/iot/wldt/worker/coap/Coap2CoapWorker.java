@@ -5,13 +5,18 @@ import it.unimore.dipi.iot.wldt.exception.WldtCoapManagerMissingDeviceInfoExcept
 import it.unimore.dipi.iot.wldt.exception.WldtCoapModuleException;
 import it.unimore.dipi.iot.wldt.exception.WldtCoapResourceDiscoveryException;
 import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
+import it.unimore.dipi.iot.wldt.processing.PipelineData;
+import it.unimore.dipi.iot.wldt.processing.ProcessingPipelineListener;
 import it.unimore.dipi.iot.wldt.worker.WldtWorker;
 import it.unimore.dipi.iot.wldt.utils.WldtUtils;
+import it.unimore.dipi.iot.wldt.worker.dummy.DummyPipelineData;
+import it.unimore.dipi.iot.wldt.worker.dummy.WldtDummyWorker;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Author: Marco Picone, Ph.D. (marco.picone@unimore.it)
@@ -27,6 +32,8 @@ public class Coap2CoapWorker extends WldtWorker<Coap2CoapConfiguration, String, 
     private static final String CONF_FILE_NAME = "coap.yaml";
 
     private Coap2CoapManager coap2CoapManager = null;
+
+    public static final String DEFAULT_PROCESSING_PIPELINE = "coap_default_processing_pipeline";
 
     public Coap2CoapWorker(Coap2CoapConfiguration coap2CoapConfiguration) {
         super(coap2CoapConfiguration);
@@ -59,7 +66,7 @@ public class Coap2CoapWorker extends WldtWorker<Coap2CoapConfiguration, String, 
         if(coap2CoapManager == null) {
 
             //Create the CoAP Manager
-            coap2CoapManager = new Coap2CoapManager(this.getWldtWorkerConfiguration().getDeviceAddress(),this.getWldtWorkerConfiguration().getDevicePort(), this.getWldtWorkerConfiguration().getCacheEnabled());
+            coap2CoapManager = new Coap2CoapManager(this.getWldtWorkerConfiguration().getDeviceAddress(),this.getWldtWorkerConfiguration().getDevicePort(), this.getWldtWorkerConfiguration().getCacheEnabled(), this);
 
             logger.debug("{} COAP MANAGER Initialized for device at: {}:{}", TAG, coap2CoapManager.getDeviceAddress(), coap2CoapManager.getDevicePort());
 

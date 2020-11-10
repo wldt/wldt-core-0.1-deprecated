@@ -52,10 +52,13 @@ public class Coap2CoapManager {
         this.random = new Random();
     }
 
-    public Coap2CoapManager(String deviceAddress, int devicePort, boolean coapCacheEnabled) {
+    private Coap2CoapWorker coap2CoapWorker;
+
+    public Coap2CoapManager(String deviceAddress, int devicePort, boolean coapCacheEnabled, Coap2CoapWorker coap2CoapWorker) {
 
         this();
 
+        this.coap2CoapWorker = coap2CoapWorker;
         this.deviceAddress = deviceAddress;
         this.devicePort = devicePort;
         this.coapCacheEnabled = coapCacheEnabled;
@@ -118,7 +121,7 @@ public class Coap2CoapManager {
             this.coapResourceList.forEach(wldtCoapResourceDescriptor -> {
                 Timer.Context coapResourcesServerContext = WldtMetricsManager.getInstance().getCoapModuleTimerContext(WldtMetricsManager.COAP_WLDT_RESOURCE_CREATION_TIME);
                 try {
-                    this.coapServer.add(new WldtCoapResource(wldtCoapResourceDescriptor, this.coapCacheEnabled));
+                    this.coapServer.add(new WldtCoapResource(wldtCoapResourceDescriptor, this.coapCacheEnabled, this));
                 } catch (WldtCoapResourceException e) {
                     logger.error("{} Error adding resource with descriptor: {} Reason: {}", TAG, wldtCoapResourceDescriptor, e.getLocalizedMessage());
                 }
@@ -232,6 +235,14 @@ public class Coap2CoapManager {
 
     public void setCoapResourceList(List<WldtCoapResourceDescriptor> coapResourceList) {
         this.coapResourceList = coapResourceList;
+    }
+
+    public Coap2CoapWorker getCoap2CoapWorker() {
+        return coap2CoapWorker;
+    }
+
+    public void setCoap2CoapWorker(Coap2CoapWorker coap2CoapWorker) {
+        this.coap2CoapWorker = coap2CoapWorker;
     }
 
     public CoapServer getCoapServer() {

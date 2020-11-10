@@ -24,6 +24,12 @@ public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Vo
 
     private static final String CONF_FILE_NAME = "mqtt.yaml";
 
+    public static final String DEFAULT_DEVICE_TELEMETRY_PROCESSING_PIPELINE = "mqtt_default_device_telemetry_processing_pipeline";
+
+    public static final String DEFAULT_RESOURCE_TELEMETRY_PROCESSING_PIPELINE = "mqtt_default_resource_telemetry_processing_pipeline";
+
+    public static final String DEFAULT_EVENT_PIPELINE = "mqtt_default_event_processing_pipeline";
+
     private String wldtId;
 
     private Mqtt2MqttManager mqtt2MqttManager;
@@ -75,7 +81,7 @@ public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Vo
 
         if(mqtt2MqttManager == null){
 
-            this.mqtt2MqttManager = new Mqtt2MqttManager(this.wldtId, this.getWldtWorkerConfiguration());
+            this.mqtt2MqttManager = new Mqtt2MqttManager(this.wldtId, this.getWldtWorkerConfiguration(), this);
 
             logger.debug("{} Starting MQTT Manager for Broker at: {}:{} ", TAG, mqtt2MqttManager.getMqtt2MqttConfiguration().getBrokerAddress(), mqtt2MqttManager.getMqtt2MqttConfiguration().getBrokerPort());
 

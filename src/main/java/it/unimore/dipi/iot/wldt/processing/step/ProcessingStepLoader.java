@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class ProcessingStepLoader {
 
     private String DEFAULT_PACKAGE_NAME = "it.unimore.dipi.iot.wldt.processing.step";
@@ -58,13 +59,17 @@ public class ProcessingStepLoader {
             }
         });
 
-        // Find classes implementing ICommand.
-        for (File file : files) {
-            String className = file.getName().replaceAll(".class$", "");
-            Class<?> cls = Class.forName(packageName + "." + className);
-            if (ProcessingStep.class.isAssignableFrom(cls)) {
-                this.loadedClasses.add((Class<ProcessingStep>) cls);
+        if(files != null && files.length > 0){
+
+            // Find classes implementing ICommand.
+            for (File file : files) {
+                String className = file.getName().replaceAll(".class$", "");
+                Class<?> cls = Class.forName(packageName + "." + className);
+                if (ProcessingStep.class.isAssignableFrom(cls)) {
+                    this.loadedClasses.add((Class<ProcessingStep>) cls);
+                }
             }
+
         }
     }
 

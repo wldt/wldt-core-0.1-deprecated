@@ -24,7 +24,7 @@ import static com.codahale.metrics.MetricRegistry.name;
  */
 public class WldtMetricsManager {
 
-    public static String METRICS_FOLDER = "logs/metrics";
+    public static String METRICS_FOLDER = "metrics";
 
     private static final Logger logger = LoggerFactory.getLogger(WldtMetricsManager.class);
 
@@ -119,6 +119,8 @@ public class WldtMetricsManager {
 
         try{
 
+            checkOrCreateBasicMetricsFolder();
+
             reporter = CsvReporter.forRegistry(metricsRegistry)
                     .formatFor(Locale.US)
                     .convertRatesTo(TimeUnit.SECONDS)
@@ -181,6 +183,24 @@ public class WldtMetricsManager {
             metricsFolder.mkdir();
 
         return metricsFolder;
+    }
+
+    /**
+     * Check if the basic metrics folder exists or needs to be created
+     * @return
+     */
+    private void checkOrCreateBasicMetricsFolder(){
+
+        File metricsFolder = new File(METRICS_FOLDER);
+
+        if(!metricsFolder.exists()) {
+            if(metricsFolder.mkdir())
+               logger.info("LOGGER FOLDER -> Correctly created !");
+            else
+                logger.error("LOGGER FOLDER -> Error creating folder: {}", METRICS_FOLDER);
+        }
+        else
+            logger.info("LOGGER FOLDER -> Already exists !");
     }
 
     public Timer.Context getTimer(String metricIdentifier , String timerKey){

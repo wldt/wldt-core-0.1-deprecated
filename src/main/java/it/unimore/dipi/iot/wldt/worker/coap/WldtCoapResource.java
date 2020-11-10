@@ -1,21 +1,25 @@
 package it.unimore.dipi.iot.wldt.worker.coap;
 
 import com.codahale.metrics.Timer;
+import it.unimore.dipi.iot.wldt.exception.ProcessingPipelineException;
 import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.WldtCoapResourceException;
+import it.unimore.dipi.iot.wldt.processing.PipelineData;
+import it.unimore.dipi.iot.wldt.processing.ProcessingPipeline;
+import it.unimore.dipi.iot.wldt.processing.ProcessingPipelineListener;
+import it.unimore.dipi.iot.wldt.worker.dummy.WldtDummyWorker;
+import it.unimore.dipi.iot.wldt.worker.mqtt.MqttPipelineData;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.eclipse.californium.core.*;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Author: Marco Picone, Ph.D. (marco.picone@unimore.it)
@@ -40,12 +44,14 @@ public class WldtCoapResource extends CoapResource {
 
     private boolean coapCacheEnabled = false;
 
-    public WldtCoapResource(WldtCoapResourceDescriptor wldtCoapResourceDescriptor, boolean coapCacheEnabled) throws WldtCoapResourceException {
-        this(wldtCoapResourceDescriptor);
+    private Coap2CoapManager coap2CoapManager;
+
+    public WldtCoapResource(WldtCoapResourceDescriptor wldtCoapResourceDescriptor, boolean coapCacheEnabled, Coap2CoapManager coap2CoapManager) throws WldtCoapResourceException {
+        this(wldtCoapResourceDescriptor, coap2CoapManager);
         this.coapCacheEnabled = coapCacheEnabled;
     }
 
-    public WldtCoapResource(WldtCoapResourceDescriptor wldtCoapResourceDescriptor) throws WldtCoapResourceException {
+    public WldtCoapResource(WldtCoapResourceDescriptor wldtCoapResourceDescriptor, Coap2CoapManager coap2CoapManager) throws WldtCoapResourceException {
 
         super(UUID.randomUUID().toString());
 
@@ -54,6 +60,8 @@ public class WldtCoapResource extends CoapResource {
 
         this.wldtCoapResourceDescriptor = wldtCoapResourceDescriptor;
         String deviceEndpoint = generateDeviceCoapEndpoint();
+
+        this.coap2CoapManager = coap2CoapManager;
 
         this.coapClient = new CoapClient(generateDeviceCoapEndpoint());
 
@@ -227,7 +235,54 @@ public class WldtCoapResource extends CoapResource {
                 physicalTwinCoapResp.advanced().setToken(exchange.advanced().getRequest().getToken());
 
                 Response clientResponse = physicalTwinCoapResp.advanced();
-                exchange.respond(clientResponse);
+
+                if(this.coap2CoapManager.getCoap2CoapWorker().hasProcessingPipeline(Coap2CoapWorker.DEFAULT_PROCESSING_PIPELINE)){
+
+                    String resourceUri = exchange.advanced().getRequest().getURI();
+                    byte[] payload = clientResponse.getPayload();
+                    int contentFormat = clientResponse.getOptions().getContentFormat();
+
+                    logger.info("Executing Processing Pipeline for resource Uri: {} ...", resourceUri);
+
+                    this.coap2CoapManager.getCoap2CoapWorker().executeProcessingPipeline(Coap2CoapWorker.DEFAULT_PROCESSING_PIPELINE, new CoapPipelineData(
+                            resourceUri,
+                            payload,
+                            contentFormat,
+                            wldtCoapResourceDescriptor), new ProcessingPipelineListener() {
+
+                        @Override
+                        public void onPipelineDone(Optional<PipelineData> result) {
+
+                            if(result.isPresent() && result.get() instanceof CoapPipelineData){
+                                try {
+
+                                    CoapPipelineData resultPipelineData = (CoapPipelineData)result.get();
+                                    clientResponse.setPayload(resultPipelineData.getPayload());
+                                    clientResponse.setOptions(clientResponse.getOptions().setContentFormat(resultPipelineData.getContentFormat()));
+
+                                    exchange.respond(clientResponse);
+
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                    exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
+                                }
+                            }
+                            else {
+                                logger.warn("CoAP Processing Pipeline produced an empty result for target resource URI: {} !", resourceUri);
+                                exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
+                            }
+                        }
+
+                        @Override
+                        public void onPipelineError() {
+                            logger.error("Error CoAP Processing Pipeline for URI: {} ! ", resourceUri);
+                            exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
+                        }
+
+                    });
+                }
+                else
+                   exchange.respond(clientResponse);
 
                 logger.debug("{} Response Forwarded to the CLIENT: \n{}", TAG, Utils.prettyPrint(clientResponse));
             }

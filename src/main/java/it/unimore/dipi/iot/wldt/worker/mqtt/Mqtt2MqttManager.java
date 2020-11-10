@@ -8,6 +8,7 @@ import it.unimore.dipi.iot.wldt.processing.ProcessingPipeline;
 import it.unimore.dipi.iot.wldt.processing.ProcessingPipelineListener;
 import it.unimore.dipi.iot.wldt.processing.step.ProcessingStepLoader;
 import it.unimore.dipi.iot.wldt.utils.TopicTemplateManager;
+import it.unimore.dipi.iot.wldt.worker.coap.Coap2CoapWorker;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
@@ -41,17 +42,16 @@ public class Mqtt2MqttManager {
      */
     private IMqttClient outgoingMqttClient;
 
-    private ProcessingPipeline deviceTelemetryprocessingPipeline;
-
-    private ProcessingPipeline resourceTelemetryprocessingPipeline;
-
-    private ProcessingPipeline eventTelemetryprocessingPipeline;
+    /**
+     * Reference to the Mqtt2MqttWorker
+     */
+    private Mqtt2MqttWorker mqtt2MqttWorker;
 
     private Mqtt2MqttManager(){
 
     }
 
-    public Mqtt2MqttManager(String wldtId, Mqtt2MqttConfiguration mqtt2MqttConfiguration) throws WldtMqttModuleException, MqttException, IOException {
+    public Mqtt2MqttManager(String wldtId, Mqtt2MqttConfiguration mqtt2MqttConfiguration, Mqtt2MqttWorker mqtt2MqttWorker) throws WldtMqttModuleException, MqttException, IOException {
 
         if(mqtt2MqttConfiguration == null)
             throw new WldtMqttModuleException("Provided DTDPMqttProtocol = null !");
@@ -63,8 +63,10 @@ public class Mqtt2MqttManager {
 
             this.mqtt2MqttConfiguration = mqtt2MqttConfiguration;
             this.wldtId = wldtId;
+            this.mqtt2MqttWorker = mqtt2MqttWorker;
 
-            initProcessingPipelines();
+            //TODO CHECK AND REMOVE IF NEEDED
+            //initProcessingPipelines();
 
         }
         else
@@ -72,6 +74,7 @@ public class Mqtt2MqttManager {
 
     }
 
+    /*
     private void initProcessingPipelines() {
 
         ProcessingStepLoader processingStepLoader = new ProcessingStepLoader();
@@ -112,6 +115,7 @@ public class Mqtt2MqttManager {
             logger.info("Resource Telemetry Processing Pipeline Initialized ! Step Size: {}", this.eventTelemetryprocessingPipeline.getSize());
         }
     }
+    */
 
     public void initCommandMessageManagement() {
 
@@ -194,9 +198,11 @@ public class Mqtt2MqttManager {
 
             if(mqtt2MqttConfiguration.getOutgoingPublishingEnabled()){
 
-                if(this.deviceTelemetryprocessingPipeline != null && this.deviceTelemetryprocessingPipeline.getSize() > 0){
+                if(this.getMqtt2MqttWorker() != null && this.getMqtt2MqttWorker().hasProcessingPipeline(Mqtt2MqttWorker.DEFAULT_EVENT_PIPELINE)){
 
-                    this.deviceTelemetryprocessingPipeline.start(new MqttPipelineData(topic, payload), new ProcessingPipelineListener() {
+                    logger.info("Executing Processing Pipeline ({}) for topic: {} ...", Mqtt2MqttWorker.DEFAULT_EVENT_PIPELINE, topic);
+
+                    this.getMqtt2MqttWorker().executeProcessingPipeline(Mqtt2MqttWorker.DEFAULT_EVENT_PIPELINE, new MqttPipelineData(topic, payload), new ProcessingPipelineListener() {
 
                         @Override
                         public void onPipelineDone(Optional<PipelineData> result) {
@@ -219,6 +225,7 @@ public class Mqtt2MqttManager {
                         }
 
                     });
+
                 }
                 else
                     publishData(outgoingMqttClient, getOutgoingTopic(topic), payload);
@@ -246,9 +253,11 @@ public class Mqtt2MqttManager {
 
             if(mqtt2MqttConfiguration.getOutgoingPublishingEnabled()){
 
-                if(this.deviceTelemetryprocessingPipeline != null && this.deviceTelemetryprocessingPipeline.getSize() > 0){
+                if(this.getMqtt2MqttWorker() != null && this.getMqtt2MqttWorker().hasProcessingPipeline(Mqtt2MqttWorker.DEFAULT_DEVICE_TELEMETRY_PROCESSING_PIPELINE)){
 
-                    this.deviceTelemetryprocessingPipeline.start(new MqttPipelineData(topic, payload), new ProcessingPipelineListener() {
+                    logger.info("Executing Processing Pipeline ({}) for topic: {} ...", Mqtt2MqttWorker.DEFAULT_DEVICE_TELEMETRY_PROCESSING_PIPELINE, topic);
+
+                    this.getMqtt2MqttWorker().executeProcessingPipeline(Mqtt2MqttWorker.DEFAULT_DEVICE_TELEMETRY_PROCESSING_PIPELINE, new MqttPipelineData(topic, payload), new ProcessingPipelineListener() {
 
                         @Override
                         public void onPipelineDone(Optional<PipelineData> result) {
@@ -299,9 +308,11 @@ public class Mqtt2MqttManager {
 
             if(mqtt2MqttConfiguration.getOutgoingPublishingEnabled()){
 
-                if(this.deviceTelemetryprocessingPipeline != null && this.deviceTelemetryprocessingPipeline.getSize() > 0){
+                if(this.getMqtt2MqttWorker() != null && this.getMqtt2MqttWorker().hasProcessingPipeline(Mqtt2MqttWorker.DEFAULT_RESOURCE_TELEMETRY_PROCESSING_PIPELINE)){
 
-                    this.deviceTelemetryprocessingPipeline.start(new MqttPipelineData(topic, payload), new ProcessingPipelineListener() {
+                    logger.info("Executing Processing Pipeline ({}) for topic: {} ...", Mqtt2MqttWorker.DEFAULT_RESOURCE_TELEMETRY_PROCESSING_PIPELINE, topic);
+
+                    this.getMqtt2MqttWorker().executeProcessingPipeline(Mqtt2MqttWorker.DEFAULT_RESOURCE_TELEMETRY_PROCESSING_PIPELINE, new MqttPipelineData(topic, payload), new ProcessingPipelineListener() {
 
                         @Override
                         public void onPipelineDone(Optional<PipelineData> result) {
@@ -483,5 +494,13 @@ public class Mqtt2MqttManager {
 
     public void setMqtt2MqttConfiguration(Mqtt2MqttConfiguration mqtt2MqttConfiguration) {
         this.mqtt2MqttConfiguration = mqtt2MqttConfiguration;
+    }
+
+    public Mqtt2MqttWorker getMqtt2MqttWorker() {
+        return mqtt2MqttWorker;
+    }
+
+    public void setMqtt2MqttWorker(Mqtt2MqttWorker mqtt2MqttWorker) {
+        this.mqtt2MqttWorker = mqtt2MqttWorker;
     }
 }
