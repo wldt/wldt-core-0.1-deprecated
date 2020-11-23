@@ -8,3 +8,5 @@ csv/
 .settings
 .gradle
 *.iml
+gradle.properties
+settings.xml
