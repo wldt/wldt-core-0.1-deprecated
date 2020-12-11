@@ -34,7 +34,7 @@ as independent software agents and packed as microservices.
 The core layer of the solution is the WLDT Engine designed 
 to handle and orchestrate available and active modules 
 (denoted as Workers) defining the behavior of the twin. 
-A Worker is the the active module of the framework and it 
+A Worker is the active module of the framework and it 
 is designed to implement a specific twin's task or feature 
 related for example to the synchronization with the 
 original physical counterpart through a target IoT protocol. 
@@ -62,7 +62,7 @@ For developing a Digital Twin instance using the WLDT framework you have only to
 
 * download the WLDT library through the .jar file or download the wldt-core maven project and install it in your locale repository;
 * develop your app using the ZWT library; for example if you are using a PC with Java SE, you can you the corresponding ZWT jar for this phase;
-* develop the the entry class used for starting your app in the target platform(s).
+* develop the entry class used for starting your app in the target platform(s).
 
 ### WLDT Worker Configuration
 
