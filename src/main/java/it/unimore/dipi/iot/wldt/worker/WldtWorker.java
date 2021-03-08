@@ -4,12 +4,16 @@ import it.unimore.dipi.iot.wldt.cache.IWldtCache;
 import it.unimore.dipi.iot.wldt.exception.ProcessingPipelineException;
 import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
 import it.unimore.dipi.iot.wldt.exception.WldtRuntimeException;
+import it.unimore.dipi.iot.wldt.exception.WldtWorkerException;
 import it.unimore.dipi.iot.wldt.processing.IProcessingPipeline;
 import it.unimore.dipi.iot.wldt.processing.PipelineData;
 import it.unimore.dipi.iot.wldt.processing.ProcessingPipelineListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,6 +30,8 @@ public abstract class WldtWorker<T, K, V> implements Runnable {
     protected IWldtCache<K,V> workerCache = null;
 
     private Map<String, IProcessingPipeline> processingPipelineMap = null;
+
+    private List<MirroringListener> mirroringListenerList = null;
 
     public WldtWorker(){
     }
@@ -121,6 +127,93 @@ public abstract class WldtWorker<T, K, V> implements Runnable {
             throw new ProcessingPipelineException("PipelineId or ProcessingPipeline = Null or Not Found !");
     }
 
-    abstract public void startWorkerJob() throws WldtConfigurationException, WldtRuntimeException;
+    public void addMirroringListener(MirroringListener mirroringListener) throws WldtWorkerException {
 
+        try {
+
+            if(this.mirroringListenerList == null)
+                this.mirroringListenerList = new ArrayList<>();
+
+            if(mirroringListener != null)
+                this.mirroringListenerList.add(mirroringListener);
+            else
+                throw new WldtWorkerException("Error adding MirroringListener ! Provided Object = null !");
+
+        }catch (Exception e){
+            logger.error("Error adding mirroring listener ! Error: {}", e.getLocalizedMessage());
+            throw new WldtWorkerException(e.getLocalizedMessage());
+        }
+    }
+
+    public void removeMirroringListener(MirroringListener mirroringListener) throws WldtWorkerException {
+
+        try {
+
+            if(this.mirroringListenerList != null)
+                if(mirroringListener != null)
+                    this.mirroringListenerList.remove(mirroringListener);
+                else
+                    throw new WldtWorkerException("Error removing MirroringListener ! Provided Object = null !");
+        }catch (Exception e){
+            logger.error("Error adding mirroring listener ! Error: {}", e.getLocalizedMessage());
+            throw new WldtWorkerException(e.getLocalizedMessage());
+        }
+    }
+
+    public void notifyDeviceMirrored(String deviceId, Map<String, Object> metadata) throws WldtWorkerException{
+
+        try{
+
+            if(this.mirroringListenerList != null)
+                this.mirroringListenerList.forEach(mirroringListener -> {
+                    mirroringListener.onPhysicalDeviceMirrored(deviceId, metadata);
+                });
+
+        }catch (Exception e){
+            logger.error("Error notifying listener ! Error: {}", e.getLocalizedMessage());
+            throw new WldtWorkerException(e.getLocalizedMessage());
+        }
+    }
+
+    public void notifyResourceMirrored(String deviceId, Map<String, Object> metadata)  throws WldtWorkerException{
+        try{
+
+            if(this.mirroringListenerList != null)
+                this.mirroringListenerList.forEach(mirroringListener -> {
+                    mirroringListener.onPhysicalResourceMirrored(deviceId, metadata);
+                });
+
+        }catch (Exception e){
+            logger.error("Error notifying listener ! Error: {}", e.getLocalizedMessage());
+            throw new WldtWorkerException(e.getLocalizedMessage());
+        }
+    }
+
+    public void notifyDeviceMirroringError(String deviceId, String errorMsg) {
+        try{
+
+            if(this.mirroringListenerList != null)
+                this.mirroringListenerList.forEach(mirroringListener -> {
+                    mirroringListener.onPhysicalDeviceMirroringError(deviceId, errorMsg);
+                });
+
+        }catch (Exception e){
+            logger.error("Error notifying listener ! Error: {}", e.getLocalizedMessage());
+        }
+    }
+
+    public void notifyResourceMirroringError(String deviceId, String errorMsg) {
+        try{
+
+            if(this.mirroringListenerList != null)
+                this.mirroringListenerList.forEach(mirroringListener -> {
+                    mirroringListener.onPhysicalResourceMirroringError(deviceId, errorMsg);
+                });
+
+        }catch (Exception e){
+            logger.error("Error notifying listener ! Error: {}", e.getLocalizedMessage());
+        }
+    }
+
+    abstract public void startWorkerJob() throws WldtConfigurationException, WldtRuntimeException;
 }

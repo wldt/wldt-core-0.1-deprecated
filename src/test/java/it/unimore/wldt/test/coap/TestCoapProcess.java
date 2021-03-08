@@ -7,8 +7,6 @@ import it.unimore.dipi.iot.wldt.process.WldtCoapProcess;
 import it.unimore.dipi.iot.wldt.processing.ProcessingPipeline;
 import it.unimore.dipi.iot.wldt.worker.coap.Coap2CoapConfiguration;
 import it.unimore.dipi.iot.wldt.worker.coap.Coap2CoapWorker;
-import it.unimore.dipi.iot.wldt.worker.dummy.DummyProcessingStep;
-import it.unimore.dipi.iot.wldt.worker.dummy.WldtDummyWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,20 +1,19 @@
 package it.unimore.dipi.iot.wldt.worker.mqtt;
 
 import com.codahale.metrics.Timer;
+import it.unimore.dipi.iot.wldt.exception.WldtWorkerException;
 import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.WldtMqttModuleException;
 import it.unimore.dipi.iot.wldt.processing.PipelineData;
-import it.unimore.dipi.iot.wldt.processing.ProcessingPipeline;
 import it.unimore.dipi.iot.wldt.processing.ProcessingPipelineListener;
-import it.unimore.dipi.iot.wldt.processing.step.ProcessingStepLoader;
 import it.unimore.dipi.iot.wldt.utils.TopicTemplateManager;
-import it.unimore.dipi.iot.wldt.worker.coap.Coap2CoapWorker;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Optional;
 
 /**
@@ -46,6 +45,24 @@ public class Mqtt2MqttManager {
      * Reference to the Mqtt2MqttWorker
      */
     private Mqtt2MqttWorker mqtt2MqttWorker;
+
+    /**
+     * Variable used to detect mirroring errors. The mirroring is completed only when all the resources are correctly
+     * mirrored. In the MQTT case when the WLDT is correctly registered on all the target topics
+     */
+    private boolean isMirroringCompleted = true;
+
+    /**
+     * Target device telemetry topic. Initialized at the setup of the worker
+     * It is null if the target topic is not configured or required.
+     */
+    private String deviceTelemetryTopic = null;
+
+    /**
+     * Target device event topic. Initialized at the setup of the worker
+     * It is null if the target topic is not configured or required.
+     */
+    private String deviceEventTopic = null;
 
     private Mqtt2MqttManager(){
 
@@ -129,7 +146,7 @@ public class Mqtt2MqttManager {
         try {
 
             if(this.mqtt2MqttConfiguration.getEventTopic() != null){
-                String deviceEventTopic = TopicTemplateManager.getTopicForDevice(this.mqtt2MqttConfiguration.getEventTopic(), this.mqtt2MqttConfiguration.getDeviceId());
+                deviceEventTopic = TopicTemplateManager.getTopicForDevice(this.mqtt2MqttConfiguration.getEventTopic(), this.mqtt2MqttConfiguration.getDeviceId());
                 registerToIncomingMqttTopic(deviceEventTopic, this::handleEventMessage);
                 logger.info("{} Registered to Device Event Topic: {}", TAG, deviceEventTopic);
             }
@@ -142,7 +159,7 @@ public class Mqtt2MqttManager {
         }
     }
 
-    public void initTelemetryMessageManagement() throws MqttException, WldtMqttModuleException, IOException {
+    public void initTelemetryMessageManagement() throws MqttException, WldtMqttModuleException, IOException, WldtWorkerException {
 
         Timer.Context context = WldtMetricsManager.getInstance().getMqttModuleTimerContext(WldtMetricsManager.MQTT_TOPIC_REGISTRATION_TIME);
 
@@ -150,7 +167,7 @@ public class Mqtt2MqttManager {
 
             if(this.mqtt2MqttConfiguration.getDeviceTelemetryTopic() != null){
 
-                String deviceTelemetryTopic = TopicTemplateManager.getTopicForDevice(this.mqtt2MqttConfiguration.getDeviceTelemetryTopic(), this.mqtt2MqttConfiguration.getDeviceId());
+                deviceTelemetryTopic = TopicTemplateManager.getTopicForDevice(this.mqtt2MqttConfiguration.getDeviceTelemetryTopic(), this.mqtt2MqttConfiguration.getDeviceId());
                 registerToIncomingMqttTopic(deviceTelemetryTopic, this::handleDeviceTelemetryMessage);
 
                 logger.info("{} Registered to Device Telemetry Topic: {}", TAG, deviceTelemetryTopic);
@@ -163,16 +180,28 @@ public class Mqtt2MqttManager {
                             try {
                                 String resourceTelemetryTopic = TopicTemplateManager.getTopicForDeviceResource(this.mqtt2MqttConfiguration.getResourceTelemetryTopic(), this.mqtt2MqttConfiguration.getDeviceId(), resourceId);
                                 registerToIncomingMqttTopic(resourceTelemetryTopic, this::handleResourceTelemetryMessage);
+
+                                //Notify resource correctly mirrored
+                                this.mqtt2MqttWorker.notifyResourceMirrored(this.mqtt2MqttConfiguration.getDeviceId(), new HashMap<String, Object>() {
+                                    {
+                                        put(Mqtt2MqttWorker.RESOURCE_MIRRORED_TELEMETRY_TOPIC_CALLBACK_METADATA, resourceTelemetryTopic);
+                                        put(Mqtt2MqttWorker.DEVICE_MIRRORED_BROKER_ENDPOINT_CALLBACK_METADATA, getPhysicalThingMqttBrokerUrl());
+                                    }
+                                });
+
                                 logger.info("{} Registered to ResourceId Telemetry Topic: {}", TAG, resourceTelemetryTopic);
-                            } catch (WldtMqttModuleException | MqttException | IOException e) {
-                                logger.error("{} Error registering for resourceId: {} telemetry topics ! Exception: {}", TAG, resourceId, e.getLocalizedMessage());
+
+                            } catch (WldtMqttModuleException | MqttException | IOException | WldtWorkerException e) {
+                                String errorMsg = String.format("%s Error registering for resourceId: %s telemetry topics ! Exception: %s", TAG, resourceId, e.getLocalizedMessage());
+                                logger.error(errorMsg);
+                                this.mqtt2MqttWorker.notifyDeviceMirroringError(this.mqtt2MqttConfiguration.getDeviceId(), errorMsg);
+                                isMirroringCompleted = false;
                             }
                         });
                     }
                 }
                 else
                     logger.info("Resource Telemetry Topic Configuration = null ! Avoiding registering to the topic ...");
-
 
             }else
                 logger.info("Device Telemetry Topic Configuration = null ! Avoiding registering to the topic ...");
@@ -386,23 +415,46 @@ public class Mqtt2MqttManager {
     /**
      * Initialize both incoming and outgoind MQTT Clients
      */
-    public void init() throws MqttException {
+    public void init() throws WldtMqttModuleException {
 
-        if(this.mqtt2MqttConfiguration != null) {
-            logger.info("{} Initializing Incoming MQTT Client ...", TAG);
-            initIncomingClient();
-        }
-        else
-            logger.info("{} DTDPMqttProtocol = null ! Impossible to init the Incoming MQTT Client", TAG);
+        try{
 
-        if(this.mqtt2MqttConfiguration.getOutgoingPublishingEnabled() &&
-                this.mqtt2MqttConfiguration.getDestinationBrokerAddress() != null &&
-                this.mqtt2MqttConfiguration.getDestinationBrokerPort() > 0) {
-            logger.info("{} Initializing Outgoing MQTT Client ...", TAG);
-            initOutgoingClient();
+            if(this.mqtt2MqttConfiguration != null) {
+                logger.info("{} Initializing Incoming MQTT Client ...", TAG);
+                initIncomingClient();
+            }
+            else
+                logger.info("{} DTDPMqttProtocol = null ! Impossible to init the Incoming MQTT Client", TAG);
+
+            if(this.mqtt2MqttConfiguration.getOutgoingPublishingEnabled() &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerAddress() != null &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerPort() > 0) {
+                logger.info("{} Initializing Outgoing MQTT Client ...", TAG);
+                initOutgoingClient();
+            }
+            else
+                logger.info("{} Destination Broker Configuration Error ! Impossible to init the Outgoing MQTT Client", TAG);
+
+            //Init telemetry and event managemenet
+            this.initTelemetryMessageManagement();
+            this.initEventMessageManagement();
+
+            //TODO Command and Responses topics management should be implemented
+
+            //Notify device correctly mirrored
+            this.mqtt2MqttWorker.notifyDeviceMirrored(this.mqtt2MqttConfiguration.getDeviceId(), new HashMap<String, Object>() {
+                {
+                    put(Mqtt2MqttWorker.DEVICE_MIRRORED_TELEMETRY_TOPIC_CALLBACK_METADATA, deviceTelemetryTopic);
+                    put(Mqtt2MqttWorker.DEVICE_MIRRORED_EVENT_TOPIC_CALLBACK_METADATA, deviceEventTopic);
+                    put(Mqtt2MqttWorker.DEVICE_MIRRORED_BROKER_ENDPOINT_CALLBACK_METADATA, getPhysicalThingMqttBrokerUrl());
+                }
+            });
+
+        }catch (Exception e){
+            this.mqtt2MqttWorker.notifyDeviceMirroringError(this.mqtt2MqttConfiguration.getDeviceId(), e.getLocalizedMessage());
+            throw new WldtMqttModuleException(e.getLocalizedMessage());
         }
-        else
-            logger.info("{} Destination Broker Configuration Error ! Impossible to init the Outgoing MQTT Client", TAG);
+
     }
 
     /**

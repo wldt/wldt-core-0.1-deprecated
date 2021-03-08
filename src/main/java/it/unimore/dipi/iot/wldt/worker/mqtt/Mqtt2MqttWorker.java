@@ -30,6 +30,14 @@ public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Vo
 
     public static final String DEFAULT_EVENT_PIPELINE = "mqtt_default_event_processing_pipeline";
 
+    public static final String DEVICE_MIRRORED_TELEMETRY_TOPIC_CALLBACK_METADATA = "mqtt_device_telemetry_topic";
+
+    public static final String DEVICE_MIRRORED_EVENT_TOPIC_CALLBACK_METADATA = "mqtt_device_event_topic";
+
+    public static final String RESOURCE_MIRRORED_TELEMETRY_TOPIC_CALLBACK_METADATA = "mqtt_resource_telemetry_topic";
+
+    public static final String DEVICE_MIRRORED_BROKER_ENDPOINT_CALLBACK_METADATA = "mqtt_broker_endpoint";
+
     private String wldtId;
 
     private Mqtt2MqttManager mqtt2MqttManager;
@@ -75,7 +83,7 @@ public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Vo
         }
     }
 
-    public void startMqttProtocolManagement() throws IOException, WldtMqttModuleException, MqttException {
+    public void startMqttProtocolManagement() throws IOException, WldtMqttModuleException, MqttException, WldtWorkerException {
 
         logger.info("{} STARTING MQTT PROTOCOL MANAGEMENT ...", TAG);
 
@@ -86,8 +94,6 @@ public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Vo
             logger.debug("{} Starting MQTT Manager for Broker at: {}:{} ", TAG, mqtt2MqttManager.getMqtt2MqttConfiguration().getBrokerAddress(), mqtt2MqttManager.getMqtt2MqttConfiguration().getBrokerPort());
 
             this.mqtt2MqttManager.init();
-            this.mqtt2MqttManager.initTelemetryMessageManagement();
-            this.mqtt2MqttManager.initEventMessageManagement();
 
             logger.info("{} MQTT PROTOCOL MANAGEMENT [STARTED]", TAG);
         }
