@@ -1,0 +1,48 @@
+outgoingPublishingEnabled: true
+
+#MQTT Ougoing Client Parameters
+outgoingClientQoS: 0
+outgoingClientRetainedMessages: false
+
+#Destination Broker Parameters
+destinationBrokerAddress: 127.0.0.1
+destinationBrokerPort: 1884
+
+#e.g., digitaltwin (without the final /)
+destinationBrokerBaseTopic: null
+
+#Physical object references. Used if the DTDP Module is not active
+#deviceId: "it.unimore.dipi.things:dummy_device:0be64e3d-985d-43f2-b810-10e8e1d6862a"
+#resourceIdList:
+#  - "dummy_sensor:58d4f33a-adc8-4317-8717-0848e9747d33-1"
+#  - "dummy_sensor:7ea88f66-02c6-4525-97a9-dc279b6ef66b-0"
+#deviceTelemetryTopic: "telemetry/{{device_id}}"
+#resourceTelemetryTopic: "telemetry/{{device_id}}/resource/{{resource_id}}"
+#eventTopic: "events/{{device_id}}"
+#commandRequestTopic: "commands/{{device_id}}/request"
+#commandResponseTopic: "commands/{{device_id}}/response"
+#brokerAddress: 127.0.0.1
+#brokerPort: 1883
+#brokerLocal: true
+
+deviceId: "it.unimore.dipi.things:dummy_device:0be64e3d-985d-43f2-b810-10e8e1d6862a"
+resourceIdList: null
+deviceTelemetryTopic: "number"
+resourceTelemetryTopic: null
+eventTopic: null
+commandRequestTopic: null
+commandResponseTopic: null
+brokerAddress: 127.0.0.1
+brokerPort: 1883
+brokerLocal: true
+
+#MQTT Processing Pipeline Configuration
+deviceTelemetryProcessingStepList:
+  - "IdentityProcessingStep"
+  #- "MqttAverageProcessingStep"
+  #- "MqttSenmlBuilderProcessingStep"
+resourceTelemetryProcessingStepList:
+  - "IdentityProcessingStep"
+eventProcessingStepList:
+  - "IdentityProcessingStep"
+commandRequestProcessingStepList: null

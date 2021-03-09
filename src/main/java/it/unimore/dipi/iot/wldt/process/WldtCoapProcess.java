@@ -40,7 +40,7 @@ public class WldtCoapProcess {
             wldtEngine.addNewWorker(new Coap2CoapWorker(getCoapProtocolConfiguration()));
             wldtEngine.startWorkers();
 
-        }catch (Exception | WldtConfigurationException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
     }

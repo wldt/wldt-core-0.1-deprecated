@@ -67,7 +67,7 @@ public class WldtDummyProcess {
 
             wldtEngine.startWorkers();
 
-        }catch (Exception | WldtConfigurationException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
     }

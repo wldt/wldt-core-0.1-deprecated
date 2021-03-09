@@ -6,7 +6,6 @@ wldtStartupTimeSeconds: 10
 
 #Active Protocol Modules List (enabled if DTDP Discovery is set to false)
 activeProtocolList:
-  - coap
   - mqtt
 
 #Application Metrics

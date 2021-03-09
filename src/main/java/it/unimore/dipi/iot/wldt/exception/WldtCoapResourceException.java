@@ -5,7 +5,7 @@ package it.unimore.dipi.iot.wldt.exception;
  * Date: 24/03/2020
  * Project: White Label Digital Twin Java Framework - (whitelabel-digitaltwin)
  */
-public class WldtCoapResourceException extends Throwable {
+public class WldtCoapResourceException extends Exception {
     public WldtCoapResourceException(String s) {
         super(s);
     }

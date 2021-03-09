@@ -9,12 +9,12 @@ import java.util.Map;
  */
 public interface MirroringListener {
 
-    public void onPhysicalDeviceMirrored(String deviceId, Map<String, Object> metadata);
+    public void onDeviceMirrored(String deviceId, Map<String, Object> metadata);
 
-    public void onPhysicalDeviceMirroringError(String deviceId, String errorMsg);
+    public void onDeviceMirroringError(String deviceId, String errorMsg);
 
-    public void onPhysicalResourceMirrored(String resourceId, Map<String, Object> metadata);
+    public void onResourceMirrored(String resourceId, Map<String, Object> metadata);
 
-    public void onPhysicalResourceMirroringError(String deviceId, String errorMsg);
+    public void onResourceMirroringError(String ResourceId, String errorMsg);
 
 }

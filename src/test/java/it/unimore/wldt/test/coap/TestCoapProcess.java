@@ -43,7 +43,7 @@ public class TestCoapProcess {
             wldtEngine.addNewWorker(coap2CoapWorker);
             wldtEngine.startWorkers();
 
-        }catch (Exception | WldtConfigurationException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
     }

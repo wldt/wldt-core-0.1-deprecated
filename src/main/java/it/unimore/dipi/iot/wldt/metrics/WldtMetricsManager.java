@@ -36,7 +36,7 @@ public class WldtMetricsManager {
 
     public static final String MQTT_EVENT_FORWARD_TIME = "event_forward_time";
 
-    public static final String MQTT_TELEMETRY_FORWARD_TIME = "telemetry_forward_time";
+    public static final String MQTT_FORWARD_TIME = "mqtt_forward_time";
 
     public static final String MQTT_COMMAND_REQUEST_FORWARD_TIME = "command_request_forward_time";
 

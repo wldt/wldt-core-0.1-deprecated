@@ -14,6 +14,7 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private int outgoingClientQoS = 0;
 
+    //TODO Check if it is correctly used or can be improved
     private boolean outgoingClientRetainedMessages = false;
 
     private String destinationBrokerAddress;
@@ -24,30 +25,42 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private String deviceId = null;
 
-    private List<String> resourceIdList = null;
-
-    private String deviceTelemetryTopic = null;
-
-    private String resourceTelemetryTopic = null;
-
-    private String eventTopic = null;
-
-    private String commandRequestTopic = null;
-
-    private String commandResponseTopic = null;
-
     private String brokerAddress = "127.0.0.1";
 
     private int brokerPort = 1883;
 
     private boolean brokerLocal = true;
 
+    private List<MqttTopicDescriptor> topicList;
+
+    @Deprecated
+    private List<String> resourceIdList = null;
+
+    @Deprecated
+    private String deviceTelemetryTopic = null;
+
+    @Deprecated
+    private String resourceTelemetryTopic = null;
+
+    @Deprecated
+    private String eventTopic = null;
+
+    @Deprecated
+    private String commandRequestTopic = null;
+
+    @Deprecated
+    private String commandResponseTopic = null;
+
+    @Deprecated
     private List<String> deviceTelemetryProcessingStepList = null;
 
+    @Deprecated
     private List<String> resourceTelemetryProcessingStepList = null;
 
+    @Deprecated
     private List<String> eventProcessingStepList = null;
 
+    @Deprecated
     private List<String> commandRequestProcessingStepList = null;
 
     public Mqtt2MqttConfiguration() {
@@ -181,57 +194,78 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         this.brokerLocal = brokerLocal;
     }
 
+    @Deprecated
     public List<String> getDeviceTelemetryProcessingStepList() {
         return deviceTelemetryProcessingStepList;
     }
 
+    @Deprecated
     public void setDeviceTelemetryProcessingStepList(List<String> deviceTelemetryProcessingStepList) {
         this.deviceTelemetryProcessingStepList = deviceTelemetryProcessingStepList;
     }
 
+    @Deprecated
     public List<String> getResourceTelemetryProcessingStepList() {
         return resourceTelemetryProcessingStepList;
     }
 
+    @Deprecated
     public void setResourceTelemetryProcessingStepList(List<String> resourceTelemetryProcessingStepList) {
         this.resourceTelemetryProcessingStepList = resourceTelemetryProcessingStepList;
     }
 
+    @Deprecated
     public List<String> getEventProcessingStepList() {
         return eventProcessingStepList;
     }
 
+    @Deprecated
     public void setEventProcessingStepList(List<String> eventProcessingStepList) {
         this.eventProcessingStepList = eventProcessingStepList;
     }
 
+    @Deprecated
     public List<String> getCommandRequestProcessingStepList() {
         return commandRequestProcessingStepList;
     }
 
+    @Deprecated
     public void setCommandRequestProcessingStepList(List<String> commandRequestProcessingStepList) {
         this.commandRequestProcessingStepList = commandRequestProcessingStepList;
     }
 
+    public List<MqttTopicDescriptor> getTopicList() {
+        return topicList;
+    }
+
+    public void setTopicList(List<MqttTopicDescriptor> topicList) {
+        this.topicList = topicList;
+    }
+
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("MqttProtocolConfiguration{");
-        sb.append("mqttDestinationBrokerAddress='").append(destinationBrokerAddress).append('\'');
-        sb.append(", mqttDestinationBrokerPort=").append(destinationBrokerPort);
-        sb.append(", mqttDestinationBrokerBaseTopic='").append(destinationBrokerBaseTopic).append('\'');
-        sb.append(", mqttOutgoingClientQoS=").append(outgoingClientQoS);
-        sb.append(", mqttOutgoingClientRetainedMessages=").append(outgoingClientRetainedMessages);
-        sb.append(", mqttOutgoingPublishingEnabled=").append(outgoingPublishingEnabled);
+        final StringBuffer sb = new StringBuffer("Mqtt2MqttConfiguration{");
+        sb.append("outgoingPublishingEnabled=").append(outgoingPublishingEnabled);
+        sb.append(", outgoingClientQoS=").append(outgoingClientQoS);
+        sb.append(", outgoingClientRetainedMessages=").append(outgoingClientRetainedMessages);
+        sb.append(", destinationBrokerAddress='").append(destinationBrokerAddress).append('\'');
+        sb.append(", destinationBrokerPort=").append(destinationBrokerPort);
+        sb.append(", destinationBrokerBaseTopic='").append(destinationBrokerBaseTopic).append('\'');
         sb.append(", deviceId='").append(deviceId).append('\'');
-        sb.append(", resourceList=").append(resourceIdList);
-        sb.append(", telemetryDeviceTopic='").append(deviceTelemetryTopic).append('\'');
-        sb.append(", telemetryResourceTopic='").append(resourceTelemetryTopic).append('\'');
+        sb.append(", brokerAddress='").append(brokerAddress).append('\'');
+        sb.append(", brokerPort=").append(brokerPort);
+        sb.append(", brokerLocal=").append(brokerLocal);
+        sb.append(", topicList=").append(topicList);
+        sb.append(", resourceIdList=").append(resourceIdList);
+        sb.append(", deviceTelemetryTopic='").append(deviceTelemetryTopic).append('\'');
+        sb.append(", resourceTelemetryTopic='").append(resourceTelemetryTopic).append('\'');
         sb.append(", eventTopic='").append(eventTopic).append('\'');
         sb.append(", commandRequestTopic='").append(commandRequestTopic).append('\'');
         sb.append(", commandResponseTopic='").append(commandResponseTopic).append('\'');
-        sb.append(", brokerAddress='").append(brokerAddress).append('\'');
-        sb.append(", brokerPortTopic=").append(brokerPort);
-        sb.append(", brokerLocal=").append(brokerLocal);
+        sb.append(", deviceTelemetryProcessingStepList=").append(deviceTelemetryProcessingStepList);
+        sb.append(", resourceTelemetryProcessingStepList=").append(resourceTelemetryProcessingStepList);
+        sb.append(", eventProcessingStepList=").append(eventProcessingStepList);
+        sb.append(", commandRequestProcessingStepList=").append(commandRequestProcessingStepList);
         sb.append('}');
         return sb.toString();
     }

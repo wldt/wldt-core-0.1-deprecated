@@ -35,7 +35,7 @@ public class WldtUtils {
             return om.readValue(file, targetClass);
 
         }catch (Exception e){
-            String errorMessage = String.format("ERROR LOADING CONFIGURATION FILE ({}) ! Error: %s", confFilename, e.getLocalizedMessage());
+            String errorMessage = String.format("ERROR LOADING CONFIGURATION FILE (%s) ! Error: %s", confFilename, e.getLocalizedMessage());
             logger.error("{}", errorMessage);
             throw new WldtConfigurationException(errorMessage);
         }

@@ -2,14 +2,13 @@ package it.unimore.dipi.iot.wldt.process;
 
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
-import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
 import it.unimore.dipi.iot.wldt.worker.MirroringListener;
 import it.unimore.dipi.iot.wldt.worker.mqtt.Mqtt2MqttConfiguration;
 import it.unimore.dipi.iot.wldt.worker.mqtt.Mqtt2MqttWorker;
+import it.unimore.dipi.iot.wldt.worker.mqtt.MqttTopicDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -46,30 +45,31 @@ public class WldtMqttProcess {
             mqtt2MqttWorker.addMirroringListener(new MirroringListener() {
 
                 @Override
-                public void onPhysicalDeviceMirrored(String deviceId, Map<String, Object> metadata) {
-                    logger.info("onPhysicalDeviceMirrored() callback ! DeviceId: {} -> Metadata: {}", deviceId, metadata);
+                public void onDeviceMirrored(String deviceId, Map<String, Object> metadata) {
+                    logger.info("onDeviceMirrored() callback ! DeviceId: {} -> Metadata: {}", deviceId, metadata);
                 }
 
                 @Override
-                public void onPhysicalDeviceMirroringError(String deviceId, String errorMsg) {
-                    logger.error("onPhysicalDeviceMirroringError() callback ! Error Mirroring Device: {} Reason: {}", deviceId, errorMsg);
+                public void onDeviceMirroringError(String deviceId, String errorMsg) {
+                    logger.info("onDeviceMirroringError() callback ! DeviceId: {} -> ErrorMsg: {}", deviceId, errorMsg);
                 }
 
                 @Override
-                public void onPhysicalResourceMirrored(String resourceId, Map<String, Object> metadata) {
-                    logger.info("onPhysicalResourceMirrored() callback ! ResourceId: {} -> Metadata: {}", resourceId, metadata);
+                public void onResourceMirrored(String resourceId, Map<String, Object> metadata) {
+                    logger.info("onResourceMirrored() callback ! ResourceId: {} -> Metadata: {}", resourceId, metadata);
                 }
 
                 @Override
-                public void onPhysicalResourceMirroringError(String deviceId, String errorMsg) {
-                    logger.error("onPhysicalResourceMirroringError() callback ! Error Mirroring Resource: {} Reason: {}", deviceId, errorMsg);
+                public void onResourceMirroringError(String resourceId, String errorMsg) {
+                    logger.info("onResourceMirroringError() callback ! ResourceId: {} -> ErrorMsg: {}", resourceId, errorMsg);
                 }
+
             });
 
             wldtEngine.addNewWorker(mqtt2MqttWorker);
             wldtEngine.startWorkers();
 
-        }catch (Exception | WldtConfigurationException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
     }
@@ -86,14 +86,27 @@ public class WldtMqttProcess {
         mqtt2MqttConfiguration.setDestinationBrokerPort(1884);
         mqtt2MqttConfiguration.setDestinationBrokerBaseTopic("wldt");
         mqtt2MqttConfiguration.setDeviceId("com:iot:dummy:dummyMqttDevice001");
-        mqtt2MqttConfiguration.setResourceIdList(Arrays.asList("dummy_string_resource"));
-        mqtt2MqttConfiguration.setDeviceTelemetryTopic("telemetry/{{device_id}}");
-        mqtt2MqttConfiguration.setResourceTelemetryTopic("telemetry/{{device_id}}/resource/{{resource_id}}");
-        mqtt2MqttConfiguration.setEventTopic("events/{{device_id}}");
-        mqtt2MqttConfiguration.setCommandRequestTopic("commands/{{device_id}}/request");
-        mqtt2MqttConfiguration.setCommandResponseTopic("commands/{{device_id}}/response");
         mqtt2MqttConfiguration.setBrokerAddress("127.0.0.1");
         mqtt2MqttConfiguration.setBrokerPort(1883);
+
+        //Specify Topic List Configuration
+        mqtt2MqttConfiguration.setTopicList(
+                Collections.singletonList(
+                        new MqttTopicDescriptor("DummyStringResource",
+                                "dummy_string_resource",
+                                "telemetry/{{device_id}}/resource/{{resource_id}}",
+                                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING)
+                )
+        );
+
+        //mqtt2MqttConfiguration.setResourceIdList(Arrays.asList("dummy_string_resource"));
+        //mqtt2MqttConfiguration.setDeviceTelemetryTopic("telemetry/{{device_id}}");
+        //mqtt2MqttConfiguration.setResourceTelemetryTopic("telemetry/{{device_id}}/resource/{{resource_id}}");
+        //mqtt2MqttConfiguration.setEventTopic("events/{{device_id}}");
+        //mqtt2MqttConfiguration.setCommandRequestTopic("commands/{{device_id}}/request");
+        //mqtt2MqttConfiguration.setCommandResponseTopic("commands/{{device_id}}/response");
+
+
 
         return mqtt2MqttConfiguration;
     }
