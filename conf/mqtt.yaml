@@ -1,13 +1,15 @@
-outgoingPublishingEnabled: true
+dtForwardingEnabled: true
 
 #MQTT Ougoing Client Parameters
 outgoingClientQoS: 0
-outgoingClientRetainedMessages: false
 
 #Physical Device Broker Parameters
 brokerAddress: 127.0.0.1
 brokerPort: 1883
 brokerLocal: true
+
+#It is applied both to incoming and outgoing DT's topics
+dtTopicPrefix: "wldt"
 
 #Destination Broker Parameters
 destinationBrokerAddress: 127.0.0.1

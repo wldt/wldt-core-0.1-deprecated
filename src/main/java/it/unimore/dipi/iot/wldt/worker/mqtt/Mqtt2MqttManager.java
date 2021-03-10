@@ -1,11 +1,8 @@
 package it.unimore.dipi.iot.wldt.worker.mqtt;
 
 import com.codahale.metrics.Timer;
-import it.unimore.dipi.iot.wldt.exception.WldtWorkerException;
 import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.WldtMqttModuleException;
-import it.unimore.dipi.iot.wldt.processing.PipelineData;
-import it.unimore.dipi.iot.wldt.processing.ProcessingPipelineListener;
 import it.unimore.dipi.iot.wldt.utils.TopicTemplateManager;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -14,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -107,7 +103,7 @@ public class Mqtt2MqttManager {
                 logger.info("{} Mqtt2MqttConfiguration = null ! Impossible to init the Incoming MQTT Client", TAG);
 
             //Init MQTT Outgoing client
-            if(this.mqtt2MqttConfiguration.getOutgoingPublishingEnabled() &&
+            if(this.mqtt2MqttConfiguration.getDtForwardingEnabled() &&
                     this.mqtt2MqttConfiguration.getDestinationBrokerAddress() != null &&
                     this.mqtt2MqttConfiguration.getDestinationBrokerPort() > 0) {
                 logger.info("{} Initializing Outgoing MQTT Client ...", TAG);
@@ -168,8 +164,11 @@ public class Mqtt2MqttManager {
                             //Select the right mqttClient according to topic configuration
                             if (mqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING))
                                 targetMqttClient = physicalDeviceMqttBrokerClient;
-                            else if (mqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING))
+                            else if (mqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING)) {
                                 targetMqttClient = digitalTwinMqttBrokerClient;
+                                //If configured append DT prefix to incoming topic
+                                targetTopic = getDigitalTwinIncomingTopic(targetTopic);
+                            }
 
                             if (targetMqttClient != null) {
 
@@ -276,7 +275,7 @@ public class Mqtt2MqttManager {
             throw new WldtMqttModuleException("MQTT Client = NULL or Not Connected ! Impossible to subscribe to a target topic !");
     }
 
-    private void publishData(IMqttClient mqttClient, String topic, byte[] payload) throws MqttException {
+    private void publishData(IMqttClient mqttClient, String topic, byte[] payload, boolean isRetained) throws MqttException {
 
         Timer.Context context = WldtMetricsManager.getInstance().getMqttModuleTimerContext(WldtMetricsManager.MQTT_OUTGOING_PUBLISH_DATA_TIME);
 
@@ -287,7 +286,7 @@ public class Mqtt2MqttManager {
             if (mqttClient.isConnected() && topic != null && payload.length > 0) {
                 MqttMessage msg = new MqttMessage(payload);
                 msg.setQos(this.mqtt2MqttConfiguration.getOutgoingClientQoS());
-                msg.setRetained(this.mqtt2MqttConfiguration.getOutgoingClientRetainedMessages());
+                msg.setRetained(isRetained);
                 mqttClient.publish(topic,msg);
                 logger.debug("Data Correctly Published !");
             }
@@ -304,12 +303,39 @@ public class Mqtt2MqttManager {
     }
 
     private String getOutgoingTopic(String originalTopic){
-        if(mqtt2MqttConfiguration.getDestinationBrokerBaseTopic() == null ||
-                mqtt2MqttConfiguration.getDestinationBrokerBaseTopic().equals("null") ||
-                mqtt2MqttConfiguration.getDestinationBrokerBaseTopic().length() == 0)
+
+        //If the topic prefix is not configured
+        if(mqtt2MqttConfiguration.getDtTopicPrefix() == null ||
+                mqtt2MqttConfiguration.getDtTopicPrefix().equals("null") ||
+                mqtt2MqttConfiguration.getDtTopicPrefix().length() == 0)
             return originalTopic;
         else
-            return String.format("%s/%s", mqtt2MqttConfiguration.getDestinationBrokerBaseTopic(), originalTopic);
+            return String.format("%s/%s", mqtt2MqttConfiguration.getDtTopicPrefix(), originalTopic);
+
+    }
+
+    private String getDeviceIncomingTopicFromDigital(String dtIncomingTopic){
+
+        //If the topic prefix is not configured
+        if(mqtt2MqttConfiguration.getDtTopicPrefix() == null ||
+                mqtt2MqttConfiguration.getDtTopicPrefix().equals("null") ||
+                mqtt2MqttConfiguration.getDtTopicPrefix().length() == 0)
+            return dtIncomingTopic;
+        else if(dtIncomingTopic.startsWith(String.format("%s/", mqtt2MqttConfiguration.getDtTopicPrefix())))
+            return dtIncomingTopic.replace(String.format("%s/", mqtt2MqttConfiguration.getDtTopicPrefix()), "");
+        else
+            return dtIncomingTopic;
+    }
+
+    private String getDigitalTwinIncomingTopic(String originalTopic){
+
+        //If the topic prefix is not configured
+        if(mqtt2MqttConfiguration.getDtTopicPrefix() == null ||
+                mqtt2MqttConfiguration.getDtTopicPrefix().equals("null") ||
+                mqtt2MqttConfiguration.getDtTopicPrefix().length() == 0)
+            return originalTopic;
+        else
+            return String.format("%s/%s", mqtt2MqttConfiguration.getDtTopicPrefix(), originalTopic);
     }
 
     private void handleIncomingMessage(String topic, MqttMessage msg) {
@@ -324,17 +350,16 @@ public class Mqtt2MqttManager {
 
             logger.debug("{} DEVICE TOPIC ({}) Message Received: {}", TAG, topic, new String(payload));
 
-            //TODO rename that field -> Forwarding Enabled ?
-            if(mqtt2MqttConfiguration.getOutgoingPublishingEnabled()){
+            if(mqtt2MqttConfiguration.getDtForwardingEnabled()){
 
                 MqttTopicDescriptor configuredMqttTopicDescriptor = configuredTopicMap.get(topic);
 
                 //TODO add processing pipeline support
                 if(configuredMqttTopicDescriptor != null){
                     if(configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING))
-                        publishData(digitalTwinMqttBrokerClient, getOutgoingTopic(topic), payload);
+                        publishData(digitalTwinMqttBrokerClient, getOutgoingTopic(topic), payload, msg.isRetained());
                     else if(configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING))
-                        publishData(physicalDeviceMqttBrokerClient, getOutgoingTopic(topic), payload);
+                        publishData(physicalDeviceMqttBrokerClient, getDeviceIncomingTopicFromDigital(topic), payload, msg.isRetained());
 
                 }
                 else

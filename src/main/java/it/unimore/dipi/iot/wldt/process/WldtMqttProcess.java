@@ -8,7 +8,8 @@ import it.unimore.dipi.iot.wldt.worker.mqtt.Mqtt2MqttWorker;
 import it.unimore.dipi.iot.wldt.worker.mqtt.MqttTopicDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.Collections;
+
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -84,18 +85,22 @@ public class WldtMqttProcess {
         mqtt2MqttConfiguration.setOutgoingClientQoS(0);
         mqtt2MqttConfiguration.setDestinationBrokerAddress("127.0.0.1");
         mqtt2MqttConfiguration.setDestinationBrokerPort(1884);
-        mqtt2MqttConfiguration.setDestinationBrokerBaseTopic("wldt");
+        mqtt2MqttConfiguration.setDtTopicPrefix("wldt");
         mqtt2MqttConfiguration.setDeviceId("com:iot:dummy:dummyMqttDevice001");
         mqtt2MqttConfiguration.setBrokerAddress("127.0.0.1");
         mqtt2MqttConfiguration.setBrokerPort(1883);
 
         //Specify Topic List Configuration
         mqtt2MqttConfiguration.setTopicList(
-                Collections.singletonList(
+                Arrays.asList(
                         new MqttTopicDescriptor("DummyStringResource",
                                 "dummy_string_resource",
                                 "telemetry/{{device_id}}/resource/{{resource_id}}",
-                                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING)
+                                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING),
+                        new MqttTopicDescriptor("CommandChannel",
+                                "default_command_channel",
+                                "command/{{device_id}}",
+                                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING)
                 )
         );
 
