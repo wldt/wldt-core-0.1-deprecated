@@ -124,13 +124,6 @@ public class WldtMqttProcess {
                 )
         );
 
-        //mqtt2MqttConfiguration.setResourceIdList(Arrays.asList("dummy_string_resource"));
-        //mqtt2MqttConfiguration.setDeviceTelemetryTopic("telemetry/{{device_id}}");
-        //mqtt2MqttConfiguration.setResourceTelemetryTopic("telemetry/{{device_id}}/resource/{{resource_id}}");
-        //mqtt2MqttConfiguration.setEventTopic("events/{{device_id}}");
-        //mqtt2MqttConfiguration.setCommandRequestTopic("commands/{{device_id}}/request");
-        //mqtt2MqttConfiguration.setCommandResponseTopic("commands/{{device_id}}/response");
-
         return mqtt2MqttConfiguration;
     }
 
