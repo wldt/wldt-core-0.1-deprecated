@@ -1,8 +1,7 @@
-package it.unimore.dipi.iot.wldt.process;
+package it.unimore.wldt.test.coap;
 
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
-import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
 import it.unimore.dipi.iot.wldt.worker.coap.Coap2CoapConfiguration;
 import it.unimore.dipi.iot.wldt.worker.coap.Coap2CoapWorker;
 import org.slf4j.Logger;
@@ -40,7 +39,7 @@ public class WldtCoapProcess {
             wldtEngine.addNewWorker(new Coap2CoapWorker(getCoapProtocolConfiguration()));
             wldtEngine.startWorkers();
 
-        }catch (Exception | WldtConfigurationException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
     }

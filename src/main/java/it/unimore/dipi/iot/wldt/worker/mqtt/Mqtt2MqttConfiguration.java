@@ -10,31 +10,20 @@ import java.util.List;
  */
 public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
-    private boolean outgoingPublishingEnabled = true;
+    private boolean dtForwardingEnabled = true;
 
-    private int outgoingClientQoS = 0;
-
-    private boolean outgoingClientRetainedMessages = false;
+    private int dtPublishingQoS = 0;
 
     private String destinationBrokerAddress;
 
     private int destinationBrokerPort;
 
-    private String destinationBrokerBaseTopic;
+    /**
+     * It is applied both for outgoing and incoming topics
+     */
+    private String dtTopicPrefix;
 
     private String deviceId = null;
-
-    private List<String> resourceIdList = null;
-
-    private String deviceTelemetryTopic = null;
-
-    private String resourceTelemetryTopic = null;
-
-    private String eventTopic = null;
-
-    private String commandRequestTopic = null;
-
-    private String commandResponseTopic = null;
 
     private String brokerAddress = "127.0.0.1";
 
@@ -42,13 +31,7 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private boolean brokerLocal = true;
 
-    private List<String> deviceTelemetryProcessingStepList = null;
-
-    private List<String> resourceTelemetryProcessingStepList = null;
-
-    private List<String> eventProcessingStepList = null;
-
-    private List<String> commandRequestProcessingStepList = null;
+    private List<MqttTopicDescriptor> topicList;
 
     public Mqtt2MqttConfiguration() {
     }
@@ -69,36 +52,28 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         this.destinationBrokerPort = destinationBrokerPort;
     }
 
-    public String getDestinationBrokerBaseTopic() {
-        return destinationBrokerBaseTopic;
+    public String getDtTopicPrefix() {
+        return dtTopicPrefix;
     }
 
-    public void setDestinationBrokerBaseTopic(String destinationBrokerBaseTopic) {
-        this.destinationBrokerBaseTopic = destinationBrokerBaseTopic;
+    public void setDtTopicPrefix(String dtTopicPrefix) {
+        this.dtTopicPrefix = dtTopicPrefix;
     }
 
-    public int getOutgoingClientQoS() {
-        return outgoingClientQoS;
+    public int getDtPublishingQoS() {
+        return dtPublishingQoS;
     }
 
-    public void setOutgoingClientQoS(int outgoingClientQoS) {
-        this.outgoingClientQoS = outgoingClientQoS;
+    public void setDtPublishingQoS(int dtPublishingQoS) {
+        this.dtPublishingQoS = dtPublishingQoS;
     }
 
-    public boolean getOutgoingClientRetainedMessages() {
-        return outgoingClientRetainedMessages;
+    public boolean getDtForwardingEnabled() {
+        return dtForwardingEnabled;
     }
 
-    public void setOutgoingClientRetainedMessages(boolean outgoingClientRetainedMessages) {
-        this.outgoingClientRetainedMessages = outgoingClientRetainedMessages;
-    }
-
-    public boolean getOutgoingPublishingEnabled() {
-        return outgoingPublishingEnabled;
-    }
-
-    public void setOutgoingPublishingEnabled(boolean outgoingPublishingEnabled) {
-        this.outgoingPublishingEnabled = outgoingPublishingEnabled;
+    public void setDtForwardingEnabled(boolean dtForwardingEnabled) {
+        this.dtForwardingEnabled = dtForwardingEnabled;
     }
 
     public String getDeviceId() {
@@ -107,54 +82,6 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     public void setDeviceId(String deviceId) {
         this.deviceId = deviceId;
-    }
-
-    public List<String> getResourceIdList() {
-        return resourceIdList;
-    }
-
-    public void setResourceIdList(List<String> resourceIdList) {
-        this.resourceIdList = resourceIdList;
-    }
-
-    public String getDeviceTelemetryTopic() {
-        return deviceTelemetryTopic;
-    }
-
-    public void setDeviceTelemetryTopic(String deviceTelemetryTopic) {
-        this.deviceTelemetryTopic = deviceTelemetryTopic;
-    }
-
-    public String getResourceTelemetryTopic() {
-        return resourceTelemetryTopic;
-    }
-
-    public void setResourceTelemetryTopic(String resourceTelemetryTopic) {
-        this.resourceTelemetryTopic = resourceTelemetryTopic;
-    }
-
-    public String getEventTopic() {
-        return eventTopic;
-    }
-
-    public void setEventTopic(String eventTopic) {
-        this.eventTopic = eventTopic;
-    }
-
-    public String getCommandRequestTopic() {
-        return commandRequestTopic;
-    }
-
-    public void setCommandRequestTopic(String commandRequestTopic) {
-        this.commandRequestTopic = commandRequestTopic;
-    }
-
-    public String getCommandResponseTopic() {
-        return commandResponseTopic;
-    }
-
-    public void setCommandResponseTopic(String commandResponseTopic) {
-        this.commandResponseTopic = commandResponseTopic;
     }
 
     public String getBrokerAddress() {
@@ -181,57 +108,27 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         this.brokerLocal = brokerLocal;
     }
 
-    public List<String> getDeviceTelemetryProcessingStepList() {
-        return deviceTelemetryProcessingStepList;
+    public List<MqttTopicDescriptor> getTopicList() {
+        return topicList;
     }
 
-    public void setDeviceTelemetryProcessingStepList(List<String> deviceTelemetryProcessingStepList) {
-        this.deviceTelemetryProcessingStepList = deviceTelemetryProcessingStepList;
-    }
-
-    public List<String> getResourceTelemetryProcessingStepList() {
-        return resourceTelemetryProcessingStepList;
-    }
-
-    public void setResourceTelemetryProcessingStepList(List<String> resourceTelemetryProcessingStepList) {
-        this.resourceTelemetryProcessingStepList = resourceTelemetryProcessingStepList;
-    }
-
-    public List<String> getEventProcessingStepList() {
-        return eventProcessingStepList;
-    }
-
-    public void setEventProcessingStepList(List<String> eventProcessingStepList) {
-        this.eventProcessingStepList = eventProcessingStepList;
-    }
-
-    public List<String> getCommandRequestProcessingStepList() {
-        return commandRequestProcessingStepList;
-    }
-
-    public void setCommandRequestProcessingStepList(List<String> commandRequestProcessingStepList) {
-        this.commandRequestProcessingStepList = commandRequestProcessingStepList;
+    public void setTopicList(List<MqttTopicDescriptor> topicList) {
+        this.topicList = topicList;
     }
 
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("MqttProtocolConfiguration{");
-        sb.append("mqttDestinationBrokerAddress='").append(destinationBrokerAddress).append('\'');
-        sb.append(", mqttDestinationBrokerPort=").append(destinationBrokerPort);
-        sb.append(", mqttDestinationBrokerBaseTopic='").append(destinationBrokerBaseTopic).append('\'');
-        sb.append(", mqttOutgoingClientQoS=").append(outgoingClientQoS);
-        sb.append(", mqttOutgoingClientRetainedMessages=").append(outgoingClientRetainedMessages);
-        sb.append(", mqttOutgoingPublishingEnabled=").append(outgoingPublishingEnabled);
+        final StringBuffer sb = new StringBuffer("Mqtt2MqttConfiguration{");
+        sb.append("dtForwardingEnabled=").append(dtForwardingEnabled);
+        sb.append(", dtPublishingQoS=").append(dtPublishingQoS);
+        sb.append(", destinationBrokerAddress='").append(destinationBrokerAddress).append('\'');
+        sb.append(", destinationBrokerPort=").append(destinationBrokerPort);
+        sb.append(", dtTopicPrefix='").append(dtTopicPrefix).append('\'');
         sb.append(", deviceId='").append(deviceId).append('\'');
-        sb.append(", resourceList=").append(resourceIdList);
-        sb.append(", telemetryDeviceTopic='").append(deviceTelemetryTopic).append('\'');
-        sb.append(", telemetryResourceTopic='").append(resourceTelemetryTopic).append('\'');
-        sb.append(", eventTopic='").append(eventTopic).append('\'');
-        sb.append(", commandRequestTopic='").append(commandRequestTopic).append('\'');
-        sb.append(", commandResponseTopic='").append(commandResponseTopic).append('\'');
         sb.append(", brokerAddress='").append(brokerAddress).append('\'');
-        sb.append(", brokerPortTopic=").append(brokerPort);
+        sb.append(", brokerPort=").append(brokerPort);
         sb.append(", brokerLocal=").append(brokerLocal);
+        sb.append(", topicList=").append(topicList);
         sb.append('}');
         return sb.toString();
     }

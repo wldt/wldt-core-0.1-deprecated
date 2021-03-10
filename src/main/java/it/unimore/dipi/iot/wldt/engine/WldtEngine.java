@@ -109,6 +109,7 @@ public class WldtEngine {
             throw new WldtConfigurationException("Empty enabled protocol list !");
 
         this.workerList.forEach(wldtWorker -> {
+            logger.info("Executing worker: {}", wldtWorker.getClass());
             executor.execute(wldtWorker);
         });
 
@@ -131,7 +132,7 @@ public class WldtEngine {
         else {
             for(String protocolId: this.wldtConfiguration.getActiveProtocolList()){
                 if(protocolId.equals(WorkerIdentifier.MQTT_TO_MQTT_MODULE.value))
-                    this.addNewWorker(new Mqtt2MqttWorker(this.getWldtId(), this.wldtConfiguration));
+                    this.addNewWorker(new Mqtt2MqttWorker(this.getWldtId()));
                 if(protocolId.equals(WorkerIdentifier.COAP_TO_COAP_MODULE.value))
                     this.addNewWorker(new Coap2CoapWorker());
             }

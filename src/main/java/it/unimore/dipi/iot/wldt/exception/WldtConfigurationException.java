@@ -5,7 +5,7 @@ package it.unimore.dipi.iot.wldt.exception;
  * Date: 24/03/2020
  * Project: White Label Digital Twin Java Framework - (whitelabel-digitaltwin)
  */
-public class WldtConfigurationException extends Throwable {
+public class WldtConfigurationException extends Exception {
 
     public WldtConfigurationException(String s) {
         super(s);

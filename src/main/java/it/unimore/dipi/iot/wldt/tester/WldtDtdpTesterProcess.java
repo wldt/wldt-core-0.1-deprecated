@@ -92,7 +92,7 @@ public class WldtDtdpTesterProcess {
             }
              */
 
-        }catch (Exception | WldtConfigurationException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
     }

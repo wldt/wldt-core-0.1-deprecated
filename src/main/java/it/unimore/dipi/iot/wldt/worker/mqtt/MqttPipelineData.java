@@ -6,13 +6,25 @@ public class MqttPipelineData implements PipelineData {
 
     private String topic;
     private byte[] payload;
+    private MqttTopicDescriptor mqttTopicDescriptor = null;
+    private boolean isRetained = false;
 
     public MqttPipelineData() {
     }
 
-    public MqttPipelineData(String topic, byte[] payload) {
+    public MqttPipelineData(String topic, MqttTopicDescriptor mqttTopicDescriptor, byte[] payload, boolean isRetained) {
         this.topic = topic;
         this.payload = payload;
+        this.mqttTopicDescriptor = mqttTopicDescriptor;
+        this.isRetained = isRetained;
+    }
+
+    public MqttTopicDescriptor getMqttTopicDescriptor() {
+        return mqttTopicDescriptor;
+    }
+
+    public void setMqttTopicDescriptor(MqttTopicDescriptor mqttTopicDescriptor) {
+        this.mqttTopicDescriptor = mqttTopicDescriptor;
     }
 
     public String getTopic() {
@@ -31,9 +43,17 @@ public class MqttPipelineData implements PipelineData {
         this.payload = payload;
     }
 
+    public boolean isRetained() {
+        return isRetained;
+    }
+
+    public void setRetained(boolean retained) {
+        isRetained = retained;
+    }
+
     @Override
     public String toString() {
-        final StringBuffer sb = new StringBuffer("MqttProcessingInfo{");
+        final StringBuffer sb = new StringBuffer("MqttPipelineData{");
         sb.append("topic='").append(topic).append('\'');
         sb.append(", payload=");
         if (payload == null) sb.append("null");
@@ -43,6 +63,8 @@ public class MqttPipelineData implements PipelineData {
                 sb.append(i == 0 ? "" : ", ").append(payload[i]);
             sb.append(']');
         }
+        sb.append(", mqttTopicDescriptor=").append(mqttTopicDescriptor);
+        sb.append(", isRetained=").append(isRetained);
         sb.append('}');
         return sb.toString();
     }

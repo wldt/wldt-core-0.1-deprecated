@@ -55,7 +55,7 @@ public abstract class WldtWorker<T, K, V> implements Runnable {
         try {
             initCache();
             startWorkerJob();
-        } catch (WldtConfigurationException | WldtRuntimeException e) {
+        } catch (Exception e) {
             logger.error("WLDT WORKER ERROR: {}", e.getLocalizedMessage());
         }
     }
@@ -166,7 +166,7 @@ public abstract class WldtWorker<T, K, V> implements Runnable {
 
             if(this.mirroringListenerList != null)
                 this.mirroringListenerList.forEach(mirroringListener -> {
-                    mirroringListener.onPhysicalDeviceMirrored(deviceId, metadata);
+                    mirroringListener.onDeviceMirrored(deviceId, metadata);
                 });
 
         }catch (Exception e){
@@ -180,7 +180,7 @@ public abstract class WldtWorker<T, K, V> implements Runnable {
 
             if(this.mirroringListenerList != null)
                 this.mirroringListenerList.forEach(mirroringListener -> {
-                    mirroringListener.onPhysicalResourceMirrored(deviceId, metadata);
+                    mirroringListener.onResourceMirrored(deviceId, metadata);
                 });
 
         }catch (Exception e){
@@ -194,7 +194,7 @@ public abstract class WldtWorker<T, K, V> implements Runnable {
 
             if(this.mirroringListenerList != null)
                 this.mirroringListenerList.forEach(mirroringListener -> {
-                    mirroringListener.onPhysicalDeviceMirroringError(deviceId, errorMsg);
+                    mirroringListener.onDeviceMirroringError(deviceId, errorMsg);
                 });
 
         }catch (Exception e){
@@ -207,7 +207,7 @@ public abstract class WldtWorker<T, K, V> implements Runnable {
 
             if(this.mirroringListenerList != null)
                 this.mirroringListenerList.forEach(mirroringListener -> {
-                    mirroringListener.onPhysicalResourceMirroringError(deviceId, errorMsg);
+                    mirroringListener.onResourceMirroringError(deviceId, errorMsg);
                 });
 
         }catch (Exception e){
