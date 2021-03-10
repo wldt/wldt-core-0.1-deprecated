@@ -102,7 +102,7 @@ public class WldtMqttProcess {
 
         Mqtt2MqttConfiguration mqtt2MqttConfiguration = new Mqtt2MqttConfiguration();
 
-        mqtt2MqttConfiguration.setOutgoingClientQoS(0);
+        mqtt2MqttConfiguration.setDtPublishingQoS(0);
         mqtt2MqttConfiguration.setDestinationBrokerAddress("127.0.0.1");
         mqtt2MqttConfiguration.setDestinationBrokerPort(1884);
         mqtt2MqttConfiguration.setDtTopicPrefix("wldt");

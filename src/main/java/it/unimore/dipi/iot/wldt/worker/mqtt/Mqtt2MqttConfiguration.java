@@ -12,7 +12,7 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private boolean dtForwardingEnabled = true;
 
-    private int outgoingClientQoS = 0;
+    private int dtPublishingQoS = 0;
 
     private String destinationBrokerAddress;
 
@@ -60,12 +60,12 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         this.dtTopicPrefix = dtTopicPrefix;
     }
 
-    public int getOutgoingClientQoS() {
-        return outgoingClientQoS;
+    public int getDtPublishingQoS() {
+        return dtPublishingQoS;
     }
 
-    public void setOutgoingClientQoS(int outgoingClientQoS) {
-        this.outgoingClientQoS = outgoingClientQoS;
+    public void setDtPublishingQoS(int dtPublishingQoS) {
+        this.dtPublishingQoS = dtPublishingQoS;
     }
 
     public boolean getDtForwardingEnabled() {
@@ -120,7 +120,7 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
     public String toString() {
         final StringBuffer sb = new StringBuffer("Mqtt2MqttConfiguration{");
         sb.append("dtForwardingEnabled=").append(dtForwardingEnabled);
-        sb.append(", outgoingClientQoS=").append(outgoingClientQoS);
+        sb.append(", dtPublishingQoS=").append(dtPublishingQoS);
         sb.append(", destinationBrokerAddress='").append(destinationBrokerAddress).append('\'');
         sb.append(", destinationBrokerPort=").append(destinationBrokerPort);
         sb.append(", dtTopicPrefix='").append(dtTopicPrefix).append('\'');

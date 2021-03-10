@@ -306,7 +306,7 @@ public class Mqtt2MqttManager {
 
             if (mqttClient.isConnected() && topic != null && payload.length > 0) {
                 MqttMessage msg = new MqttMessage(payload);
-                msg.setQos(this.mqtt2MqttConfiguration.getOutgoingClientQoS());
+                msg.setQos(this.mqtt2MqttConfiguration.getDtPublishingQoS());
                 msg.setRetained(isRetained);
                 mqttClient.publish(topic,msg);
                 logger.debug("Data Correctly Published !");
