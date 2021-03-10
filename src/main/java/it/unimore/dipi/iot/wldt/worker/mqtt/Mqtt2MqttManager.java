@@ -114,11 +114,6 @@ public class Mqtt2MqttManager {
 
             initTopicManagement();
 
-            //Init telemetry and event management
-            //TODO this methods in the next version
-            //this.initTelemetryMessageManagement();
-            //this.initEventMessageManagement();
-
             //Notify device correctly mirrored
             this.mqtt2MqttWorker.notifyDeviceMirrored(this.mqtt2MqttConfiguration.getDeviceId(), new HashMap<String, Object>() {
                 {
@@ -136,6 +131,9 @@ public class Mqtt2MqttManager {
 
     }
 
+    /**
+     * Handle how the DT's worker subscribe and register to target topics (both incoming and outgoing)
+     */
     private void initTopicManagement() {
 
         Timer.Context context = WldtMetricsManager.getInstance().getMqttModuleTimerContext(WldtMetricsManager.MQTT_TOPIC_REGISTRATION_TIME);
@@ -267,6 +265,15 @@ public class Mqtt2MqttManager {
         }
     }
 
+    /**
+     * Register to the target topic with the specified MqttClient
+     *
+     * @param mqttClient
+     * @param topic
+     * @param mqttMessageListener
+     * @throws WldtMqttModuleException
+     * @throws MqttException
+     */
     private void registerToMqttTopic(IMqttClient mqttClient, String topic, IMqttMessageListener mqttMessageListener) throws WldtMqttModuleException, MqttException {
 
         if(mqttClient != null && mqttClient.isConnected())
@@ -275,6 +282,16 @@ public class Mqtt2MqttManager {
             throw new WldtMqttModuleException("MQTT Client = NULL or Not Connected ! Impossible to subscribe to a target topic !");
     }
 
+    /**
+     *
+     * Publish data to the target topic using the specified MQTT Client
+     *
+     * @param mqttClient
+     * @param topic
+     * @param payload
+     * @param isRetained
+     * @throws MqttException
+     */
     private void publishData(IMqttClient mqttClient, String topic, byte[] payload, boolean isRetained) throws MqttException {
 
         Timer.Context context = WldtMetricsManager.getInstance().getMqttModuleTimerContext(WldtMetricsManager.MQTT_OUTGOING_PUBLISH_DATA_TIME);
@@ -302,6 +319,13 @@ public class Mqtt2MqttManager {
         }
     }
 
+    /**
+     *
+     * Build the outgoing topic adding (if configured) the DT prefix
+     *
+     * @param originalTopic
+     * @return
+     */
     private String getOutgoingTopic(String originalTopic){
 
         //If the topic prefix is not configured
@@ -314,6 +338,13 @@ public class Mqtt2MqttManager {
 
     }
 
+    /**
+     *
+     * Convert an incoming topic from DT to the original device by removing (if necessary) the DT's topic prefix
+     *
+     * @param dtIncomingTopic
+     * @return
+     */
     private String getDeviceIncomingTopicFromDigital(String dtIncomingTopic){
 
         //If the topic prefix is not configured
@@ -327,6 +358,13 @@ public class Mqtt2MqttManager {
             return dtIncomingTopic;
     }
 
+    /**
+     *
+     * Build the DT's incoming topic adding (if configured) the DT prefix
+     *
+     * @param originalTopic
+     * @return
+     */
     private String getDigitalTwinIncomingTopic(String originalTopic){
 
         //If the topic prefix is not configured
@@ -338,6 +376,13 @@ public class Mqtt2MqttManager {
             return String.format("%s/%s", mqtt2MqttConfiguration.getDtTopicPrefix(), originalTopic);
     }
 
+    /**
+     *
+     * Implement how the worker handle a new incoming message from the target topic
+     *
+     * @param topic
+     * @param msg
+     */
     private void handleIncomingMessage(String topic, MqttMessage msg) {
 
         Timer.Context context = WldtMetricsManager.getInstance().getMqttModuleTimerContext(WldtMetricsManager.MQTT_FORWARD_TIME);
@@ -375,10 +420,22 @@ public class Mqtt2MqttManager {
         }
     }
 
+    /**
+     *
+     * Build Broker Address associated to the physical device
+     *
+     * @return
+     */
     private String getPhysicalThingMqttBrokerUrl(){
         return String.format("tcp://%s:%d",this.mqtt2MqttConfiguration.getBrokerAddress(), this.mqtt2MqttConfiguration.getBrokerPort());
     }
 
+    /**
+     *
+     * Build Broker Address associated to digital twins
+     *
+     * @return
+     */
     private String getDestinationMqttBrokerUrl(){
 
         if(this.mqtt2MqttConfiguration.getDestinationBrokerAddress() == null)
