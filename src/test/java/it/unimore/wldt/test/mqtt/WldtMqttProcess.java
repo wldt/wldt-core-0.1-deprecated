@@ -1,7 +1,9 @@
-package it.unimore.dipi.iot.wldt.process;
+package it.unimore.wldt.test.mqtt;
 
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
+import it.unimore.dipi.iot.wldt.processing.ProcessingPipeline;
+import it.unimore.dipi.iot.wldt.processing.step.IdentityProcessingStep;
 import it.unimore.dipi.iot.wldt.worker.MirroringListener;
 import it.unimore.dipi.iot.wldt.worker.mqtt.Mqtt2MqttConfiguration;
 import it.unimore.dipi.iot.wldt.worker.mqtt.Mqtt2MqttWorker;
@@ -43,6 +45,24 @@ public class WldtMqttProcess {
             WldtEngine wldtEngine = new WldtEngine(wldtConfiguration);
 
             Mqtt2MqttWorker mqtt2MqttWorker = new Mqtt2MqttWorker(wldtEngine.getWldtId(), getMqttComplexProtocolConfiguration());
+
+            //Add Processing Pipeline for target topics
+            mqtt2MqttWorker.addTopicProcessingPipeline("DummyStringResource",
+                    new ProcessingPipeline(
+                        new IdentityProcessingStep(),
+                        new MqttPayloadChangeStep(),
+                        new MqttTopicChangeStep()
+                    )
+            );
+
+            mqtt2MqttWorker.addTopicProcessingPipeline("CommandChannel",
+                    new ProcessingPipeline(
+                            new IdentityProcessingStep(),
+                            new MqttPayloadChangeStep()
+                    )
+            );
+
+            //Add Mirroring Listener
             mqtt2MqttWorker.addMirroringListener(new MirroringListener() {
 
                 @Override
@@ -110,8 +130,6 @@ public class WldtMqttProcess {
         //mqtt2MqttConfiguration.setEventTopic("events/{{device_id}}");
         //mqtt2MqttConfiguration.setCommandRequestTopic("commands/{{device_id}}/request");
         //mqtt2MqttConfiguration.setCommandResponseTopic("commands/{{device_id}}/response");
-
-
 
         return mqtt2MqttConfiguration;
     }

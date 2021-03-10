@@ -1,28 +1,24 @@
-package it.unimore.dipi.iot.wldt.processing.step;
+package it.unimore.wldt.test.mqtt;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.unimore.dipi.iot.wldt.processing.PipelineData;
 import it.unimore.dipi.iot.wldt.processing.cache.PipelineCache;
 import it.unimore.dipi.iot.wldt.processing.ProcessingStep;
 import it.unimore.dipi.iot.wldt.processing.ProcessingStepListener;
 import it.unimore.dipi.iot.wldt.worker.mqtt.MqttPipelineData;
-import it.unimore.dipi.iot.wldt.utils.SenML;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.Optional;
+import javax.inject.Named;
 
-@Named("MqttSenmlBuilderProcessingStep")
-public class MqttSenmlBuilderProcessingStep implements ProcessingStep {
+@Named("MqttAverageProcessingStep")
+public class MqttAverageProcessingStep implements ProcessingStep {
 
-    private static final Logger logger = LoggerFactory.getLogger(MqttSenmlBuilderProcessingStep.class);
+    private static final Logger logger = LoggerFactory.getLogger(MqttAverageProcessingStep.class);
 
-    private ObjectMapper mapper;
+    private final static String PIPELINE_CACHE_VALUE_LIST = "value_list";
 
-    public MqttSenmlBuilderProcessingStep() {
-        this.mapper = new ObjectMapper();
-        this.mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    public MqttAverageProcessingStep() {
     }
 
     @Override
@@ -39,18 +35,37 @@ public class MqttSenmlBuilderProcessingStep implements ProcessingStep {
 
         try{
 
-            if(listener != null && data != null && data.getPayload() != null){
+            if(listener != null && data.getPayload() != null){
 
                 String payloadBodyString = new String(data.getPayload());
 
                 if(isNumeric(payloadBodyString)){
-                    Double bodyDoubleValue = Double.parseDouble(payloadBodyString);
-                    Optional<String> newPayload = buildSenmlDataPayload(data.getTopic(), bodyDoubleValue);
 
-                    if(newPayload.isPresent())
-                        listener.onStepDone(this, Optional.of(new MqttPipelineData(data.getTopic(), newPayload.get().getBytes())));
-                    else
-                        listener.onStepError(this, data, "Error processing the data ! Processing Error ...");
+                    Double bodyDoubleValue = Double.parseDouble(payloadBodyString);
+
+                    //Init Pipeline Cache
+                    if(pipelineCache.getData(this, PIPELINE_CACHE_VALUE_LIST) == null)
+                        pipelineCache.addData(this, PIPELINE_CACHE_VALUE_LIST, new ArrayList<Double>());
+
+                    ArrayList<Double> valueList = (ArrayList<Double>) pipelineCache.getData(this, PIPELINE_CACHE_VALUE_LIST);
+                    valueList.add(bodyDoubleValue);
+
+                    logger.info("Cached list size: {}", valueList.size());
+
+                    if(valueList.size() == 10){
+
+                        double sum = valueList.stream().mapToDouble(value -> value).sum();
+                        double average = sum / (double)valueList.size();
+
+                        valueList.clear();
+                        pipelineCache.addData(this, PIPELINE_CACHE_VALUE_LIST, valueList);
+
+                        listener.onStepDone(this, java.util.Optional.of(new MqttPipelineData(String.format("%s/%s", data.getTopic(), "average"), data.getMqttTopicDescriptor(), Double.toString(average).getBytes(), data.isRetained())));
+                    }
+                    else{
+                        pipelineCache.addData(this, PIPELINE_CACHE_VALUE_LIST, valueList);
+                        listener.onStepDone(this, Optional.empty());
+                    }
                 }
                 else
                     listener.onStepError(this, data, "Provided Payload is not a Number ! Skipping processing ....");
@@ -67,24 +82,6 @@ public class MqttSenmlBuilderProcessingStep implements ProcessingStep {
         }
     }
 
-    private Optional<String> buildSenmlDataPayload(String topic, Double doubleValue){
-
-        try{
-
-            SenML senmlData = new SenML();
-
-            senmlData.setBaseName(topic);
-            senmlData.setName(topic);
-            senmlData.setValue(doubleValue);
-            senmlData.setUpdateTime(System.currentTimeMillis());
-
-            return Optional.of(this.mapper.writeValueAsString(senmlData));
-
-        }catch (Exception e){
-            logger.error("Error building SENML Data ! Error: {}", e.getLocalizedMessage());
-            return Optional.empty();
-        }
-    }
 
     private static boolean isNumeric(String strNum) {
         if (strNum == null) {

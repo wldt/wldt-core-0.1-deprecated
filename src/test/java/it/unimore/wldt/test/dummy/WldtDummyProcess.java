@@ -1,9 +1,8 @@
-package it.unimore.dipi.iot.wldt.process;
+package it.unimore.wldt.test.dummy;
 
 import it.unimore.dipi.iot.wldt.cache.WldtCache;
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
-import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
 import it.unimore.dipi.iot.wldt.processing.ProcessingPipeline;
 import it.unimore.dipi.iot.wldt.worker.dummy.DummyProcessingStep;
 import it.unimore.dipi.iot.wldt.worker.dummy.DummyWorkerConfiguration;

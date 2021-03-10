@@ -2,6 +2,7 @@ package it.unimore.dipi.iot.wldt.worker.mqtt;
 
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
 import it.unimore.dipi.iot.wldt.exception.*;
+import it.unimore.dipi.iot.wldt.processing.IProcessingPipeline;
 import it.unimore.dipi.iot.wldt.worker.WldtWorker;
 import it.unimore.dipi.iot.wldt.utils.WldtUtils;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -22,15 +23,6 @@ public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Vo
     private static final String TAG = "[WLDT-MQTT2MQTT-WORKER]";
 
     private static final String CONF_FILE_NAME = "mqtt.yaml";
-
-    @Deprecated
-    public static final String DEFAULT_DEVICE_TELEMETRY_PROCESSING_PIPELINE = "mqtt_default_device_telemetry_processing_pipeline";
-
-    @Deprecated
-    public static final String DEFAULT_RESOURCE_TELEMETRY_PROCESSING_PIPELINE = "mqtt_default_resource_telemetry_processing_pipeline";
-
-    @Deprecated
-    public static final String DEFAULT_EVENT_PIPELINE = "mqtt_default_event_processing_pipeline";
 
     public static final String DEVICE_MIRRORED_ID = "mqtt_device_id";
 
@@ -101,6 +93,10 @@ public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Vo
         else
             logger.error("MQTT Manager already associated to an existing MQTT Device ({}:{}) ! No Action !", this.mqtt2MqttManager.getMqtt2MqttConfiguration().getBrokerAddress(), this.mqtt2MqttManager.getMqtt2MqttConfiguration().getBrokerPort());
 
+    }
+
+    public void addTopicProcessingPipeline(String configuredTopicId, IProcessingPipeline newProcessingPipeline) throws ProcessingPipelineException {
+        super.addProcessingPipeline(configuredTopicId, newProcessingPipeline);
     }
 
     public Mqtt2MqttManager getMqtt2MqttManager() {

@@ -1,8 +1,11 @@
 package it.unimore.dipi.iot.wldt.worker.mqtt;
 
 import com.codahale.metrics.Timer;
+import it.unimore.dipi.iot.wldt.exception.ProcessingPipelineException;
 import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.WldtMqttModuleException;
+import it.unimore.dipi.iot.wldt.processing.PipelineData;
+import it.unimore.dipi.iot.wldt.processing.ProcessingPipelineListener;
 import it.unimore.dipi.iot.wldt.utils.TopicTemplateManager;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -11,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -321,6 +325,74 @@ public class Mqtt2MqttManager {
 
     /**
      *
+     * Forward data according to the target topic and apply the associated processing pipeline (if configured)
+     *
+     * @param topic
+     * @param msg
+     * @throws WldtMqttModuleException
+     * @throws MqttException
+     * @throws ProcessingPipelineException
+     */
+    private void forwardData(String topic, MqttMessage msg) throws WldtMqttModuleException, MqttException, ProcessingPipelineException {
+
+        MqttTopicDescriptor configuredMqttTopicDescriptor = configuredTopicMap.get(topic);
+
+        if(configuredMqttTopicDescriptor != null) {
+
+                if (this.getMqtt2MqttWorker() != null && this.getMqtt2MqttWorker().hasProcessingPipeline(configuredMqttTopicDescriptor.getId())) {
+
+                    logger.info("Executing Processing Pipeline ({}) for topic: {} ...", configuredMqttTopicDescriptor.getId(), topic);
+
+                    this.getMqtt2MqttWorker().executeProcessingPipeline(configuredMqttTopicDescriptor.getId(), new MqttPipelineData(topic, configuredMqttTopicDescriptor, msg.getPayload(), msg.isRetained()), new ProcessingPipelineListener() {
+                        @Override
+                        public void onPipelineDone(Optional<PipelineData> result) {
+                            if (result.isPresent() && result.get() instanceof MqttPipelineData)
+                                try {
+                                    MqttPipelineData processingInfo = (MqttPipelineData) result.get();
+                                    publishToTargetMqttChannel(processingInfo.getTopic(), processingInfo.getPayload(), processingInfo.isRetained(), configuredMqttTopicDescriptor);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            else
+                                logger.warn("MQTT Processing Pipeline produced an empty result for Topic: {} ! Skipping data forwarding !", topic);
+                        }
+
+                        @Override
+                        public void onPipelineError() {
+                            logger.error("Error MQTT Processing Pipeline for Topic: {} ! Skipping data forwarding !", topic);
+                        }
+                    });
+                } else
+                    publishToTargetMqttChannel(topic, msg.getPayload(), msg.isRetained(), configuredMqttTopicDescriptor);
+        }
+        else
+            throw new WldtMqttModuleException(String.format("Error Forwarding the message ! Configured Topic (%s) Not Found !", topic));
+
+    }
+
+    /**
+     *
+     * Select the right publishing MQTT channeld according to the configured topic's type (incoming or outgoing)
+     *
+     * @param topic
+     * @param payload
+     * @param isRetained
+     * @param configuredMqttTopicDescriptor
+     * @throws WldtMqttModuleException
+     * @throws MqttException
+     */
+    private void publishToTargetMqttChannel(String topic, byte[] payload, boolean isRetained, MqttTopicDescriptor configuredMqttTopicDescriptor) throws WldtMqttModuleException, MqttException {
+
+        if (configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING))
+            publishData(digitalTwinMqttBrokerClient, getOutgoingTopic(topic), payload, isRetained);
+        else if (configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING))
+            publishData(physicalDeviceMqttBrokerClient, getDeviceIncomingTopicFromDigital(topic), payload, isRetained);
+        else
+            throw new WldtMqttModuleException(String.format("Error Forwarding the message ! Configured Topic Type Error (%s) !", configuredMqttTopicDescriptor.getType()));
+    }
+
+    /**
+     *
      * Build the outgoing topic adding (if configured) the DT prefix
      *
      * @param originalTopic
@@ -395,22 +467,8 @@ public class Mqtt2MqttManager {
 
             logger.debug("{} DEVICE TOPIC ({}) Message Received: {}", TAG, topic, new String(payload));
 
-            if(mqtt2MqttConfiguration.getDtForwardingEnabled()){
-
-                MqttTopicDescriptor configuredMqttTopicDescriptor = configuredTopicMap.get(topic);
-
-                //TODO add processing pipeline support
-                if(configuredMqttTopicDescriptor != null){
-                    if(configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING))
-                        publishData(digitalTwinMqttBrokerClient, getOutgoingTopic(topic), payload, msg.isRetained());
-                    else if(configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING))
-                        publishData(physicalDeviceMqttBrokerClient, getDeviceIncomingTopicFromDigital(topic), payload, msg.isRetained());
-
-                }
-                else
-                    logger.error("{} MqttTopicDescriptor not found ! ERROR FORWARDING TELEMETRY MESSAGE TO TOPIC: {}", TAG, topic);
-
-            }
+            if(mqtt2MqttConfiguration.getDtForwardingEnabled())
+                forwardData(topic, msg);
 
         }catch (Exception e){
             logger.error("{} ERROR FORWARDING TELEMETRY MESSAGE TO TOPIC: {}", TAG, topic);
