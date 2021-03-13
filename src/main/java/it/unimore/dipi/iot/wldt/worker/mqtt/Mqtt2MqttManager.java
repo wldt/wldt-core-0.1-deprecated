@@ -218,7 +218,7 @@ public class Mqtt2MqttManager {
     /**
      * Initialize the MQTT Consumer to send and receive data and command from and to the Physical Thing
      */
-    public void initPhysicalDeviceMqttBrokerClient() throws MqttException {
+    private void initPhysicalDeviceMqttBrokerClient() throws WldtMqttModuleException {
 
         Timer.Context context = WldtMetricsManager.getInstance().getMqttModuleTimerContext(WldtMetricsManager.MQTT_INCOMING_CLIENT_SETUP_TIME);
 
@@ -230,12 +230,26 @@ public class Mqtt2MqttManager {
             options.setAutomaticReconnect(true);
             options.setCleanSession(true);
             options.setConnectionTimeout(10);
+
+            //If configured, add username and password to connect to the target MQTT broker
+            if(this.mqtt2MqttConfiguration != null &&
+                    this.mqtt2MqttConfiguration.getBrokerClientUsername() != null &&
+                    this.mqtt2MqttConfiguration.getBrokerClientUsername().length() > 0 &&
+                    this.mqtt2MqttConfiguration.getBrokerClientPassword() != null &&
+                    this.mqtt2MqttConfiguration.getBrokerClientPassword().length() > 0){
+
+                logger.info("Configuring Username & Password to connect to physical devices' MQTT Broker ...");
+
+                options.setUserName(this.mqtt2MqttConfiguration.getBrokerClientUsername());
+                options.setPassword(new String(this.mqtt2MqttConfiguration.getBrokerClientPassword()).toCharArray());
+            }
+
             physicalDeviceMqttBrokerClient.connect(options);
 
             logger.info("{} INCOMING MQTT Client Connected to {}", TAG, getPhysicalThingMqttBrokerUrl());
 
         }catch (Exception e){
-            throw e;
+            throw new WldtMqttModuleException(e.getLocalizedMessage());
         } finally {
             if(context != null)
                 context.stop();
@@ -245,7 +259,7 @@ public class Mqtt2MqttManager {
     /**
      * Initialize the MQTT Client to send and receive data and command to external broker
      */
-    public void initDigitalTwinMqttBrokerClient() throws MqttException {
+    private void initDigitalTwinMqttBrokerClient() throws WldtMqttModuleException {
 
         Timer.Context context = WldtMetricsManager.getInstance().getMqttModuleTimerContext(WldtMetricsManager.MQTT_OUTGOING_CLIENT_SETUP_TIME);
 
@@ -257,12 +271,26 @@ public class Mqtt2MqttManager {
             options.setAutomaticReconnect(true);
             options.setCleanSession(true);
             options.setConnectionTimeout(10);
+
+            //If configured, add username and password to connect to the target MQTT broker
+            if(this.mqtt2MqttConfiguration != null &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerClientUsername() != null &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerClientUsername().length() > 0 &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerClientPassword() != null &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerClientPassword().length() > 0){
+
+                logger.info("Configuring Username & Password to connect to Digital Twins' MQTT Broker ...");
+
+                options.setUserName(this.mqtt2MqttConfiguration.getDestinationBrokerClientUsername());
+                options.setPassword(new String(this.mqtt2MqttConfiguration.getDestinationBrokerClientPassword()).toCharArray());
+            }
+
             digitalTwinMqttBrokerClient.connect(options);
 
             logger.info("{} OUTGOING MQTT Client Connected to {}", TAG, getDestinationMqttBrokerUrl());
 
         }catch (Exception e){
-            throw e;
+            throw new WldtMqttModuleException(e.getLocalizedMessage());
         } finally {
             if(context != null)
                 context.stop();
