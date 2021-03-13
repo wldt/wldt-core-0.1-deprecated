@@ -7,6 +7,9 @@ dtPublishingQoS: 0
 brokerAddress: 127.0.0.1
 brokerPort: 1883
 brokerLocal: true
+brokerClientUsername: null
+brokerClientPassword: null
+
 
 #It is applied both to incoming and outgoing DT's topics
 dtTopicPrefix: "wldt"
@@ -14,6 +17,9 @@ dtTopicPrefix: "wldt"
 #Destination Broker Parameters
 destinationBrokerAddress: 127.0.0.1
 destinationBrokerPort: 1884
+destinationBrokerLocal: true
+destinationBrokerClientUsername: null
+destinationBrokerClientPassword: null
 
 #e.g., digitaltwin (without the final /)
 destinationBrokerBaseTopic: null

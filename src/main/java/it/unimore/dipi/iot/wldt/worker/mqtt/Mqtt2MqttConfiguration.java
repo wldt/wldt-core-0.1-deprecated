@@ -18,6 +18,12 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private int destinationBrokerPort;
 
+    private String destinationBrokerClientUsername;
+
+    private String destinationBrokerClientPassword;
+
+    private boolean destinationBrokerLocal = true;
+
     /**
      * It is applied both for outgoing and incoming topics
      */
@@ -30,6 +36,10 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
     private int brokerPort = 1883;
 
     private boolean brokerLocal = true;
+
+    private String brokerClientUsername;
+
+    private String brokerClientPassword;
 
     private List<MqttTopicDescriptor> topicList;
 
@@ -116,6 +126,46 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         this.topicList = topicList;
     }
 
+    public String getDestinationBrokerClientUsername() {
+        return destinationBrokerClientUsername;
+    }
+
+    public void setDestinationBrokerClientUsername(String destinationBrokerClientUsername) {
+        this.destinationBrokerClientUsername = destinationBrokerClientUsername;
+    }
+
+    public String getDestinationBrokerClientPassword() {
+        return destinationBrokerClientPassword;
+    }
+
+    public void setDestinationBrokerClientPassword(String destinationBrokerClientPassword) {
+        this.destinationBrokerClientPassword = destinationBrokerClientPassword;
+    }
+
+    public boolean getDestinationBrokerLocal() {
+        return destinationBrokerLocal;
+    }
+
+    public void setDestinationBrokerLocal(boolean destinationBrokerLocal) {
+        this.destinationBrokerLocal = destinationBrokerLocal;
+    }
+
+    public String getBrokerClientUsername() {
+        return brokerClientUsername;
+    }
+
+    public void setBrokerClientUsername(String brokerClientUsername) {
+        this.brokerClientUsername = brokerClientUsername;
+    }
+
+    public String getBrokerClientPassword() {
+        return brokerClientPassword;
+    }
+
+    public void setBrokerClientPassword(String brokerClientPassword) {
+        this.brokerClientPassword = brokerClientPassword;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("Mqtt2MqttConfiguration{");
@@ -123,11 +173,16 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         sb.append(", dtPublishingQoS=").append(dtPublishingQoS);
         sb.append(", destinationBrokerAddress='").append(destinationBrokerAddress).append('\'');
         sb.append(", destinationBrokerPort=").append(destinationBrokerPort);
+        sb.append(", destinationBrokerClientUsername='").append(destinationBrokerClientUsername).append('\'');
+        sb.append(", destinationBrokerClientPassword='").append(destinationBrokerClientPassword).append('\'');
+        sb.append(", destinationBrokerLocal=").append(destinationBrokerLocal);
         sb.append(", dtTopicPrefix='").append(dtTopicPrefix).append('\'');
         sb.append(", deviceId='").append(deviceId).append('\'');
         sb.append(", brokerAddress='").append(brokerAddress).append('\'');
         sb.append(", brokerPort=").append(brokerPort);
         sb.append(", brokerLocal=").append(brokerLocal);
+        sb.append(", brokerClientUsername='").append(brokerClientUsername).append('\'');
+        sb.append(", brokerClientPassword='").append(brokerClientPassword).append('\'');
         sb.append(", topicList=").append(topicList);
         sb.append('}');
         return sb.toString();
