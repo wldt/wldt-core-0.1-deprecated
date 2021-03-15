@@ -24,6 +24,12 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private boolean destinationBrokerLocal = true;
 
+    private boolean destinationBrokerSecureCommunicationRequired = false;
+
+    private String destinationBrokerServerCertPath;
+
+    private String destinationBrokerTlsContext = "TLSv1.2";
+
     /**
      * It is applied both for outgoing and incoming topics
      */
@@ -40,6 +46,12 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
     private String brokerClientUsername;
 
     private String brokerClientPassword;
+
+    private boolean brokerSecureCommunicationRequired = false;
+
+    private String brokerServerCertPath;
+
+    private String brokerTlsContext = "TLSv1.2";
 
     private List<MqttTopicDescriptor> topicList;
 
@@ -166,6 +178,54 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         this.brokerClientPassword = brokerClientPassword;
     }
 
+    public boolean getDestinationBrokerSecureCommunicationRequired() {
+        return destinationBrokerSecureCommunicationRequired;
+    }
+
+    public void setDestinationBrokerSecureCommunicationRequired(boolean destinationBrokerSecureCommunicationRequired) {
+        this.destinationBrokerSecureCommunicationRequired = destinationBrokerSecureCommunicationRequired;
+    }
+
+    public String getDestinationBrokerServerCertPath() {
+        return destinationBrokerServerCertPath;
+    }
+
+    public void setDestinationBrokerServerCertPath(String destinationBrokerServerCertPath) {
+        this.destinationBrokerServerCertPath = destinationBrokerServerCertPath;
+    }
+
+    public boolean getBrokerSecureCommunicationRequired() {
+        return brokerSecureCommunicationRequired;
+    }
+
+    public void setBrokerSecureCommunicationRequired(boolean brokerSecureCommunicationRequired) {
+        this.brokerSecureCommunicationRequired = brokerSecureCommunicationRequired;
+    }
+
+    public String getBrokerServerCertPath() {
+        return brokerServerCertPath;
+    }
+
+    public void setBrokerServerCertPath(String brokerServerCertPath) {
+        this.brokerServerCertPath = brokerServerCertPath;
+    }
+
+    public String getDestinationBrokerTlsContext() {
+        return destinationBrokerTlsContext;
+    }
+
+    public void setDestinationBrokerTlsContext(String destinationBrokerTlsContext) {
+        this.destinationBrokerTlsContext = destinationBrokerTlsContext;
+    }
+
+    public String getBrokerTlsContext() {
+        return brokerTlsContext;
+    }
+
+    public void setBrokerTlsContext(String brokerTlsContext) {
+        this.brokerTlsContext = brokerTlsContext;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("Mqtt2MqttConfiguration{");
@@ -176,6 +236,9 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         sb.append(", destinationBrokerClientUsername='").append(destinationBrokerClientUsername).append('\'');
         sb.append(", destinationBrokerClientPassword='").append(destinationBrokerClientPassword).append('\'');
         sb.append(", destinationBrokerLocal=").append(destinationBrokerLocal);
+        sb.append(", destinationBrokerSecureCommunicationRequired=").append(destinationBrokerSecureCommunicationRequired);
+        sb.append(", destinationBrokerServerCertPath='").append(destinationBrokerServerCertPath).append('\'');
+        sb.append(", destinationBrokerTlsContext='").append(destinationBrokerTlsContext).append('\'');
         sb.append(", dtTopicPrefix='").append(dtTopicPrefix).append('\'');
         sb.append(", deviceId='").append(deviceId).append('\'');
         sb.append(", brokerAddress='").append(brokerAddress).append('\'');
@@ -183,6 +246,9 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         sb.append(", brokerLocal=").append(brokerLocal);
         sb.append(", brokerClientUsername='").append(brokerClientUsername).append('\'');
         sb.append(", brokerClientPassword='").append(brokerClientPassword).append('\'');
+        sb.append(", brokerSecureCommunicationRequired=").append(brokerSecureCommunicationRequired);
+        sb.append(", brokerServerCertPath='").append(brokerServerCertPath).append('\'');
+        sb.append(", brokerTlsContext='").append(brokerTlsContext).append('\'');
         sb.append(", topicList=").append(topicList);
         sb.append('}');
         return sb.toString();

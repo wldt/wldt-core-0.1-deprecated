@@ -9,7 +9,8 @@ brokerPort: 1883
 brokerLocal: true
 brokerClientUsername: null
 brokerClientPassword: null
-
+brokerSecureCommunicationRequired: false
+brokerServerCertPath: null
 
 #It is applied both to incoming and outgoing DT's topics
 dtTopicPrefix: "wldt"
@@ -20,6 +21,8 @@ destinationBrokerPort: 1884
 destinationBrokerLocal: true
 destinationBrokerClientUsername: null
 destinationBrokerClientPassword: null
+destinationBrokerSecureCommunicationRequired: false
+destinationBrokerServerCertPath: null
 
 #e.g., digitaltwin (without the final /)
 destinationBrokerBaseTopic: null

@@ -7,11 +7,22 @@ import it.unimore.dipi.iot.wldt.exception.WldtMqttModuleException;
 import it.unimore.dipi.iot.wldt.processing.PipelineData;
 import it.unimore.dipi.iot.wldt.processing.ProcessingPipelineListener;
 import it.unimore.dipi.iot.wldt.utils.TopicTemplateManager;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.KeyStore;
+import java.security.Security;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -244,6 +255,14 @@ public class Mqtt2MqttManager {
                 options.setPassword(new String(this.mqtt2MqttConfiguration.getBrokerClientPassword()).toCharArray());
             }
 
+            //Check a secure communication is required and a server side certificate is available
+            if(this.mqtt2MqttConfiguration != null &&
+                    this.mqtt2MqttConfiguration.getBrokerSecureCommunicationRequired() &&
+                    this.mqtt2MqttConfiguration.getBrokerServerCertPath() != null &&
+                    this.mqtt2MqttConfiguration.getBrokerServerCertPath().length() > 0){
+                options.setSocketFactory(getSocketFactory(this.mqtt2MqttConfiguration.getBrokerServerCertPath(), this.mqtt2MqttConfiguration.getBrokerTlsContext()));
+            }
+
             physicalDeviceMqttBrokerClient.connect(options);
 
             logger.info("{} INCOMING MQTT Client Connected to {}", TAG, getPhysicalThingMqttBrokerUrl());
@@ -265,7 +284,11 @@ public class Mqtt2MqttManager {
 
         try {
 
-            digitalTwinMqttBrokerClient = new MqttClient(getDestinationMqttBrokerUrl(),String.format("%s%s", this.wldtId, "digital"), new MemoryPersistence());
+            String targetUrl = getDestinationMqttBrokerUrl();
+
+            logger.info("{} Connecting to {} ...", TAG, targetUrl);
+
+            digitalTwinMqttBrokerClient = new MqttClient(targetUrl,String.format("%s%s", this.wldtId, "digital"), new MemoryPersistence());
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setAutomaticReconnect(true);
@@ -285,9 +308,17 @@ public class Mqtt2MqttManager {
                 options.setPassword(new String(this.mqtt2MqttConfiguration.getDestinationBrokerClientPassword()).toCharArray());
             }
 
+            //Check a secure communication is required and a server side certificate is available
+            if(this.mqtt2MqttConfiguration != null &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerSecureCommunicationRequired() &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerServerCertPath() != null &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerServerCertPath().length() > 0){
+                options.setSocketFactory(getSocketFactory(this.mqtt2MqttConfiguration.getDestinationBrokerServerCertPath(), this.mqtt2MqttConfiguration.getDestinationBrokerTlsContext()));
+            }
+
             digitalTwinMqttBrokerClient.connect(options);
 
-            logger.info("{} OUTGOING MQTT Client Connected to {}", TAG, getDestinationMqttBrokerUrl());
+            logger.info("{} OUTGOING MQTT Client Connected to {}", TAG, targetUrl);
 
         }catch (Exception e){
             throw new WldtMqttModuleException(e.getLocalizedMessage());
@@ -513,7 +544,17 @@ public class Mqtt2MqttManager {
      * @return
      */
     private String getPhysicalThingMqttBrokerUrl(){
-        return String.format("tcp://%s:%d",this.mqtt2MqttConfiguration.getBrokerAddress(), this.mqtt2MqttConfiguration.getBrokerPort());
+
+        if(this.mqtt2MqttConfiguration.getBrokerAddress() == null)
+            return null;
+
+        //Secure communication required
+        if(this.mqtt2MqttConfiguration.getBrokerSecureCommunicationRequired())
+            return String.format("ssl://%s:%d",this.mqtt2MqttConfiguration.getBrokerAddress(), this.mqtt2MqttConfiguration.getBrokerPort());
+        else
+            return String.format("tcp://%s:%d",this.mqtt2MqttConfiguration.getBrokerAddress(), this.mqtt2MqttConfiguration.getBrokerPort());
+
+
     }
 
     /**
@@ -527,8 +568,44 @@ public class Mqtt2MqttManager {
         if(this.mqtt2MqttConfiguration.getDestinationBrokerAddress() == null)
             return null;
 
-        return String.format("tcp://%s:%d",this.mqtt2MqttConfiguration.getDestinationBrokerAddress(), this.mqtt2MqttConfiguration.getDestinationBrokerPort());
+        //Secure communication required
+        if(this.mqtt2MqttConfiguration.getDestinationBrokerSecureCommunicationRequired())
+            return String.format("ssl://%s:%d",this.mqtt2MqttConfiguration.getDestinationBrokerAddress(), this.mqtt2MqttConfiguration.getDestinationBrokerPort());
+        else
+            return String.format("tcp://%s:%d",this.mqtt2MqttConfiguration.getDestinationBrokerAddress(), this.mqtt2MqttConfiguration.getDestinationBrokerPort());
     }
+
+    private static SSLSocketFactory getSocketFactory(final String crtFile, String tlsContext) throws Exception
+    {
+        Security.addProvider(new BouncyCastleProvider());
+
+        // load CA certificate
+        X509Certificate caCert = null;
+
+        FileInputStream fis = new FileInputStream(crtFile);
+        BufferedInputStream bis = new BufferedInputStream(fis);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+
+        while (bis.available() > 0)
+        {
+            caCert = (X509Certificate) cf.generateCertificate(bis);
+            // System.out.println(caCert.toString());
+        }
+
+        // CA certificate is used to authenticate server
+        KeyStore caKs = KeyStore.getInstance(KeyStore.getDefaultType());
+        caKs.load(null, null);
+        caKs.setCertificateEntry("ca-certificate", caCert);
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("X509");
+        tmf.init(caKs);
+
+        // finally, create SSL socket factory
+        SSLContext context = SSLContext.getInstance((tlsContext != null) ? tlsContext : "TLSv1.2");
+        context.init(null, tmf.getTrustManagers(), null);
+
+        return context.getSocketFactory();
+    }
+
 
     public String getWldtId() {
         return wldtId;
