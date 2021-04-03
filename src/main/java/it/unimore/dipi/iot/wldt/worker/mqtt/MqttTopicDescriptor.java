@@ -1,5 +1,7 @@
 package it.unimore.dipi.iot.wldt.worker.mqtt;
 
+import java.util.Objects;
+
 /**
  * @author Marco Picone, Ph.D. - picone.m@gmail.com
  * @project wldt-core
@@ -70,5 +72,18 @@ public class MqttTopicDescriptor {
         sb.append(", type='").append(type).append('\'');
         sb.append('}');
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MqttTopicDescriptor that = (MqttTopicDescriptor) o;
+        return Objects.equals(id, that.id) && Objects.equals(resourceId, that.resourceId) && Objects.equals(topic, that.topic) && Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, resourceId, topic, type);
     }
 }

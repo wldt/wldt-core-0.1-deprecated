@@ -96,6 +96,7 @@ public class Mqtt2MqttWorker extends WldtWorker<Mqtt2MqttConfiguration, Void, Vo
     }
 
     public void addTopicProcessingPipeline(String configuredTopicId, IProcessingPipeline newProcessingPipeline) throws ProcessingPipelineException {
+        logger.info("Adding Processing pipeline for TopicId: {}", configuredTopicId);
         super.addProcessingPipeline(configuredTopicId, newProcessingPipeline);
     }
 

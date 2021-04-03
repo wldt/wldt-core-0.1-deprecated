@@ -10,6 +10,7 @@ import it.unimore.dipi.iot.wldt.utils.TopicTemplateManager;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.client.mqttv3.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -361,7 +362,7 @@ public class Mqtt2MqttManager {
 
         try {
 
-            logger.debug("{} Forwarging to TOPIC: {} Message: {}", TAG, topic, new String(payload));
+            logger.debug("{} Forwarding to TOPIC: {} Message: {}", TAG, topic, new String(payload));
 
             if (mqttClient.isConnected() && topic != null && payload.length > 0) {
                 MqttMessage msg = new MqttMessage(payload);
@@ -394,9 +395,15 @@ public class Mqtt2MqttManager {
      */
     private void forwardData(String topic, MqttMessage msg) throws WldtMqttModuleException, MqttException, ProcessingPipelineException {
 
-        MqttTopicDescriptor configuredMqttTopicDescriptor = configuredTopicMap.get(topic);
+        //MqttTopicDescriptor configuredMqttTopicDescriptor = configuredTopicMap.get(topic);
 
-        if(configuredMqttTopicDescriptor != null) {
+        Optional<MqttTopicDescriptor> optionalConfiguredMqttTopicDescriptor = lookupTopicDescriptor(this.configuredTopicMap, topic);
+
+        if(optionalConfiguredMqttTopicDescriptor.isPresent()) {
+
+                logger.debug("ConfiguredTopicDescriptor found -> {}", optionalConfiguredMqttTopicDescriptor.get());
+
+                MqttTopicDescriptor configuredMqttTopicDescriptor = optionalConfiguredMqttTopicDescriptor.get();
 
                 if (this.getMqtt2MqttWorker() != null && this.getMqtt2MqttWorker().hasProcessingPipeline(configuredMqttTopicDescriptor.getId())) {
 
@@ -424,8 +431,11 @@ public class Mqtt2MqttManager {
                 } else
                     publishToTargetMqttChannel(topic, msg.getPayload(), msg.isRetained(), configuredMqttTopicDescriptor);
         }
-        else
-            throw new WldtMqttModuleException(String.format("Error Forwarding the message ! Configured Topic (%s) Not Found !", topic));
+        else {
+            String errorMsg = String.format("Error Forwarding the message ! Configured Topic (%s) Not Found !", topic);
+            logger.error(errorMsg);
+            throw new WldtMqttModuleException(errorMsg);
+        }
 
     }
 
@@ -524,13 +534,13 @@ public class Mqtt2MqttManager {
             WldtMetricsManager.getInstance().measureMqttIncomingPayloadSizeMetric(payload.length);
             WldtMetricsManager.getInstance().measureMqttIncomingTelemetryPayload(payload.length);
 
-            logger.debug("{} DEVICE TOPIC ({}) Message Received: {}", TAG, topic, new String(payload));
+            logger.debug("{} TOPIC ({}) Message Received: {}", TAG, topic, new String(payload));
 
             if(mqtt2MqttConfiguration.getDtForwardingEnabled())
                 forwardData(topic, msg);
 
         }catch (Exception e){
-            logger.error("{} ERROR FORWARDING TELEMETRY MESSAGE TO TOPIC: {}", TAG, topic);
+            logger.error("{} ERROR FORWARDING TELEMETRY MESSAGE TO TOPIC: {} - Error: {}", TAG, topic, e.getLocalizedMessage());
         } finally {
             if(context != null)
                 context.stop();
@@ -606,6 +616,43 @@ public class Mqtt2MqttManager {
         return context.getSocketFactory();
     }
 
+    /**
+     * // command///req//#
+     * command///+/req//#
+     * //Incoming topic command///req//modified
+     *
+     * @param incomingTopic
+     * @return
+     */
+    public static Optional<MqttTopicDescriptor> lookupTopicDescriptor(Map<String, MqttTopicDescriptor> configuredTopicMap, String incomingTopic){
+
+        if(configuredTopicMap != null && configuredTopicMap.size() > 0){
+            Optional<Map.Entry<String, MqttTopicDescriptor>> result = configuredTopicMap.entrySet().stream().filter(item -> {
+
+                String savedTopicKey = item.getKey();
+                MqttTopicDescriptor savedTopicDescriptor = item.getValue();
+
+                if (savedTopicKey != null &&
+                        savedTopicKey.length() > 0 &&
+                        savedTopicDescriptor != null &&
+                        savedTopicDescriptor.getTopic() != null) {
+                    //If stored is wildcard topic
+                    if(savedTopicDescriptor.getTopic().contains("#") || savedTopicDescriptor.getTopic().contains("+"))
+                        return MqttTopic.isMatched(savedTopicDescriptor.getTopic(), incomingTopic);
+                    else
+                        return savedTopicDescriptor.getTopic().equals(incomingTopic);
+                } else
+                    return false;
+            }).findAny();
+
+            if(result.isPresent() && result.get().getValue() != null)
+                return Optional.of(result.get().getValue());
+            else
+                return Optional.empty();
+        }
+        else
+            return Optional.empty();
+    }
 
     public String getWldtId() {
         return wldtId;
