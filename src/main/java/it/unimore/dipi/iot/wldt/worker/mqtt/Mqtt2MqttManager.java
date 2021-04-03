@@ -397,7 +397,7 @@ public class Mqtt2MqttManager {
 
         //MqttTopicDescriptor configuredMqttTopicDescriptor = configuredTopicMap.get(topic);
 
-        Optional<MqttTopicDescriptor> optionalConfiguredMqttTopicDescriptor = lookupTopicDescriptor(this.configuredTopicMap, topic);
+        Optional<MqttTopicDescriptor> optionalConfiguredMqttTopicDescriptor = lookupTopicDescriptor(this.mqtt2MqttConfiguration.getDeviceId(), this.configuredTopicMap, topic);
 
         if(optionalConfiguredMqttTopicDescriptor.isPresent()) {
 
@@ -624,7 +624,7 @@ public class Mqtt2MqttManager {
      * @param incomingTopic
      * @return
      */
-    public static Optional<MqttTopicDescriptor> lookupTopicDescriptor(Map<String, MqttTopicDescriptor> configuredTopicMap, String incomingTopic){
+    public static Optional<MqttTopicDescriptor> lookupTopicDescriptor(String deviceId, Map<String, MqttTopicDescriptor> configuredTopicMap, String incomingTopic){
 
         if(configuredTopicMap != null && configuredTopicMap.size() > 0){
             Optional<Map.Entry<String, MqttTopicDescriptor>> result = configuredTopicMap.entrySet().stream().filter(item -> {
@@ -636,11 +636,18 @@ public class Mqtt2MqttManager {
                         savedTopicKey.length() > 0 &&
                         savedTopicDescriptor != null &&
                         savedTopicDescriptor.getTopic() != null) {
-                    //If stored is wildcard topic
-                    if(savedTopicDescriptor.getTopic().contains("#") || savedTopicDescriptor.getTopic().contains("+"))
-                        return MqttTopic.isMatched(savedTopicDescriptor.getTopic(), incomingTopic);
+
+                    Optional<String> optionalTargetTopic = buildTopicWithInternalWildCard(deviceId, savedTopicDescriptor.getResourceId(), savedTopicDescriptor);
+
+                    if(optionalTargetTopic.isPresent()){
+                        //If stored is wildcard topic
+                        if(optionalTargetTopic.get().contains("#") || optionalTargetTopic.get().contains("+"))
+                            return MqttTopic.isMatched(savedTopicDescriptor.getTopic(), incomingTopic);
+                        else
+                            return optionalTargetTopic.get().equals(incomingTopic);
+                    }
                     else
-                        return savedTopicDescriptor.getTopic().equals(incomingTopic);
+                        return false;
                 } else
                     return false;
             }).findAny();
@@ -652,6 +659,27 @@ public class Mqtt2MqttManager {
         }
         else
             return Optional.empty();
+    }
+
+    private static Optional<String> buildTopicWithInternalWildCard(String deviceId, String resourceId, MqttTopicDescriptor mqttTopicDescriptor){
+
+        try{
+
+            //Build final target topic in order to apply templates (if required)
+            String targetTopic = null;
+
+            if(resourceId != null && resourceId.length() > 0)
+                targetTopic = TopicTemplateManager.getTopicForDeviceResource(mqttTopicDescriptor.getTopic(), deviceId, resourceId);
+            else
+                targetTopic = TopicTemplateManager.getTopicForDevice(mqttTopicDescriptor.getTopic(), deviceId);
+
+            return Optional.of(targetTopic);
+
+        }catch (Exception e){
+            logger.error("Error building topic with internal wildcard ! Error: {}", e.getLocalizedMessage());
+            return Optional.empty();
+        }
+
     }
 
     public String getWldtId() {

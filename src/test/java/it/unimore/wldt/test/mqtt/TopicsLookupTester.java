@@ -16,9 +16,12 @@ import java.util.Optional;
  */
 public class TopicsLookupTester {
 
+    private static final String DEVICE_ID = "testDeviceId";
+
     private Map<String, MqttTopicDescriptor> getTopicMap(){
 
         Map<String, MqttTopicDescriptor> mqttTopicMap = new HashMap<>();
+
         mqttTopicMap.put("TelemetryChannel",new MqttTopicDescriptor("DummyStringResource",
                 "dummy_string_resource",
                 "telemetry/gps/",
@@ -37,7 +40,51 @@ public class TopicsLookupTester {
                 MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING)
         );
 
+        mqttTopicMap.put("batteryTopic", new MqttTopicDescriptor("gpsResource",
+                "battery",
+                "telemetry/tb6002f533897433c94bd84f1b59ef35d_hub/com.iot.example:VehicleTest05/battery",
+                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING)
+        );
+
+        mqttTopicMap.put("gpsTopicInternalWildcard", new MqttTopicDescriptor("gpsResource",
+                "gps",
+                "test/{{device_id}}/{{resource_id}}",
+                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING)
+        );
+
         return mqttTopicMap;
+    }
+
+    @Test
+    public void successTopicInternalTemplateLookupTest(){
+
+        Map<String, MqttTopicDescriptor> mqttTopicMap = getTopicMap();
+
+        //Looking for telemetry/gps/
+        Optional<MqttTopicDescriptor> telemetryTopicResult = Mqtt2MqttManager
+                .lookupTopicDescriptor(DEVICE_ID, mqttTopicMap, "test/testDeviceId/gps");
+
+        Assert.assertNotNull(telemetryTopicResult);
+        Assert.assertTrue(telemetryTopicResult.isPresent());
+        Assert.assertNotNull(telemetryTopicResult.get());
+        Assert.assertEquals(telemetryTopicResult.get(), mqttTopicMap.get("gpsTopicInternalWildcard"));
+
+    }
+
+    @Test
+    public void successTelemetryGpsTopicLookupTest(){
+
+        Map<String, MqttTopicDescriptor> mqttTopicMap = getTopicMap();
+
+        //Looking for telemetry/gps/
+        Optional<MqttTopicDescriptor> telemetryTopicResult = Mqtt2MqttManager
+                .lookupTopicDescriptor(DEVICE_ID, mqttTopicMap, "telemetry/tb6002f533897433c94bd84f1b59ef35d_hub/com.iot.example:VehicleTest05/battery");
+
+        Assert.assertNotNull(telemetryTopicResult);
+        Assert.assertTrue(telemetryTopicResult.isPresent());
+        Assert.assertNotNull(telemetryTopicResult.get());
+        Assert.assertEquals(telemetryTopicResult.get(), mqttTopicMap.get("batteryTopic"));
+
     }
 
     @Test
@@ -47,7 +94,7 @@ public class TopicsLookupTester {
 
         //Looking for telemetry/gps/
         Optional<MqttTopicDescriptor> telemetryTopicResult = Mqtt2MqttManager
-                .lookupTopicDescriptor(mqttTopicMap, "telemetry/gps/");
+                .lookupTopicDescriptor(DEVICE_ID, mqttTopicMap, "telemetry/gps/");
 
         Assert.assertNotNull(telemetryTopicResult);
         Assert.assertTrue(telemetryTopicResult.isPresent());
@@ -63,7 +110,7 @@ public class TopicsLookupTester {
 
         //Looking for telemetry/gps/
         Optional<MqttTopicDescriptor> telemetryTopicResult = Mqtt2MqttManager
-                .lookupTopicDescriptor(mqttTopicMap, "telemetry/gps/test");
+                .lookupTopicDescriptor(DEVICE_ID, mqttTopicMap, "telemetry/gps/test");
 
         Assert.assertNotNull(telemetryTopicResult);
         Assert.assertFalse(telemetryTopicResult.isPresent());
@@ -76,7 +123,7 @@ public class TopicsLookupTester {
 
         //Looking for command topic
         Optional<MqttTopicDescriptor> commandTopicResult = Mqtt2MqttManager
-                .lookupTopicDescriptor(mqttTopicMap, "command///req//modified");
+                .lookupTopicDescriptor(DEVICE_ID, mqttTopicMap, "command///req//modified");
 
         Assert.assertNotNull(commandTopicResult);
         Assert.assertTrue(commandTopicResult.isPresent());
@@ -92,7 +139,7 @@ public class TopicsLookupTester {
 
         //Looking for command topic
         Optional<MqttTopicDescriptor> topicResult = Mqtt2MqttManager
-                .lookupTopicDescriptor(mqttTopicMap, "telemetry/device/d00001/gps/");
+                .lookupTopicDescriptor(DEVICE_ID, mqttTopicMap, "telemetry/device/d00001/gps/");
 
         Assert.assertNotNull(topicResult);
         Assert.assertTrue(topicResult.isPresent());
@@ -108,7 +155,7 @@ public class TopicsLookupTester {
 
         //Looking for command topic
         Optional<MqttTopicDescriptor> topicResult = Mqtt2MqttManager
-                .lookupTopicDescriptor(mqttTopicMap, "telemetry/device/d00002/gps/");
+                .lookupTopicDescriptor(DEVICE_ID, mqttTopicMap, "telemetry/device/d00002/gps/");
 
         Assert.assertNotNull(topicResult);
         Assert.assertTrue(topicResult.isPresent());
