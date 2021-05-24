@@ -30,11 +30,6 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private String destinationBrokerTlsContext = "TLSv1.2";
 
-    /**
-     * It is applied both for outgoing and incoming topics
-     */
-    private String dtTopicPrefix;
-
     private String deviceId = null;
 
     private String brokerAddress = "127.0.0.1";
@@ -72,14 +67,6 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     public void setDestinationBrokerPort(int destinationBrokerPort) {
         this.destinationBrokerPort = destinationBrokerPort;
-    }
-
-    public String getDtTopicPrefix() {
-        return dtTopicPrefix;
-    }
-
-    public void setDtTopicPrefix(String dtTopicPrefix) {
-        this.dtTopicPrefix = dtTopicPrefix;
     }
 
     public int getDtPublishingQoS() {
@@ -239,7 +226,6 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         sb.append(", destinationBrokerSecureCommunicationRequired=").append(destinationBrokerSecureCommunicationRequired);
         sb.append(", destinationBrokerServerCertPath='").append(destinationBrokerServerCertPath).append('\'');
         sb.append(", destinationBrokerTlsContext='").append(destinationBrokerTlsContext).append('\'');
-        sb.append(", dtTopicPrefix='").append(dtTopicPrefix).append('\'');
         sb.append(", deviceId='").append(deviceId).append('\'');
         sb.append(", brokerAddress='").append(brokerAddress).append('\'');
         sb.append(", brokerPort=").append(brokerPort);

@@ -12,9 +12,6 @@ brokerClientPassword: null
 brokerSecureCommunicationRequired: false
 brokerServerCertPath: null
 
-#It is applied both to incoming and outgoing DT's topics
-dtTopicPrefix: "wldt"
-
 #Destination Broker Parameters
 destinationBrokerAddress: 127.0.0.1
 destinationBrokerPort: 1884

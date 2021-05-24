@@ -10,7 +10,6 @@ import it.unimore.dipi.iot.wldt.utils.TopicTemplateManager;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.eclipse.paho.client.mqttv3.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -178,11 +177,8 @@ public class Mqtt2MqttManager {
                             //Select the right mqttClient according to topic configuration
                             if (mqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING))
                                 targetMqttClient = physicalDeviceMqttBrokerClient;
-                            else if (mqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING)) {
+                            else if (mqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING))
                                 targetMqttClient = digitalTwinMqttBrokerClient;
-                                //If configured append DT prefix to incoming topic
-                                targetTopic = getDigitalTwinIncomingTopic(targetTopic);
-                            }
 
                             if (targetMqttClient != null) {
 
@@ -441,7 +437,7 @@ public class Mqtt2MqttManager {
 
     /**
      *
-     * Select the right publishing MQTT channeld according to the configured topic's type (incoming or outgoing)
+     * Select the right publishing MQTT channel according to the configured topic's type (incoming or outgoing)
      *
      * @param topic
      * @param payload
@@ -453,68 +449,11 @@ public class Mqtt2MqttManager {
     private void publishToTargetMqttChannel(String topic, byte[] payload, boolean isRetained, MqttTopicDescriptor configuredMqttTopicDescriptor) throws WldtMqttModuleException, MqttException {
 
         if (configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING))
-            publishData(digitalTwinMqttBrokerClient, getOutgoingTopic(topic), payload, isRetained);
+            publishData(digitalTwinMqttBrokerClient, topic, payload, isRetained);
         else if (configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING))
-            publishData(physicalDeviceMqttBrokerClient, getDeviceIncomingTopicFromDigital(topic), payload, isRetained);
+            publishData(physicalDeviceMqttBrokerClient, topic, payload, isRetained);
         else
             throw new WldtMqttModuleException(String.format("Error Forwarding the message ! Configured Topic Type Error (%s) !", configuredMqttTopicDescriptor.getType()));
-    }
-
-    /**
-     *
-     * Build the outgoing topic adding (if configured) the DT prefix
-     *
-     * @param originalTopic
-     * @return
-     */
-    private String getOutgoingTopic(String originalTopic){
-
-        //If the topic prefix is not configured
-        if(mqtt2MqttConfiguration.getDtTopicPrefix() == null ||
-                mqtt2MqttConfiguration.getDtTopicPrefix().equals("null") ||
-                mqtt2MqttConfiguration.getDtTopicPrefix().length() == 0)
-            return originalTopic;
-        else
-            return String.format("%s/%s", mqtt2MqttConfiguration.getDtTopicPrefix(), originalTopic);
-
-    }
-
-    /**
-     *
-     * Convert an incoming topic from DT to the original device by removing (if necessary) the DT's topic prefix
-     *
-     * @param dtIncomingTopic
-     * @return
-     */
-    private String getDeviceIncomingTopicFromDigital(String dtIncomingTopic){
-
-        //If the topic prefix is not configured
-        if(mqtt2MqttConfiguration.getDtTopicPrefix() == null ||
-                mqtt2MqttConfiguration.getDtTopicPrefix().equals("null") ||
-                mqtt2MqttConfiguration.getDtTopicPrefix().length() == 0)
-            return dtIncomingTopic;
-        else if(dtIncomingTopic.startsWith(String.format("%s/", mqtt2MqttConfiguration.getDtTopicPrefix())))
-            return dtIncomingTopic.replace(String.format("%s/", mqtt2MqttConfiguration.getDtTopicPrefix()), "");
-        else
-            return dtIncomingTopic;
-    }
-
-    /**
-     *
-     * Build the DT's incoming topic adding (if configured) the DT prefix
-     *
-     * @param originalTopic
-     * @return
-     */
-    private String getDigitalTwinIncomingTopic(String originalTopic){
-
-        //If the topic prefix is not configured
-        if(mqtt2MqttConfiguration.getDtTopicPrefix() == null ||
-                mqtt2MqttConfiguration.getDtTopicPrefix().equals("null") ||
-                mqtt2MqttConfiguration.getDtTopicPrefix().length() == 0)
-            return originalTopic;
-        else
-            return String.format("%s/%s", mqtt2MqttConfiguration.getDtTopicPrefix(), originalTopic);
     }
 
     /**

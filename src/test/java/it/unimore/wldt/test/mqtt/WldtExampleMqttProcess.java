@@ -15,15 +15,43 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * Author: Marco Picone, Ph.D. (marco.picone@unimore.it)
- * Date: 24/03/2020
- * Project: White Label Digital Twin - Java Framework
+ * Demo of a WLDT enabled Digital Twin that mirrors an MQTT IoT Device
+ * received telemetry data from the physical asset and command from
+ * external applications according to the following schema:
+ *
+ * Telemetry:
+ *
+ * DEVICE ---- [msg] ----> BROKER-A ----> (DT) ---- [msg] ---- BROKER-B ----> CONSUMER(s)
+ *
+ * Commands:
+ *
+ * DEVICE <---- [msg] ---- BROKER-A <---- (DT) <---- [msg] ---- BROKER-B <---- APP(s)
+ *
+ * @author : Marco Picone, Ph.D. (marco.picone@unimore.it)
+ * @created: 21/05/2021
+ * @project: WLDT - MQTT Example
  */
-public class WldtMqttProcess {
+public class WldtExampleMqttProcess {
 
     private static final String TAG = "[WLDT-Process]";
 
-    private static final Logger logger = LoggerFactory.getLogger(WldtMqttProcess.class);
+    private static final Logger logger = LoggerFactory.getLogger(WldtExampleMqttProcess.class);
+
+    private static final String DEMO_TEMPERATURE_TOPIC_ID = "temperature_topic";
+    private static final String DEMO_TEMPERATURE_RESOURCE_ID = "temperature";
+
+    private static final String DEMO_COMMAND_TOPIC_ID = "command_topic";
+    private static final String DEMO_COMMAND_RESOURCE_ID = "default_command_channel";
+
+    private static final String SOURCE_BROKER_ADDRESS = "127.0.0.1";
+    private static final int SOURCE_BROKER_PORT = 1883;
+
+    private static final String DESTINATION_BROKER_ADDRESS = "127.0.0.1";
+    private static final int DESTINATION_BROKER_PORT = 1884;
+
+    private static final String DT_PREFIX = "wldt";
+
+    private static final String DEVICE_ID = "com:iot:dummy:dummyMqttDevice001";
 
     public static void main(String[] args)  {
 
@@ -47,18 +75,19 @@ public class WldtMqttProcess {
             Mqtt2MqttWorker mqtt2MqttWorker = new Mqtt2MqttWorker(wldtEngine.getWldtId(), getMqttComplexProtocolConfiguration());
 
             //Add Processing Pipeline for target topics
-            mqtt2MqttWorker.addTopicProcessingPipeline("DummyStringResource",
+            mqtt2MqttWorker.addTopicProcessingPipeline(DEMO_TEMPERATURE_TOPIC_ID,
                     new ProcessingPipeline(
-                        new IdentityProcessingStep(),
-                        new MqttPayloadChangeStep(),
-                        new MqttTopicChangeStep()
+                            new IdentityProcessingStep(),
+                            new MqttAverageProcessingStep(),
+                            new MqttTopicChangeStep()
                     )
             );
 
-            mqtt2MqttWorker.addTopicProcessingPipeline("CommandChannel",
+            mqtt2MqttWorker.addTopicProcessingPipeline(DEMO_COMMAND_TOPIC_ID,
                     new ProcessingPipeline(
                             new IdentityProcessingStep(),
-                            new MqttPayloadChangeStep()
+                            new MqttPayloadChangeStep(),
+                            new MqttCommandTopicChangeStep()
                     )
             );
 
@@ -103,22 +132,21 @@ public class WldtMqttProcess {
         Mqtt2MqttConfiguration mqtt2MqttConfiguration = new Mqtt2MqttConfiguration();
 
         mqtt2MqttConfiguration.setDtPublishingQoS(0);
-        mqtt2MqttConfiguration.setDestinationBrokerAddress("127.0.0.1");
-        mqtt2MqttConfiguration.setDestinationBrokerPort(1884);
-        mqtt2MqttConfiguration.setDtTopicPrefix("wldt");
-        mqtt2MqttConfiguration.setDeviceId("com:iot:dummy:dummyMqttDevice001");
-        mqtt2MqttConfiguration.setBrokerAddress("127.0.0.1");
-        mqtt2MqttConfiguration.setBrokerPort(1883);
+        mqtt2MqttConfiguration.setBrokerAddress(SOURCE_BROKER_ADDRESS);
+        mqtt2MqttConfiguration.setBrokerPort(SOURCE_BROKER_PORT);
+        mqtt2MqttConfiguration.setDestinationBrokerAddress(DESTINATION_BROKER_ADDRESS);
+        mqtt2MqttConfiguration.setDestinationBrokerPort(DESTINATION_BROKER_PORT);
+        mqtt2MqttConfiguration.setDeviceId(DEVICE_ID);
 
         //Specify Topic List Configuration
         mqtt2MqttConfiguration.setTopicList(
                 Arrays.asList(
-                        new MqttTopicDescriptor("DummyStringResource",
-                                "dummy_string_resource",
+                        new MqttTopicDescriptor(DEMO_TEMPERATURE_TOPIC_ID,
+                                DEMO_TEMPERATURE_RESOURCE_ID,
                                 "telemetry/{{device_id}}/resource/{{resource_id}}",
                                 MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING),
-                        new MqttTopicDescriptor("CommandChannel",
-                                "default_command_channel",
+                        new MqttTopicDescriptor(DEMO_COMMAND_TOPIC_ID,
+                                DEMO_COMMAND_RESOURCE_ID,
                                 "command/{{device_id}}",
                                 MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING)
                 )
@@ -128,3 +156,4 @@ public class WldtMqttProcess {
     }
 
 }
+
