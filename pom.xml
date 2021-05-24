@@ -119,9 +119,9 @@
 
     <distributionManagement>
         <repository>
-            <id>bintray-unimore-dipi-wldt-core</id>
-            <name>Unimore-DIPI-wldt-core</name>
-            <url>https://api.bintray.com/maven/unimore-dipi/wldt-core/wldt-core/;publish=1</url>
+            <id>central</id>
+            <name>a0uxzprjrxulx-artifactory-primary-0-releases</name>
+            <url>https://dipiresearch.jfrog.io/artifactory/dipi-maven-libs-release-local</url>
         </repository>
     </distributionManagement>
 
