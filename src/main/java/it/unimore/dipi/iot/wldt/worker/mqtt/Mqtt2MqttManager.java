@@ -232,7 +232,21 @@ public class Mqtt2MqttManager {
 
         try {
 
-            physicalDeviceMqttBrokerClient = new MqttClient(getPhysicalThingMqttBrokerUrl(),String.format("%s%s", this.wldtId, "physical"), new MemoryPersistence());
+            String targetUrl = getPhysicalThingMqttBrokerUrl();
+
+            //Default client id
+            String mqttClientId = String.format("%s%s", this.wldtId, "physical");
+
+            //Check if a clientId is specified in the configuration and use it
+            if(this.mqtt2MqttConfiguration != null &&
+                    this.mqtt2MqttConfiguration.getBrokerClientId() != null &&
+                    this.mqtt2MqttConfiguration.getBrokerClientId().length() > 0
+            )
+                mqttClientId = this.mqtt2MqttConfiguration.getBrokerClientId();
+
+            logger.info("{} Client ({}) - Connecting to {} ...", TAG, mqttClientId, targetUrl);
+
+            physicalDeviceMqttBrokerClient = new MqttClient(targetUrl, mqttClientId, new MemoryPersistence());
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setAutomaticReconnect(true);
@@ -283,9 +297,19 @@ public class Mqtt2MqttManager {
 
             String targetUrl = getDestinationMqttBrokerUrl();
 
-            logger.info("{} Connecting to {} ...", TAG, targetUrl);
+            //Default client id
+            String mqttClientId = String.format("%s%s", this.wldtId, "digital");
 
-            digitalTwinMqttBrokerClient = new MqttClient(targetUrl,String.format("%s%s", this.wldtId, "digital"), new MemoryPersistence());
+            //Check if a clientId is specified in the configuration and use it
+            if(this.mqtt2MqttConfiguration != null &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerClientId() != null &&
+                    this.mqtt2MqttConfiguration.getDestinationBrokerClientId().length() > 0
+            )
+                mqttClientId = this.mqtt2MqttConfiguration.getDestinationBrokerClientId();
+
+            logger.info("{} Client ({}) - Connecting to {} ...", TAG, mqttClientId, targetUrl);
+
+            digitalTwinMqttBrokerClient = new MqttClient(targetUrl, mqttClientId, new MemoryPersistence());
 
             MqttConnectOptions options = new MqttConnectOptions();
             options.setAutomaticReconnect(true);

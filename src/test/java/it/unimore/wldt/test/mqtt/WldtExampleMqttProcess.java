@@ -138,6 +138,10 @@ public class WldtExampleMqttProcess {
         mqtt2MqttConfiguration.setDestinationBrokerPort(DESTINATION_BROKER_PORT);
         mqtt2MqttConfiguration.setDeviceId(DEVICE_ID);
 
+        //If Required Specify the ClientId
+        //mqtt2MqttConfiguration.setBrokerClientId("physicalBrokerTestClientId");
+        //mqtt2MqttConfiguration.setDestinationBrokerClientId("digitalBrokerTestClientId");
+
         //Specify Topic List Configuration
         mqtt2MqttConfiguration.setTopicList(
                 Arrays.asList(

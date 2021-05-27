@@ -30,6 +30,8 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private String destinationBrokerTlsContext = "TLSv1.2";
 
+    private String destinationBrokerClientId = null;
+
     private String deviceId = null;
 
     private String brokerAddress = "127.0.0.1";
@@ -47,6 +49,8 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
     private String brokerServerCertPath;
 
     private String brokerTlsContext = "TLSv1.2";
+
+    private String brokerClientId = null;
 
     private List<MqttTopicDescriptor> topicList;
 
@@ -213,6 +217,22 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         this.brokerTlsContext = brokerTlsContext;
     }
 
+    public String getBrokerClientId() {
+        return brokerClientId;
+    }
+
+    public void setBrokerClientId(String brokerClientId) {
+        this.brokerClientId = brokerClientId;
+    }
+
+    public String getDestinationBrokerClientId() {
+        return destinationBrokerClientId;
+    }
+
+    public void setDestinationBrokerClientId(String destinationBrokerClientId) {
+        this.destinationBrokerClientId = destinationBrokerClientId;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("Mqtt2MqttConfiguration{");
@@ -226,6 +246,7 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         sb.append(", destinationBrokerSecureCommunicationRequired=").append(destinationBrokerSecureCommunicationRequired);
         sb.append(", destinationBrokerServerCertPath='").append(destinationBrokerServerCertPath).append('\'');
         sb.append(", destinationBrokerTlsContext='").append(destinationBrokerTlsContext).append('\'');
+        sb.append(", destinationBrokerClientId='").append(destinationBrokerClientId).append('\'');
         sb.append(", deviceId='").append(deviceId).append('\'');
         sb.append(", brokerAddress='").append(brokerAddress).append('\'');
         sb.append(", brokerPort=").append(brokerPort);
@@ -235,6 +256,7 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
         sb.append(", brokerSecureCommunicationRequired=").append(brokerSecureCommunicationRequired);
         sb.append(", brokerServerCertPath='").append(brokerServerCertPath).append('\'');
         sb.append(", brokerTlsContext='").append(brokerTlsContext).append('\'');
+        sb.append(", brokerClientId='").append(brokerClientId).append('\'');
         sb.append(", topicList=").append(topicList);
         sb.append('}');
         return sb.toString();
