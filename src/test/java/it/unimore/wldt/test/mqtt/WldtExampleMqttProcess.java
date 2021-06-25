@@ -7,6 +7,7 @@ import it.unimore.dipi.iot.wldt.processing.step.IdentityProcessingStep;
 import it.unimore.dipi.iot.wldt.worker.MirroringListener;
 import it.unimore.dipi.iot.wldt.worker.mqtt.Mqtt2MqttConfiguration;
 import it.unimore.dipi.iot.wldt.worker.mqtt.Mqtt2MqttWorker;
+import it.unimore.dipi.iot.wldt.worker.mqtt.MqttQosLevel;
 import it.unimore.dipi.iot.wldt.worker.mqtt.MqttTopicDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,7 +132,6 @@ public class WldtExampleMqttProcess {
 
         Mqtt2MqttConfiguration mqtt2MqttConfiguration = new Mqtt2MqttConfiguration();
 
-        mqtt2MqttConfiguration.setDtPublishingQoS(0);
         mqtt2MqttConfiguration.setBrokerAddress(SOURCE_BROKER_ADDRESS);
         mqtt2MqttConfiguration.setBrokerPort(SOURCE_BROKER_PORT);
         mqtt2MqttConfiguration.setDestinationBrokerAddress(DESTINATION_BROKER_ADDRESS);
@@ -148,11 +148,15 @@ public class WldtExampleMqttProcess {
                         new MqttTopicDescriptor(DEMO_TEMPERATURE_TOPIC_ID,
                                 DEMO_TEMPERATURE_RESOURCE_ID,
                                 "telemetry/{{device_id}}/resource/{{resource_id}}",
-                                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING),
+                                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING,
+                                MqttQosLevel.MQTT_QOS_2,
+                                MqttQosLevel.MQTT_QOS_2),
                         new MqttTopicDescriptor(DEMO_COMMAND_TOPIC_ID,
                                 DEMO_COMMAND_RESOURCE_ID,
                                 "command/{{device_id}}",
-                                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING)
+                                MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING,
+                                MqttQosLevel.MQTT_QOS_2,
+                                MqttQosLevel.MQTT_QOS_2)
                 )
         );
 

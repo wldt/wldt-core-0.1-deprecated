@@ -21,6 +21,10 @@ public class MqttTopicDescriptor {
 
     private String type;
 
+    private MqttQosLevel subscribeQosLevel = MqttQosLevel.MQTT_QOS_0;
+
+    private MqttQosLevel publishQosLevel = MqttQosLevel.MQTT_QOS_0;
+
     public MqttTopicDescriptor() {
     }
 
@@ -29,6 +33,15 @@ public class MqttTopicDescriptor {
         this.resourceId = resourceId;
         this.topic = topic;
         this.type = type;
+    }
+
+    public MqttTopicDescriptor(String id, String resourceId, String topic, String type, MqttQosLevel subscribeQosLevel, MqttQosLevel publishQosLevel) {
+        this.id = id;
+        this.resourceId = resourceId;
+        this.topic = topic;
+        this.type = type;
+        this.subscribeQosLevel = subscribeQosLevel;
+        this.publishQosLevel = publishQosLevel;
     }
 
     public String getId() {
@@ -63,6 +76,22 @@ public class MqttTopicDescriptor {
         this.type = type;
     }
 
+    public MqttQosLevel getSubscribeQosLevel() {
+        return subscribeQosLevel;
+    }
+
+    public void setSubscribeQosLevel(MqttQosLevel subscribeQosLevel) {
+        this.subscribeQosLevel = subscribeQosLevel;
+    }
+
+    public MqttQosLevel getPublishQosLevel() {
+        return publishQosLevel;
+    }
+
+    public void setPublishQosLevel(MqttQosLevel publishQosLevel) {
+        this.publishQosLevel = publishQosLevel;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("MqttTopicDescriptor{");
@@ -70,6 +99,8 @@ public class MqttTopicDescriptor {
         sb.append(", resourceId='").append(resourceId).append('\'');
         sb.append(", topic='").append(topic).append('\'');
         sb.append(", type='").append(type).append('\'');
+        sb.append(", subscribeQosLevel=").append(subscribeQosLevel);
+        sb.append(", publishQosLevel=").append(publishQosLevel);
         sb.append('}');
         return sb.toString();
     }

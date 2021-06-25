@@ -183,7 +183,7 @@ public class Mqtt2MqttManager {
                             if (targetMqttClient != null) {
 
                                 //Register to the target MQTT topic on the right client
-                                registerToMqttTopic(targetMqttClient, targetTopic, this::handleIncomingMessage);
+                                registerToMqttTopic(targetMqttClient, targetTopic, mqttTopicDescriptor.getSubscribeQosLevel(), this::handleIncomingMessage);
 
                                 //Save the configured topic and its descriptor in order to properly use the configuration when a new message is received
                                 configuredTopicMap.put(targetTopic, mqttTopicDescriptor);
@@ -358,10 +358,10 @@ public class Mqtt2MqttManager {
      * @throws WldtMqttModuleException
      * @throws MqttException
      */
-    private void registerToMqttTopic(IMqttClient mqttClient, String topic, IMqttMessageListener mqttMessageListener) throws WldtMqttModuleException, MqttException {
+    private void registerToMqttTopic(IMqttClient mqttClient, String topic, MqttQosLevel subscribeQosLevel, IMqttMessageListener mqttMessageListener) throws WldtMqttModuleException, MqttException {
 
         if(mqttClient != null && mqttClient.isConnected())
-            mqttClient.subscribe(topic, mqttMessageListener);
+            mqttClient.subscribe(topic, subscribeQosLevel.qosValue, mqttMessageListener);
         else
             throw new WldtMqttModuleException("MQTT Client = NULL or Not Connected ! Impossible to subscribe to a target topic !");
     }
@@ -376,7 +376,7 @@ public class Mqtt2MqttManager {
      * @param isRetained
      * @throws MqttException
      */
-    private void publishData(IMqttClient mqttClient, String topic, byte[] payload, boolean isRetained) throws MqttException {
+    private void publishData(IMqttClient mqttClient, String topic, byte[] payload, boolean isRetained, MqttQosLevel mqttQosLevel) throws MqttException {
 
         Timer.Context context = WldtMetricsManager.getInstance().getMqttModuleTimerContext(WldtMetricsManager.MQTT_OUTGOING_PUBLISH_DATA_TIME);
 
@@ -386,7 +386,7 @@ public class Mqtt2MqttManager {
 
             if (mqttClient.isConnected() && topic != null && payload.length > 0) {
                 MqttMessage msg = new MqttMessage(payload);
-                msg.setQos(this.mqtt2MqttConfiguration.getDtPublishingQoS());
+                msg.setQos(mqttQosLevel.qosValue);
                 msg.setRetained(isRetained);
                 mqttClient.publish(topic,msg);
                 logger.debug("Data Correctly Published !");
@@ -473,9 +473,9 @@ public class Mqtt2MqttManager {
     private void publishToTargetMqttChannel(String topic, byte[] payload, boolean isRetained, MqttTopicDescriptor configuredMqttTopicDescriptor) throws WldtMqttModuleException, MqttException {
 
         if (configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING))
-            publishData(digitalTwinMqttBrokerClient, topic, payload, isRetained);
+            publishData(digitalTwinMqttBrokerClient, topic, payload, isRetained, configuredMqttTopicDescriptor.getPublishQosLevel());
         else if (configuredMqttTopicDescriptor.getType().equals(MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING))
-            publishData(physicalDeviceMqttBrokerClient, topic, payload, isRetained);
+            publishData(physicalDeviceMqttBrokerClient, topic, payload, isRetained, configuredMqttTopicDescriptor.getPublishQosLevel());
         else
             throw new WldtMqttModuleException(String.format("Error Forwarding the message ! Configured Topic Type Error (%s) !", configuredMqttTopicDescriptor.getType()));
     }

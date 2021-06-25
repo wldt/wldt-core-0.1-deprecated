@@ -1,8 +1,5 @@
 dtForwardingEnabled: true
 
-#DT's publishing QoS
-dtPublishingQoS: 0
-
 #Physical Device Broker Parameters
 brokerAddress: 127.0.0.1
 brokerPort: 1883

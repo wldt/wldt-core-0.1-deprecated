@@ -12,8 +12,6 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     private boolean dtForwardingEnabled = true;
 
-    private int dtPublishingQoS = 0;
-
     private String destinationBrokerAddress;
 
     private int destinationBrokerPort;
@@ -71,14 +69,6 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
 
     public void setDestinationBrokerPort(int destinationBrokerPort) {
         this.destinationBrokerPort = destinationBrokerPort;
-    }
-
-    public int getDtPublishingQoS() {
-        return dtPublishingQoS;
-    }
-
-    public void setDtPublishingQoS(int dtPublishingQoS) {
-        this.dtPublishingQoS = dtPublishingQoS;
     }
 
     public boolean getDtForwardingEnabled() {
@@ -237,7 +227,6 @@ public class Mqtt2MqttConfiguration implements WldtWorkerConfiguration {
     public String toString() {
         final StringBuffer sb = new StringBuffer("Mqtt2MqttConfiguration{");
         sb.append("dtForwardingEnabled=").append(dtForwardingEnabled);
-        sb.append(", dtPublishingQoS=").append(dtPublishingQoS);
         sb.append(", destinationBrokerAddress='").append(destinationBrokerAddress).append('\'');
         sb.append(", destinationBrokerPort=").append(destinationBrokerPort);
         sb.append(", destinationBrokerClientUsername='").append(destinationBrokerClientUsername).append('\'');
