@@ -358,8 +358,7 @@ The first built-in IoT dedicated worker is implemented through the class `Mqtt2M
 providing a configurable way to automatically synchronize data between twins over MQTT. 
 The protocol is based on a Pub/Sub approach where categorization of data and resources 
 are inferred by topics definition (e.g., a device '01' can send a telemetry data for a resource 'abcd' 
-to the following topic /dev/01/res/abcd/). 
-An MQTT physical device can be at the same time a data producer 
+to the following topic /dev/01/res/abcd/). An MQTT physical device can be at the same time a data producer 
 (e.g., to publish for example telemetry data) or a consumer (e.g., to receive external commands).
 
 The topics structure is fully customizable allowing the developer to define how the Digital Twin can
@@ -374,40 +373,120 @@ external publishers and associated to a target MQTT broker. These topics can be 
 actions sent to the device. For this category the DT acts as a subscriber to receive
 data coming external entities and as a publisher to forward received commands/actions/messages to the associated physical counterpart.
 
-The following Figure depicts an example where ...
+The following Figure depicts an example where the physical device has two outgoing topics associated to 
+the telemetry of a temperature sensor and overheating events. The DT is interested to shadow both infomation
+and the related topics should be configured within the WLDT library as `MQTT_TOPIC_TYPE_DEVICE_OUTGOING`.
+In that case the DT will be a subscriber for the two topics and at the same time a publisher to expose them to other 
+external digital applications.
 
 <p align="center">
   <img class="center" src="images/mqtt_device_outgoing_topic.jpg" width="80%">
 </p>
 
-Developers can use up to four different types of topics 
-(also through a template placeholders like [Mustache](https://mustache.github.io/)) 
-to dynamically synchronize MQTT topics according to available device and resource information. 
-As illustrated in the following example, available topics typologies belong to: *telemetry*, *events* and 
-*command requests and responses* allowing the granular mirroring of a physical device trough topics mapping.
+In the following second example we highlight how the physical device supports two incoming topics in order 
+to receive information associated to external commands (e.g., turn on or off a light) and/or re-configuration information. 
+These two topics should be handled and configured within the WLDT library as `MQTT_TOPIC_TYPE_DEVICE_INCOMING` topics since 
+the DT will be a subscriber for the two topics and the data coming from external applications and a publisher to 
+forward received information to the physical device.
+
+<p align="center">
+  <img class="center" src="images/mqtt_device_incoming_topic.jpg" width="80%">
+</p>
+
+The WLDT class used to configure and shape the DT to handle target MQTT topics is `MqttTopicDescriptor`.
+It allows the developer to specify and configure the following aspect of the topic: 
+
+- `type`: if the topic is `MQTT_TOPIC_TYPE_DEVICE_OUTGOING` or `MQTT_TOPIC_TYPE_DEVICE_INCOMING`
+- `id`: an internal id useful to uniquely identify the topics configuration. It will be used to introduce dedicated
+ProcessingPipeline on the target topi
+- `topic`: the actual value of the topic used by the physical device (e.g., /telemetry/temp or /command)
+- `resourceId`: an optional field to specify if the topic is associated to a resource. This approach can be useful if
+the developer wants to keep a resource oriented modelling of the MQTT topic (inspired by a RESTful approach). 
+This resource id can be also used within the built-in placeholder/wildcard WLDT tools in order to simplify the
+configuration of resource oriented topics (see a following example).
+- `subscribeQosLevel`: specify the MQTT QoS level that the DT should use to subscribe to the target topic
+- `publishQosLevel`: specify the MQTT QoS level that the DT should use to publish on the target topic
+
+MQTT QoS levels have been also mapped into the enum called `MqttQosLevel` and expose the following three values to be
+easily used by the developers: i)  `MqttQosLevel.MQTT_QOS_0`; ii) `MqttQosLevel.MQTT_QOS_1`; iii) and `MqttQosLevel.MQTT_QOS_2`.
 
 The following example shows a WLDT implementation using the built-in MQTT to MQTT worker 
-to automatically create a digital twin of an existing MQTT physical object
-             
-```java             
-Mqtt2MqttConfiguration mqttConf = new Mqtt2MqttConfiguration();
-mqttConf.setOutgoingClientQoS(0);
-mqttConf.setDestinationBrokerAddress("127.0.0.1");
-mqttConf.setDestinationBrokerPort(1884);
-mqttConf.setDestinationBrokerBaseTopic("wldt");
-mqttConf.setDeviceId("id:97b904ada0f9");
-mqttConf.setDeviceTelemetryTopic("telemetry/{{device_id}}");
-mqttConf.setEventTopic("events/{{device_id}}");
-mqttConf.setBrokerAddress("127.0.0.1");
-mqttConf.setBrokerPort(1883);
+to automatically create a digital twin of an existing MQTT physical object.
 
-WldtEngine wldtEngine = new WldtEngine(new WldtConfiguration());
-wldtEngine.addNewWorker(
-	new Mqtt2MqttWorker(
-	wldtEngine.getWldtId(), 
-	mqttConf));
+As a first step we create the in order to shape how the DT should handle the MQTT communication with the device in terms
+of source (physical) and destination (digital) brokers. In that example they are different but they can also be the same.
+             
+```java
+Mqtt2MqttConfiguration mqtt2MqttConfiguration = new Mqtt2MqttConfiguration();
+mqtt2MqttConfiguration.setBrokerAddress("127.0.0.1");
+mqtt2MqttConfiguration.setBrokerPort(1883);
+mqtt2MqttConfiguration.setDestinationBrokerAddress("127.0.0.1");
+mqtt2MqttConfiguration.setDestinationBrokerPort(1884);
+mqtt2MqttConfiguration.setDeviceId("id:97b904ada0f9");
+```
+
+The next step is to add to the configuration the list of target topics: 
+
+```java
+mqtt2MqttConfiguration.setTopicList(
+    Arrays.asList(
+        new MqttTopicDescriptor("temperature_topic_id",
+            "temperature_resource_id",
+            "device/id:97b904ada0f9/telemetry/temp",
+            MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING,
+            MqttQosLevel.MQTT_QOS_2,
+            MqttQosLevel.MQTT_QOS_2),
+        new MqttTopicDescriptor("event_topic_id",
+            "overheating_event_id",
+            "device/id:97b904ada0f9/event/overheating",
+            MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING,
+            MqttQosLevel.MQTT_QOS_2,
+            MqttQosLevel.MQTT_QOS_2),
+        new MqttTopicDescriptor("command_topic_id",
+            "command_resource_id",
+            "device/id:97b904ada0f9/command",
+            MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING,
+            MqttQosLevel.MQTT_QOS_2,
+            MqttQosLevel.MQTT_QOS_2)
+        )
+    );
+```
+
+The next step is to create the WLDT Configuration and the associated Engine, create the `Mqtt2MqttWorker` with the
+new defined configuration, add the worker to the engine and then start it !
+
+```java
+WldtConfiguration wldtConfiguration = new WldtConfiguration();
+wldtConfiguration.setDeviceNameSpace("it.unimore.dipi.things");
+wldtConfiguration.setWldtBaseIdentifier("wldt");
+wldtConfiguration.setWldtStartupTimeSeconds(10);
+wldtConfiguration.setApplicationMetricsEnabled(false);
+
+WldtEngine wldtEngine = new WldtEngine(wldtConfiguration);
+
+Mqtt2MqttWorker mqtt2MqttWorker = new Mqtt2MqttWorker(wldtEngine.getWldtId(), mqtt2MqttConfiguration);
+
+wldtEngine.addNewWorker(mqtt2MqttWorker);
 wldtEngine.startWorkers();
 ```
+
+#Additional Configuration Options
+
+### MQTT Clients IDs
+
+If required developer can specify the client ids for both the physical and the digital broker
+
+```java
+mqtt2MqttConfiguration.setBrokerClientId("physicalBrokerTestClientId");
+mqtt2MqttConfiguration.setDestinationBrokerClientId("digitalBrokerTestClientId");
+```
+
+
+Developers can use up to four different types of topics
+(also through a template placeholders like [Mustache](https://mustache.github.io/))
+to dynamically synchronize MQTT topics according to available device and resource information.
+As illustrated in the following example, available topics typologies belong to: *telemetry*, *events* and
+*command requests and responses* allowing the granular mirroring of a physical device trough topics mapping.
 
 ### Built-in CoAP-to-CoAP Mirroring
 
