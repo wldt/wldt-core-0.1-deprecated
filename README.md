@@ -663,14 +663,14 @@ authentication and secure communication through the specification of server cert
 
 Exposed methods in the Mqtt2MqttConfiguration class are the following: 
 
-- setBrokerClientUsername(String username)
-- setBrokerClientPassword(String password)
-- setBrokerSecureCommunicationRequired(boolean isActive)
-- setBrokerTlsContext(String tlsContext)
-- setDestinationBrokerClientUsername(String username)
-- setDestinationBrokerClientPassword(String password)
-- setDestinationBrokerSecureCommunicationRequired(boolean isActive)
-- setDestinationBrokerTlsContext(String tlsContext)
+- `setBrokerClientUsername(String username)`
+- `setBrokerClientPassword(String password)`
+- `setBrokerSecureCommunicationRequired(boolean isActive)`
+- `setBrokerTlsContext(String tlsContext)`
+- `setDestinationBrokerClientUsername(String username)`
+- `setDestinationBrokerClientPassword(String password)`
+- `setDestinationBrokerSecureCommunicationRequired(boolean isActive)`
+- `setDestinationBrokerTlsContext(String tlsContext)`
 
 An example for the secure configuration of the destination broker with username/password, server certificate and TLS 
 is the following:
