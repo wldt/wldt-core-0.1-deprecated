@@ -470,7 +470,44 @@ wldtEngine.addNewWorker(mqtt2MqttWorker);
 wldtEngine.startWorkers();
 ```
 
-#Additional Configuration Options
+### Dynamic Topic Management & Configuration
+
+As previously anticipate the WLDT Library includes a built-in placeholder/wildcard WLDT tools in order to simplify the
+configuration of resource oriented topics. It uses the [Mustache](https://mustache.github.io/) library
+to dynamically synchronize MQTT topics according to available device and resource information. 
+
+The developer can use and automatically include into the configuration strings values associated to: 
+- `device_id`: The values configured into the `Mqtt2MqttConfiguration` (placeholder string `{{device_id}}`)
+- `resource_id`: The resource identifier specified directly into the `MqttTopicDescriptor` (placeholder string `{{resource_id}}`)
+
+Through this approach the previous example can be simplified as follows:
+
+```java
+mqtt2MqttConfiguration.setTopicList(
+    Arrays.asList(
+        new MqttTopicDescriptor("temperature_topic_id",
+            "temp",
+            "device/{{device_id}}/telemetry/{{resource_id}}",
+            MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING,
+            MqttQosLevel.MQTT_QOS_2,
+            MqttQosLevel.MQTT_QOS_2),
+        new MqttTopicDescriptor("event_topic_id",
+            "overheating",
+            "device/{{device_id}}/telemetry/{{resource_id}}",
+            MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_OUTGOING,
+            MqttQosLevel.MQTT_QOS_2,
+            MqttQosLevel.MQTT_QOS_2),
+        new MqttTopicDescriptor("command_topic_id",
+            "command_resource_id",
+            "device/{{device_id}}/telemetry/command",
+            MqttTopicDescriptor.MQTT_TOPIC_TYPE_DEVICE_INCOMING,
+            MqttQosLevel.MQTT_QOS_2,
+            MqttQosLevel.MQTT_QOS_2)
+        )
+    );
+```
+
+# Additional Configuration Options
 
 ### MQTT Clients IDs
 
@@ -481,12 +518,9 @@ mqtt2MqttConfiguration.setBrokerClientId("physicalBrokerTestClientId");
 mqtt2MqttConfiguration.setDestinationBrokerClientId("digitalBrokerTestClientId");
 ```
 
+### Security Configurations
 
-Developers can use up to four different types of topics
-(also through a template placeholders like [Mustache](https://mustache.github.io/))
-to dynamically synchronize MQTT topics according to available device and resource information.
-As illustrated in the following example, available topics typologies belong to: *telemetry*, *events* and
-*command requests and responses* allowing the granular mirroring of a physical device trough topics mapping.
+TBD ...
 
 ### Built-in CoAP-to-CoAP Mirroring
 
