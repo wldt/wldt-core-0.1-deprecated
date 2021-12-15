@@ -507,6 +507,144 @@ mqtt2MqttConfiguration.setTopicList(
     );
 ```
 
+# MQTT Processing Pipelines
+
+Dedicated WLDT ProcessingPipeline can be associated to each topic in order to customize the
+management of received and forwarded messages through the WDLT Digital Twin.
+Each ProcessingPipeline can be defined as the composition of one or multiple ProcessingStep
+defined by the developer. 
+
+Each step use as reference data structure the class `MqttPipelineData`
+containing the following information to handle and manipulate MQTT Data through Processing Pipelines:
+
+- `topic`: the value of the topic associated to the target data. It can be changed to dynamically handle incoming and outgoing
+topics from and to the DT
+- `payload`: the content of the current MQTT message. It can be changed by the pipeline
+- `mqttTopicDescriptor`: the reference to the configured `MqttTopicDescriptor` defined in the `Mqtt2MqttWorker`
+- `isRetained`: a flag to specify if the message should be handled as retained or note. It can also be changed by the pipeline
+
+Two examples of two different pipelines are presented below.
+
+In that first example a ProcessingPipeline is associated to the temperature telemetry topic
+providing three steps:
+
+- An `IdentityProcessingStep` that is just used to show a log of the incoming packet and payload
+- The `MqttAverageProcessingStep` dedicated to evaluate the average value of the last 10 received temperature samples
+- The `MqttTopicChangeStep` changes the output topic
+
+```java             
+//Add Processing Pipeline for target topics
+mqtt2MqttWorker.addTopicProcessingPipeline("temperature_topic_id",
+        new ProcessingPipeline(
+                new IdentityProcessingStep(),
+                new MqttAverageProcessingStep(),
+                new MqttTopicChangeStep()
+        )
+);
+```
+
+The definition of the `MqttTopicChangeStep` implementing the Java Interface `ProcessingStep` 
+is illustrated in the following code example: 
+
+```java
+public class MqttTopicChangeStep implements ProcessingStep {
+
+    private static final Logger logger = LoggerFactory.getLogger(MqttTopicChangeStep.class);
+    
+    public MqttTopicChangeStep() {
+    }
+
+    @Override
+    public void execute(PipelineCache pipelineCache, PipelineData incomingData, ProcessingStepListener listener) {
+
+        MqttPipelineData data = null;
+
+        if(incomingData instanceof MqttPipelineData)
+            data = (MqttPipelineData)incomingData;
+        else if(listener != null)
+            listener.onStepError(this, incomingData, String.format("Wrong PipelineData for MqttAverageProcessingStep ! Data type: %s", incomingData.getClass()));
+        else
+            logger.error("Wrong PipelineData for MqttAverageProcessingStep ! Data type: {}", incomingData.getClass());
+
+        try{
+            if(listener != null && Objects.requireNonNull(data).getPayload() != null) {
+                String newTopic = String.format("%s/%s", "wldt-pipeline", data.getTopic());
+                listener.onStepDone(this, Optional.of(new MqttPipelineData(newTopic, data.getMqttTopicDescriptor(), data.getPayload(), data.isRetained())));
+            }
+            else
+                logger.error("Processing Step Listener or MqttProcessingInfo Data = Null ! Skipping processing step");
+        }catch (Exception e){
+            logger.error("MQTT Processing Step Error: {}", e.getLocalizedMessage());
+            if(listener != null)
+                listener.onStepError(this, data, e.getLocalizedMessage());
+        }
+    }
+}
+```
+
+In the second example a ProcessingPipeline is associated to the command topic providing two steps:
+- An `IdentityProcessingStep` that is just used to show a log of the incoming packet and payload
+- The `MqttPayloadChangeStep` changes the payload in order to adapt the command received from
+  an external application into the format supported by the physical device
+
+```java 
+mqtt2MqttWorker.addTopicProcessingPipeline(DEMO_COMMAND_TOPIC_ID,
+        new ProcessingPipeline(
+                new IdentityProcessingStep(),
+                new MqttPayloadChangeStep()
+        )
+);
+```
+
+The implementation of the `MqttPayloadChangeStep` is illustrated in the following code block.
+It uses an additional demo class `DemoDataStructure` to change the payload into a new data structure and dynamically
+change the payload that will be handled by the DT
+
+```java
+public class MqttPayloadChangeStep implements ProcessingStep {
+
+    private static final Logger logger = LoggerFactory.getLogger(MqttPayloadChangeStep.class);
+
+    private ObjectMapper mapper;
+
+    public MqttPayloadChangeStep() {
+        this.mapper = new ObjectMapper();
+        this.mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+
+    @Override
+    public void execute(PipelineCache pipelineCache, PipelineData incomingData, ProcessingStepListener listener) {
+
+        MqttPipelineData data = null;
+
+        if(incomingData instanceof MqttPipelineData)
+            data = (MqttPipelineData)incomingData;
+        else if(listener != null)
+            listener.onStepError(this, incomingData, String.format("Wrong PipelineData for MqttAverageProcessingStep ! Data type: %s", incomingData.getClass()));
+        else
+            logger.error("Wrong PipelineData for MqttAverageProcessingStep ! Data type: {}", incomingData.getClass());
+
+        try{
+
+            if(listener != null && Objects.requireNonNull(data).getPayload() != null) {
+                listener.onStepDone(this,
+                        Optional.of(new MqttPipelineData(data.getTopic(),
+                                data.getMqttTopicDescriptor(),
+                                mapper.writeValueAsBytes(new DemoDataStructure(data.getPayload())), data.isRetained())));
+            }
+            else
+                logger.error("Processing Step Listener or MqttProcessingInfo Data = Null ! Skipping processing step");
+
+        }catch (Exception e){
+            logger.error("MQTT Processing Step Error: {}", e.getLocalizedMessage());
+
+            if(listener != null)
+                listener.onStepError(this, data, e.getLocalizedMessage());
+        }
+    }
+}
+```
+
 # Additional Configuration Options
 
 ### MQTT Clients IDs
