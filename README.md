@@ -645,7 +645,7 @@ public class MqttPayloadChangeStep implements ProcessingStep {
 }
 ```
 
-# Additional Configuration Options
+## Additional Configuration Options
 
 ### MQTT Clients IDs
 
@@ -656,9 +656,33 @@ mqtt2MqttConfiguration.setBrokerClientId("physicalBrokerTestClientId");
 mqtt2MqttConfiguration.setDestinationBrokerClientId("digitalBrokerTestClientId");
 ```
 
-### Security Configurations
+### Authentication & Security Configurations
 
-TBD ...
+For both source (e.g., physical) and destination (e.g., digital) brokers it is possible to specify 
+authentication and secure communication through the specification of server certificate and TLS context information.
+
+Exposed methods in the Mqtt2MqttConfiguration class are the following: 
+
+- setBrokerClientUsername(String username)
+- setBrokerClientPassword(String password)
+- setBrokerSecureCommunicationRequired(boolean isActive)
+- setBrokerTlsContext(String tlsContext)
+- setDestinationBrokerClientUsername(String username)
+- setDestinationBrokerClientPassword(String password)
+- setDestinationBrokerSecureCommunicationRequired(boolean isActive)
+- setDestinationBrokerTlsContext(String tlsContext)
+
+An example for the secure configuration of the destination broker with username/password, server certificate and TLS 
+is the following:
+
+```java
+mqtt2MqttConfiguration.setDestinationBrokerClientUsername(MQTT_USERNAME);
+mqtt2MqttConfiguration.setDestinationBrokerClientPassword(sasToken);
+
+mqtt2MqttConfiguration.setDestinationBrokerSecureCommunicationRequired(true);
+mqtt2MqttConfiguration.setDestinationBrokerServerCertPath(caCertFile);
+mqtt2MqttConfiguration.setBrokerTlsContext("TLSv1.2");
+```
 
 ### Built-in CoAP-to-CoAP Mirroring
 
