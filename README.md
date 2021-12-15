@@ -1,4 +1,34 @@
-# WhiteLabel Digital Twin Framework - Core Library
+# WhiteLabel Digital Twin Framework
+
+## Maven Dependency Import
+
+You can directly import the library in your project by adding the following repository tag into your pom.xml
+
+```xml
+<repositories>
+    <repository>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+        <id>central</id>
+        <name>dipi-maven-libs-release</name>
+        <url>https://dipiresearch.jfrog.io/artifactory/dipi-maven-libs-release</url>
+    </repository>
+</repositories>
+```
+
+After that step you can specify and add the dependency to the dependency list adding the following xml structure: 
+
+```xml
+<dependency>
+    <groupId>it.unimore.dipi.iot</groupId>
+    <artifactId>wldt-core</artifactId>
+    <version>0.1.3.6</version>
+    <type>jar</type>
+</dependency>
+```
+
+## Core Library
 
 Core library and repository of the White Label Digital Twin (WLDT) 
 Framework. The WLDT intends to maximize modularity, re-usability and flexibility in order to effectively mirror 
