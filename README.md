@@ -28,7 +28,7 @@ as independent software agents and packed as microservices.
 
 
 <p align="center">
-  <img class="center" src="images/wldt_structure.png" width="80%">
+  <img class="center" src="images/wldt_structure.jpeg" width="80%">
 </p>
 
 The core layer of the solution is the WLDT Engine designed 
@@ -290,7 +290,7 @@ private void emulateExternalGetRequest(int roundIndex) {
 ```
 
 <p align="center">
-  <img class="center" src="images/example_metrics.png" width="80%">
+  <img class="center" src="images/example_metrics.jpeg" width="80%">
 </p>
 
 The WLDT metric system provides by default two reporting option allowing the developer 
@@ -352,7 +352,7 @@ public static void main(String[] args)  {
     }
 }
 ```
-### Built-in MQTT-to-MQTT Mirroring
+## Built-in MQTT-to-MQTT Mirroring
 
 The first built-in IoT dedicated worker is implemented through the class `Mqtt2MqttWorker` 
 providing a configurable way to automatically synchronize data between twins over MQTT. 
@@ -507,7 +507,7 @@ mqtt2MqttConfiguration.setTopicList(
     );
 ```
 
-# MQTT Processing Pipelines
+### MQTT Processing Pipelines
 
 Dedicated WLDT ProcessingPipeline can be associated to each topic in order to customize the
 management of received and forwarded messages through the WDLT Digital Twin.
@@ -645,9 +645,9 @@ public class MqttPayloadChangeStep implements ProcessingStep {
 }
 ```
 
-## Additional Configuration Options
+### Additional Configuration Options
 
-### MQTT Clients IDs
+#### MQTT Clients IDs
 
 If required developer can specify the client ids for both the physical and the digital broker
 
@@ -656,7 +656,7 @@ mqtt2MqttConfiguration.setBrokerClientId("physicalBrokerTestClientId");
 mqtt2MqttConfiguration.setDestinationBrokerClientId("digitalBrokerTestClientId");
 ```
 
-### Authentication & Security Configurations
+#### Authentication & Security Configurations
 
 For both source (e.g., physical) and destination (e.g., digital) brokers it is possible to specify 
 authentication and secure communication through the specification of server certificate and TLS context information.
@@ -684,7 +684,7 @@ mqtt2MqttConfiguration.setDestinationBrokerServerCertPath(caCertFile);
 mqtt2MqttConfiguration.setBrokerTlsContext("TLSv1.2");
 ```
 
-### Built-in CoAP-to-CoAP Mirroring
+## Built-in CoAP-to-CoAP Mirroring
 
 The second core built-in IoT worker is dedicated to the seamless mirroring 
 of standard CoAP physical objects. The CoAP protocol through the use of CoRE Link Format
