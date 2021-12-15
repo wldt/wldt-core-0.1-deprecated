@@ -43,7 +43,10 @@ public class MqttPayloadChangeStep implements ProcessingStep {
         try{
 
             if(listener != null && Objects.requireNonNull(data).getPayload() != null) {
-                listener.onStepDone(this, Optional.of(new MqttPipelineData(data.getTopic(), data.getMqttTopicDescriptor(), mapper.writeValueAsBytes(new DemoDataStructure(data.getPayload())), data.isRetained())));
+                listener.onStepDone(this,
+                        Optional.of(new MqttPipelineData(data.getTopic(),
+                                data.getMqttTopicDescriptor(),
+                                mapper.writeValueAsBytes(new DemoDataStructure(data.getPayload())), data.isRetained())));
             }
             else
                 logger.error("Processing Step Listener or MqttProcessingInfo Data = Null ! Skipping processing step");

@@ -291,6 +291,7 @@ public class WldtCoapResource extends CoapResource {
             }
 
         }catch (Exception e){
+            e.printStackTrace();
             logger.error("Error sending response to the external client for incoming request: {} -> Exception: {}", exchange.getRequestCode(), e.getLocalizedMessage());
         }
         finally {
