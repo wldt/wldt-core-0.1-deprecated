@@ -6,4 +6,5 @@ public interface DigitalTwinStatePropertyListener {
 
     public void onChange(String propertyKey, Optional<DigitalTwinStateProperty<?>> previousDtStateProperty, Optional<DigitalTwinStateProperty<?>> dtStateProperty);
 
+    public void onDelete(String propertyKey, Optional<DigitalTwinStateProperty<?>> dtStateProperty);
 }

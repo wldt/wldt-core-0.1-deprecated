@@ -15,6 +15,7 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
 
     public DefaultDigitalTwinState() {
         this.properties = new HashMap<>();
+        this.listenerList = new ArrayList<>();
         this.propertyListenerMap = new HashMap<>();
     }
 
@@ -54,7 +55,13 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         if(propertyKey == null)
             throw new WldtDigitalTwinStateException("DefaultDigitalTwinState: propertyKey = Null !");
 
-        if(this.properties.containsKey(propertyKey) && this.properties.get(propertyKey) != null)
+        if(!this.properties.containsKey(propertyKey))
+            throw new WldtDigitalTwinStateException(String.format("DefaultDigitalTwinState: property with Key: %s not found !", propertyKey));
+
+        if(!this.properties.get(propertyKey).isReadable())
+            throw new WldtDigitalTwinStateException(String.format("DefaultDigitalTwinState: property with Key: %s not readable !", propertyKey));
+
+        if(this.properties.get(propertyKey) != null)
             return Optional.of(this.properties.get(propertyKey));
         else
             return Optional.empty();
@@ -72,6 +79,9 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         if(!this.properties.containsKey(propertyKey))
             throw new WldtDigitalTwinStateException(String.format("DefaultDigitalTwinState: property with Key: %s not found !", propertyKey));
 
+        if(!this.properties.get(propertyKey).isWritable())
+            throw new WldtDigitalTwinStateException(String.format("DefaultDigitalTwinState: property with Key: %s not writable !", propertyKey));
+
         //Check if there is a mismatch in the key between the propertyKey and statePropertyObject
         if(!propertyKey.equals(dtStateProperty.getKey()))
             throw new WldtDigitalTwinStateException(String.format("DefaultDigitalTwinState: Mismatch between provided Key:{} and Property-Key: {} !", propertyKey, dtStateProperty.getKey()));
@@ -80,7 +90,7 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         this.properties.put(propertyKey, dtStateProperty);
 
         notifyStateListenersPropertyUpdated(propertyKey, originalValue, dtStateProperty);
-        notifyPropertyUpdateListeners(propertyKey, originalValue, dtStateProperty);
+        notifyPropertyUpdatedListeners(propertyKey, originalValue, dtStateProperty);
     }
 
     @Override
@@ -99,6 +109,11 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         this.properties.remove(propertyKey);
 
         notifyStateListenersPropertyDeleted(propertyKey, originalValue);
+
+        notifyPropertyDeletedListeners(propertyKey, originalValue);
+
+        //Remove all listener for the target property
+        this.propertyListenerMap.remove(propertyKey);
     }
 
     @Override
@@ -193,7 +208,7 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         }
     }
 
-    private void notifyPropertyUpdateListeners(String propertyKey, DigitalTwinStateProperty<?> previousDigitalTwinStateProperty, DigitalTwinStateProperty<?> digitalTwinStateProperty){
+    private void notifyPropertyUpdatedListeners(String propertyKey, DigitalTwinStateProperty<?> previousDigitalTwinStateProperty, DigitalTwinStateProperty<?> digitalTwinStateProperty){
         try{
             if(this.propertyListenerMap != null && this.propertyListenerMap.containsKey(propertyKey) && this.propertyListenerMap.get(propertyKey) != null)
                 for(DigitalTwinStatePropertyListener listener : this.propertyListenerMap.get(propertyKey))
@@ -214,6 +229,18 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
                 logger.warn("notifyStateListenersPropertyDeleted() -> DT State Listener List Empty ! No one is observing ...");
         }catch (Exception e){
             logger.error("notifyStateListenersPropertyDeleted() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
+        }
+    }
+
+    private void notifyPropertyDeletedListeners(String propertyKey,DigitalTwinStateProperty<?> digitalTwinStateProperty){
+        try{
+            if(this.propertyListenerMap != null && this.propertyListenerMap.containsKey(propertyKey) && this.propertyListenerMap.get(propertyKey) != null)
+                for(DigitalTwinStatePropertyListener listener : this.propertyListenerMap.get(propertyKey))
+                    listener.onDelete(propertyKey, Optional.ofNullable(digitalTwinStateProperty));
+            else
+                logger.warn("notifyPropertyUpdateListeners() -> DT Property Listener List Empty for propertyKey: {} ! No one is observing ...", propertyKey);
+        }catch (Exception e){
+            logger.error("notifyPropertyUpdateListeners() -> Error Notifying State Listeners for propertyKey: {} ! Error: {}", propertyKey, e.getLocalizedMessage());
         }
     }
 

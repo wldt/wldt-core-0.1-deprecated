@@ -1,8 +1,8 @@
 package it.unimore.dipi.iot.wldt.state;
 
+import it.unimore.dipi.iot.wldt.exception.WldtDigitalTwinStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.ArrayList;
 import java.util.Objects;
 
 public class DigitalTwinStateProperty<T> {
@@ -14,11 +14,14 @@ public class DigitalTwinStateProperty<T> {
     private boolean readable = true;
     private boolean writable = true;
 
-    private DigitalTwinStateProperty() {
+    public DigitalTwinStateProperty() {
     }
 
-    public DigitalTwinStateProperty(String key, T value, boolean readable, boolean writable) {
-        this();
+    public DigitalTwinStateProperty(String key, T value, boolean readable, boolean writable) throws WldtDigitalTwinStateException {
+
+        if(key == null || value == null)
+            throw new WldtDigitalTwinStateException("Error creating DigitalTwinStateProperty ! Key or Value = Null !");
+
         this.key = key;
         this.value = value;
         this.readable = readable;
@@ -62,12 +65,12 @@ public class DigitalTwinStateProperty<T> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DigitalTwinStateProperty<?> that = (DigitalTwinStateProperty<?>) o;
-        return key.equals(that.key);
+        return readable == that.readable && writable == that.writable && key.equals(that.key) && value.equals(that.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key);
+        return Objects.hash(key, value, readable, writable);
     }
 
     @Override
