@@ -3,7 +3,8 @@ package it.unimore.dipi.iot.wldt.engine;
 import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
 import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.worker.WorkerIdentifier;
+import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
+import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import it.unimore.dipi.iot.wldt.worker.WldtWorker;
 import it.unimore.dipi.iot.wldt.utils.WldtUtils;
 import org.slf4j.Logger;
@@ -38,6 +39,8 @@ public class WldtEngine {
 
     private WldtConfiguration wldtConfiguration;
 
+    private IDigitalTwinState digitalTwinState = null;
+
     public WldtEngine(WldtConfiguration wldtConfiguration) throws WldtConfigurationException {
         this.wldtConfiguration = wldtConfiguration;
         init();
@@ -52,6 +55,9 @@ public class WldtEngine {
     private void init() throws WldtConfigurationException {
 
         this.wldtId = WldtUtils.generateRandomWldtId(this.wldtConfiguration.getDeviceNameSpace(), this.wldtConfiguration.getWldtBaseIdentifier());
+
+        //Initialize the Digital Twin State
+        this.digitalTwinState = new DefaultDigitalTwinState();
 
         this.workerList = new ArrayList<>();
 
