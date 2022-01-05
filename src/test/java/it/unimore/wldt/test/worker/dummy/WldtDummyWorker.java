@@ -1,4 +1,4 @@
-package it.unimore.dipi.iot.wldt.worker.dummy;
+package it.unimore.wldt.test.worker.dummy;
 
 import com.codahale.metrics.Timer;
 import it.unimore.dipi.iot.wldt.cache.IWldtCache;

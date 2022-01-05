@@ -1,12 +1,9 @@
-package it.unimore.wldt.test.dummy;
+package it.unimore.wldt.test.worker.dummy;
 
 import it.unimore.dipi.iot.wldt.cache.WldtCache;
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
 import it.unimore.dipi.iot.wldt.processing.ProcessingPipeline;
-import it.unimore.dipi.iot.wldt.worker.dummy.DummyProcessingStep;
-import it.unimore.dipi.iot.wldt.worker.dummy.DummyWorkerConfiguration;
-import it.unimore.dipi.iot.wldt.worker.dummy.WldtDummyWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Arrays;

@@ -5,8 +5,6 @@ import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.worker.WorkerIdentifier;
 import it.unimore.dipi.iot.wldt.worker.WldtWorker;
-import it.unimore.dipi.iot.wldt.worker.coap.Coap2CoapWorker;
-import it.unimore.dipi.iot.wldt.worker.mqtt.Mqtt2MqttWorker;
 import it.unimore.dipi.iot.wldt.utils.WldtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +125,9 @@ public class WldtEngine {
 
     public void loadConfigurationFileProtocolModules() throws WldtConfigurationException {
 
+        logger.error("{} WldtEngine.loadConfigurationFileProtocolModules() -> NOT IMPLEMENTED !", TAG);
+
+        /*
         if(this.wldtConfiguration.getActiveProtocolList() == null || this.wldtConfiguration.getActiveProtocolList().size() == 0)
             logger.debug("{} Provided Protocol Modules List is EMPTY !", TAG);
         else {
@@ -137,6 +138,7 @@ public class WldtEngine {
                     this.addNewWorker(new Coap2CoapWorker());
             }
         }
+        */
     }
 
     /*
