@@ -1,6 +1,6 @@
 package it.unimore.wldt.test.state;
 
-import it.unimore.dipi.iot.wldt.exception.WldtDigitalTwinStateException;
+import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.state.*;
 import org.junit.Test;
 
@@ -31,12 +31,12 @@ public class DigitalTwinStatePropertyObserverTester {
     private Optional<DigitalTwinStateProperty<?>>  secondObserverReceivedProperty;
     private String secondObserverReceivedPropertyKey;
 
-    private void initTestDtState() throws WldtDigitalTwinStateException {
+    private void initTestDtState() {
         //Init DigitaTwin State
         digitalTwinState = new DefaultDigitalTwinState();
     }
 
-    private void createProperty() throws WldtDigitalTwinStateException {
+    private void createProperty() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException {
         testProperty1 = new DigitalTwinStateProperty<>();
         testProperty1.setKey(TEST_KEY_0001);
         testProperty1.setReadable(true);
@@ -47,7 +47,7 @@ public class DigitalTwinStatePropertyObserverTester {
     }
 
     @Test
-    public void observePropertyUpdate() throws WldtDigitalTwinStateException, InterruptedException {
+    public void observePropertyUpdate() throws WldtDigitalTwinStateException, InterruptedException, WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException {
 
         //Init DigitaTwin State
         initTestDtState();
@@ -84,7 +84,7 @@ public class DigitalTwinStatePropertyObserverTester {
     }
 
     @Test
-    public void multipleObserversPropertyUpdate() throws WldtDigitalTwinStateException, InterruptedException {
+    public void multipleObserversPropertyUpdate() throws WldtDigitalTwinStateException, InterruptedException, WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException {
 
         //Init DigitaTwin State
         initTestDtState();
@@ -136,7 +136,7 @@ public class DigitalTwinStatePropertyObserverTester {
     }
 
     @Test
-    public void observePropertyDelete() throws WldtDigitalTwinStateException, InterruptedException {
+    public void observePropertyDelete() throws WldtDigitalTwinStateException, InterruptedException, WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException {
 
         //Init DigitaTwin State
         initTestDtState();

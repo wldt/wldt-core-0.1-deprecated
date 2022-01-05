@@ -13,6 +13,7 @@ public class DigitalTwinStateProperty<T> {
     private T value;
     private boolean readable = true;
     private boolean writable = true;
+    private boolean exposed = true;
 
     public DigitalTwinStateProperty() {
     }
@@ -26,6 +27,18 @@ public class DigitalTwinStateProperty<T> {
         this.value = value;
         this.readable = readable;
         this.writable = writable;
+    }
+
+    public DigitalTwinStateProperty(String key, T value, boolean readable, boolean writable, boolean exposed) throws WldtDigitalTwinStateException {
+
+        if(key == null || value == null)
+            throw new WldtDigitalTwinStateException("Error creating DigitalTwinStateProperty ! Key or Value = Null !");
+
+        this.key = key;
+        this.value = value;
+        this.readable = readable;
+        this.writable = writable;
+        this.exposed = exposed;
     }
 
     public String getKey() {
@@ -60,17 +73,25 @@ public class DigitalTwinStateProperty<T> {
         this.writable = writable;
     }
 
+    public boolean isExposed() {
+        return exposed;
+    }
+
+    public void setExposed(boolean exposed) {
+        this.exposed = exposed;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DigitalTwinStateProperty<?> that = (DigitalTwinStateProperty<?>) o;
-        return readable == that.readable && writable == that.writable && key.equals(that.key) && value.equals(that.value);
+        return readable == that.readable && writable == that.writable && exposed == that.exposed && key.equals(that.key) && value.equals(that.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value, readable, writable);
+        return Objects.hash(key, value, readable, writable, exposed);
     }
 
     @Override
@@ -80,6 +101,7 @@ public class DigitalTwinStateProperty<T> {
         sb.append(", value=").append(value);
         sb.append(", readable=").append(readable);
         sb.append(", writable=").append(writable);
+        sb.append(", exposed=").append(exposed);
         sb.append('}');
         return sb.toString();
     }
