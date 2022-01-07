@@ -4,17 +4,16 @@ import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EventBus {
 
     private static final Logger logger = LoggerFactory.getLogger(EventBus.class);
 
     private static EventBus instance = null;
-    private Map<String, List<EventListener>> subscriberMap = null;
+    private Map<String, List<SubscriberInfo>> subscriberMap = null;
+
+    private IEventLogger eventLogger = null;
 
     private EventBus(){
         this.subscriberMap = new HashMap<>();
@@ -26,20 +25,30 @@ public class EventBus {
         return instance;
     }
 
-    public void publishEvent(EventMessage eventMessage) throws EventBusException {
+    public void setEventLogger(IEventLogger eventLogger){
+        this.eventLogger = eventLogger;
+    }
+
+    public void publishEvent(String publisherId, EventMessage<?> eventMessage) throws EventBusException {
         if(this.subscriberMap == null)
             throw new EventBusException("EventBus-publishEvent() -> Error: SubscriberMap = NULL !");
 
-        if(eventMessage == null || eventMessage.getType() == null || (eventMessage.getType() != null && eventMessage.getType().length() == 0))
-            throw new EventBusException(String.format("EventBus-publishEvent() -> Error: eventMessage = NULL or event-type (%s) is invalid !", eventMessage != null ? eventMessage.getType() : "null"));
+        if(eventMessage == null || eventMessage.getTopic() == null || (eventMessage.getTopic() != null && eventMessage.getTopic().length() == 0))
+            throw new EventBusException(String.format("EventBus-publishEvent() -> Error: eventMessage = NULL or event-type (%s) is invalid !", eventMessage != null ? eventMessage.getTopic() : "null"));
 
-        if(this.subscriberMap.containsKey(eventMessage.getType()) && this.subscriberMap.get(eventMessage.getType()).size() > 0)
-            this.subscriberMap.get(eventMessage.getType()).forEach(eventListener -> {
-                eventListener.onEvent(eventMessage);
+        if(eventLogger != null)
+            eventLogger.logEventPublish(publisherId, eventMessage);
+
+        if(this.subscriberMap.containsKey(eventMessage.getTopic()) && this.subscriberMap.get(eventMessage.getTopic()).size() > 0)
+            this.subscriberMap.get(eventMessage.getTopic()).forEach(subscriberInfo -> {
+                subscriberInfo.getEventListener().onEvent(Optional.ofNullable(eventMessage));
+
+                if(eventLogger != null)
+                    eventLogger.logEventForwarded(subscriberInfo.getId(), publisherId, eventMessage);
             });
     }
 
-    public void subscribe(EventFilter eventFilter, EventListener eventListener) throws EventBusException{
+    public void subscribe(String subscriberId, EventFilter eventFilter, EventListener eventListener) throws EventBusException{
 
         if(this.subscriberMap == null)
             throw new EventBusException("EventBus-subscribe() -> Error: SubscriberMap = NULL !");
@@ -52,12 +61,15 @@ public class EventBus {
             if (!this.subscriberMap.containsKey(eventType))
                 this.subscriberMap.put(eventType, new ArrayList<>());
 
-            this.subscriberMap.get(eventType).add(eventListener);
+            this.subscriberMap.get(eventType).add(new SubscriberInfo(subscriberId, eventListener));
             eventListener.onSubscribe();
+
+            if(eventLogger != null)
+                eventLogger.logClientSubscription(subscriberId);
         }
     }
 
-    public void unSubscribe(EventFilter eventFilter, EventListener eventListener) throws EventBusException{
+    public void unSubscribe(String subscriberId, EventFilter eventFilter, EventListener eventListener) throws EventBusException{
 
         if(this.subscriberMap == null)
             throw new EventBusException("EventBus-unSubscribe() -> Error: SubscriberMap = NULL !");
@@ -65,10 +77,15 @@ public class EventBus {
         if(eventFilter == null || eventListener == null)
             throw new EventBusException("EventBus-unSubscribe() -> Error: EventFilter = NULL or EventLister = NULL !");
 
+        SubscriberInfo subscriberInfo = new SubscriberInfo(subscriberId, eventListener);
+
         for(String eventType: eventFilter) {
-            if(this.subscriberMap.get(eventType) != null && this.subscriberMap.get(eventType).contains(eventListener)) {
-                this.subscriberMap.get(eventType).remove(eventListener);
+            if(this.subscriberMap.get(eventType) != null && this.subscriberMap.get(eventType).contains(subscriberInfo)) {
+                this.subscriberMap.get(eventType).remove(subscriberInfo);
                 eventListener.onUnSubscribe();
+
+                if(eventLogger != null)
+                    eventLogger.logClientUnSubscription(subscriberId);
             }
         }
     }

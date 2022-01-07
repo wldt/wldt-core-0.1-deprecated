@@ -2,11 +2,11 @@ package it.unimore.dipi.iot.wldt.event;
 
 import java.util.*;
 
-public class EventMessage {
+public class EventMessage<T> {
 
     private String id;
-    private String type;
-    private Object body;
+    private String topic;
+    private T body;
     private Map<String, Object> metadata;
     private long creationTimestamp;
 
@@ -16,37 +16,37 @@ public class EventMessage {
         this.creationTimestamp = System.currentTimeMillis();
     }
 
-    public EventMessage(String type) {
+    public EventMessage(String topic) {
         this();
-        this.type = type;
+        this.topic = topic;
     }
 
-    public EventMessage(String type, Object body) {
+    public EventMessage(String topic, T body) {
         this();
-        this.type = type;
+        this.topic = topic;
         this.body = body;
     }
 
-    public EventMessage(String type, Object body, Map<String, Object> metadata) {
+    public EventMessage(String topic, T body, Map<String, Object> metadata) {
         this();
-        this.type = type;
+        this.topic = topic;
         this.body = body;
         this.metadata = metadata;
     }
 
-    public String getType() {
-        return type;
+    public String getTopic() {
+        return topic;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 
-    public Object getBody() {
+    public T getBody() {
         return body;
     }
 
-    public void setBody(Object body) {
+    public void setBody(T body) {
         this.body = body;
     }
 
@@ -77,8 +77,16 @@ public class EventMessage {
             return Optional.empty();
     }
 
+    private void setId(String id){
+        this.id = id;
+    }
+
     public String getId() {
         return id;
+    }
+
+    private void setCreationTimestamp(long creationTimestamp){
+        this.creationTimestamp = creationTimestamp;
     }
 
     public long getCreationTimestamp() {
@@ -89,8 +97,8 @@ public class EventMessage {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        EventMessage that = (EventMessage) o;
-        return id.equals(that.id);
+        EventMessage<?> that = (EventMessage<?>) o;
+        return id.equals(that.id) && topic.equals(that.topic);
     }
 
     @Override
@@ -102,7 +110,7 @@ public class EventMessage {
     public String toString() {
         final StringBuilder sb = new StringBuilder("EventMessage{");
         sb.append("id='").append(id).append('\'');
-        sb.append(", type='").append(type).append('\'');
+        sb.append(", topic='").append(topic).append('\'');
         sb.append(", body=").append(body);
         sb.append(", metadata=").append(metadata);
         sb.append(", creationTimestamp=").append(creationTimestamp);
