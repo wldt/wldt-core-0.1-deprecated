@@ -6,6 +6,7 @@ public class EventMessage<T> {
 
     private String id;
     private String type;
+    private String contentType;
     private T body;
     private Map<String, Object> metadata;
     private long creationTimestamp;
@@ -25,6 +26,7 @@ public class EventMessage<T> {
         this();
         this.type = type;
         this.body = body;
+        this.contentType = body.getClass().getName();
     }
 
     public EventMessage(String type, T body, Map<String, Object> metadata) {
@@ -32,6 +34,7 @@ public class EventMessage<T> {
         this.type = type;
         this.body = body;
         this.metadata = metadata;
+        this.contentType = body.getClass().getName();
     }
 
     public String getType() {
@@ -48,6 +51,7 @@ public class EventMessage<T> {
 
     public void setBody(T body) {
         this.body = body;
+        this.contentType = body.getClass().getName();
     }
 
     public Map<String, Object> getMetadata() {
@@ -93,6 +97,14 @@ public class EventMessage<T> {
         return creationTimestamp;
     }
 
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -110,7 +122,8 @@ public class EventMessage<T> {
     public String toString() {
         final StringBuilder sb = new StringBuilder("EventMessage{");
         sb.append("id='").append(id).append('\'');
-        sb.append(", topic='").append(type).append('\'');
+        sb.append(", type='").append(type).append('\'');
+        sb.append(", contentType='").append(contentType).append('\'');
         sb.append(", body=").append(body);
         sb.append(", metadata=").append(metadata);
         sb.append(", creationTimestamp=").append(creationTimestamp);
