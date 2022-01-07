@@ -6,8 +6,8 @@ public interface IEventLogger {
 
     public void logEventForwarded(String publisherId, String subscriberId, EventMessage<?> eventMessage);
 
-    public void logClientSubscription(String subscriberId);
+    public void logClientSubscription(String eventType, String subscriberId);
 
-    public void logClientUnSubscription(String subscriberId);
+    public void logClientUnSubscription(String eventType, String subscriberId);
 
 }

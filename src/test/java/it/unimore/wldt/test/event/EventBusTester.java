@@ -42,13 +42,13 @@ public class EventBusTester {
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
             @Override
-            public void onSubscribe() {
-                System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called !");
+            public void onSubscribe(String eventType) {
+                System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe() {
-                System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called !");
+            public void onUnSubscribe(String eventType) {
+                System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
@@ -96,13 +96,13 @@ public class EventBusTester {
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
             @Override
-            public void onSubscribe() {
-                System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called !");
+            public void onSubscribe(String eventType) {
+                System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe() {
-                System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called !");
+            public void onUnSubscribe(String eventType) {
+                System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override

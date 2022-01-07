@@ -11,31 +11,32 @@ public class DigitalTwinStateProperty<T> {
 
     private String key;
     private T value;
+    private String type = null;
     private boolean readable = true;
     private boolean writable = true;
     private boolean exposed = true;
 
-    public DigitalTwinStateProperty() {
+    private DigitalTwinStateProperty() {
     }
 
-    public DigitalTwinStateProperty(String key, T value, boolean readable, boolean writable) throws WldtDigitalTwinStateException {
+    public DigitalTwinStateProperty(String key, T value) throws WldtDigitalTwinStateException {
 
         if(key == null || value == null)
             throw new WldtDigitalTwinStateException("Error creating DigitalTwinStateProperty ! Key or Value = Null !");
 
         this.key = key;
         this.value = value;
+        this.type = value.getClass().getName();
+    }
+
+    public DigitalTwinStateProperty(String key, T value, boolean readable, boolean writable) throws WldtDigitalTwinStateException {
+        this(key, value);
         this.readable = readable;
         this.writable = writable;
     }
 
     public DigitalTwinStateProperty(String key, T value, boolean readable, boolean writable, boolean exposed) throws WldtDigitalTwinStateException {
-
-        if(key == null || value == null)
-            throw new WldtDigitalTwinStateException("Error creating DigitalTwinStateProperty ! Key or Value = Null !");
-
-        this.key = key;
-        this.value = value;
+        this(key, value);
         this.readable = readable;
         this.writable = writable;
         this.exposed = exposed;
@@ -79,6 +80,10 @@ public class DigitalTwinStateProperty<T> {
 
     public void setExposed(boolean exposed) {
         this.exposed = exposed;
+    }
+
+    public String getType(){
+        return this.type;
     }
 
     @Override

@@ -12,8 +12,8 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultDigitalTwinState.class);
 
-    public static final String DT_STATE_PUBLISHER_ID = "'dt-state-publisher";
-    public static final String DT_STATE_SUBSCRIBER_ID = "'dt-state-subscriber";
+    public static final String DT_STATE_PUBLISHER_ID = "dt-state-publisher";
+    public static final String DT_STATE_SUBSCRIBER_ID = "dt-state-subscriber";
 
     private static final String DT_STATE_PROPERTY_BASE_TOPIC = "dt.state.property";
 
@@ -22,7 +22,6 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
     public static final String DT_STATE_PROPERTY_DELETED = DT_STATE_PROPERTY_BASE_TOPIC + ".deleted";
 
     public static final String DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY = "dt.state.property.metadata.key";
-    public static final String DT_STATE_PROPERTY_METADATA_KEY_PREVIOUS_PROPERTY_VALUE = "dt.state.property.metadata.previousvalue";
 
     private Map<String, DigitalTwinStateProperty<?>> properties;
 
@@ -113,12 +112,8 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
             throw new WldtDigitalTwinStatePropertyBadRequestException(String.format("DefaultDigitalTwinState: Mismatch between provided Key:{} and Property-Key: {} !", propertyKey, dtStateProperty.getKey()));
 
         try {
-
-            DigitalTwinStateProperty<?> originalValue = this.properties.get(propertyKey);
             this.properties.put(propertyKey, dtStateProperty);
-
-            notifyPropertyUpdated(propertyKey, originalValue, dtStateProperty);
-
+            notifyPropertyUpdated(propertyKey, dtStateProperty);
         }catch (Exception e){
             throw new WldtDigitalTwinStatePropertyException(e.getLocalizedMessage());
         }
@@ -161,14 +156,13 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         }
     }
 
-    private void notifyPropertyUpdated(String propertyKey, DigitalTwinStateProperty<?> previousDigitalTwinStateProperty, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
+    private void notifyPropertyUpdated(String propertyKey, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         try {
 
             //Publish the event for state observer
             EventMessage<DigitalTwinStateProperty<?>> eventStateMessage = new EventMessage<>(DT_STATE_PROPERTY_UPDATED);
             eventStateMessage.setBody(digitalTwinStateProperty);
             eventStateMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
-            eventStateMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PREVIOUS_PROPERTY_VALUE, previousDigitalTwinStateProperty);
 
             EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventStateMessage);
 
@@ -176,7 +170,6 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
             EventMessage<DigitalTwinStateProperty<?>> eventPropertyMessage = new EventMessage<>(getPropertyUpdatedEventMessageType(propertyKey));
             eventPropertyMessage.setBody(digitalTwinStateProperty);
             eventPropertyMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
-            eventPropertyMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PREVIOUS_PROPERTY_VALUE, previousDigitalTwinStateProperty);
 
             EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventPropertyMessage);
 
@@ -206,26 +199,12 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
     }
 
     @Override
-    public String getPropertyUpdatedEventMessageType(String propertyKey) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyNotFoundException {
-
-        if (this.properties == null)
-            throw new WldtDigitalTwinStatePropertyException("DefaultDigitalTwinState: Properties Map = Null !");
-
-        if (!this.properties.containsKey(propertyKey))
-            throw new WldtDigitalTwinStatePropertyNotFoundException(String.format("DefaultDigitalTwinState: property with Key: %s not found !", propertyKey));
-
+    public String getPropertyUpdatedEventMessageType(String propertyKey){
         return String.format("%s.%s.updated", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey);
     }
 
     @Override
-    public String getPropertyDeletedEventMessageType(String propertyKey) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyNotFoundException {
-
-        if (this.properties == null)
-            throw new WldtDigitalTwinStatePropertyException("DefaultDigitalTwinState: Properties Map = Null !");
-
-        if (!this.properties.containsKey(propertyKey))
-            throw new WldtDigitalTwinStatePropertyNotFoundException(String.format("DefaultDigitalTwinState: property with Key: %s not found !", propertyKey));
-
+    public String getPropertyDeletedEventMessageType(String propertyKey) {
         return String.format("%s.%s.deleted", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey);
     }
 

@@ -62,10 +62,10 @@ public class EventBus {
                 this.subscriberMap.put(eventType, new ArrayList<>());
 
             this.subscriberMap.get(eventType).add(new SubscriberInfo(subscriberId, eventListener));
-            eventListener.onSubscribe();
+            eventListener.onSubscribe(eventType);
 
             if(eventLogger != null)
-                eventLogger.logClientSubscription(subscriberId);
+                eventLogger.logClientSubscription(eventType, subscriberId);
         }
     }
 
@@ -82,10 +82,10 @@ public class EventBus {
         for(String eventType: eventFilter) {
             if(this.subscriberMap.get(eventType) != null && this.subscriberMap.get(eventType).contains(subscriberInfo)) {
                 this.subscriberMap.get(eventType).remove(subscriberInfo);
-                eventListener.onUnSubscribe();
+                eventListener.onUnSubscribe(eventType);
 
                 if(eventLogger != null)
-                    eventLogger.logClientUnSubscription(subscriberId);
+                    eventLogger.logClientUnSubscription(eventType, subscriberId);
             }
         }
     }

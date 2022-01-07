@@ -10,7 +10,7 @@ public class DefaultEventLogger implements IEventLogger{
     @Override
     public void logEventPublish(String publisherId, EventMessage<?> eventMessage) {
         if(eventMessage != null)
-            logger.info("PUBLISHER [{}] -> PUBLISH TOPIC: {} Message: {}", publisherId, eventMessage.getType(), eventMessage);
+            logger.info("PUBLISHER [{}] -> PUBLISH EVENT TYPE: {} Message: {}", publisherId, eventMessage.getType(), eventMessage);
         else
             logger.error("PUBLISHER [{}] -> NULL MESSAGE !", publisherId);
     }
@@ -18,18 +18,18 @@ public class DefaultEventLogger implements IEventLogger{
     @Override
     public void logEventForwarded(String publisherId, String subscriberId, EventMessage<?> eventMessage) {
         if(eventMessage != null)
-            logger.info("PUBLISHER [{}] / SUBSCRIBER [{}] -> TOPIC: {} Message: {}", publisherId, subscriberId, eventMessage.getType(), eventMessage);
+            logger.info("EVENT-BUS -> FORWARDED from PUBLISHER [{}] to SUBSCRIBER [{}] -> TOPIC: {} Message: {}", publisherId, subscriberId, eventMessage.getType(), eventMessage);
         else
-            logger.error("PUBLISHER [{}] -> NULL MESSAGE !", subscriberId);
+            logger.error("EVENT-BUS FORWARDING from PUBLISHER [{}] to SUBSCRIBER [{}] -> NULL MESSAGE ! ", publisherId, subscriberId);
     }
 
     @Override
-    public void logClientSubscription(String subscriberId) {
-        logger.info("SUBSCRIBER [{}] -> Subscribed Correctly", subscriberId);
+    public void logClientSubscription(String eventType, String subscriberId) {
+        logger.info("SUBSCRIBER [{}] -> Subscribed Correctly - Event Type: {}", subscriberId, eventType);
     }
 
     @Override
-    public void logClientUnSubscription(String subscriberId) {
-        logger.info("SUBSCRIBER [{}] -> UnSubscribed Correctly", subscriberId);
+    public void logClientUnSubscription(String eventType, String subscriberId) {
+        logger.info("SUBSCRIBER [{}] -> UnSubscribed Correctly  - Event Type: {}", subscriberId, eventType);
     }
 }

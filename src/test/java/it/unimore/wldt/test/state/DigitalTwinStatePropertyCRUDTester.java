@@ -5,7 +5,6 @@ import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
 import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
 import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import org.junit.Test;
-
 import static org.junit.Assert.*;
 
 
@@ -19,23 +18,22 @@ public class DigitalTwinStatePropertyCRUDTester {
 
     public static DigitalTwinStateProperty<String> testProperty1 = null;
 
-    private void initTestDtState() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException {
+    private void initTestDtState() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStateException {
 
         //Init DigitaTwin State
         digitalTwinState = new DefaultDigitalTwinState();
 
-        testProperty1 = new DigitalTwinStateProperty<>();
+        testProperty1 = new DigitalTwinStateProperty<>(TEST_KEY_0001, TEST_VALUE_0001);
         testProperty1.setKey(TEST_KEY_0001);
         testProperty1.setReadable(true);
         testProperty1.setWritable(true);
-        testProperty1.setValue(TEST_VALUE_0001);
 
         digitalTwinState.createProperty(TEST_KEY_0001, testProperty1);
 
     }
 
     @Test
-    public void createProperty() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException {
+    public void createProperty() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException, WldtDigitalTwinStateException {
 
         //Init DigitaTwin State
         initTestDtState();
@@ -48,7 +46,7 @@ public class DigitalTwinStatePropertyCRUDTester {
     }
 
     @Test
-    public void readProperty() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException {
+    public void readProperty() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException, WldtDigitalTwinStateException {
 
         //Init DigitaTwin State
         initTestDtState();
@@ -76,7 +74,7 @@ public class DigitalTwinStatePropertyCRUDTester {
     }
 
     @Test
-    public void deleteProperty() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException {
+    public void deleteProperty() throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyNotFoundException, WldtDigitalTwinStateException {
         //Init DigitalTwin State
         initTestDtState();
 
