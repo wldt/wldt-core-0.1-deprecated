@@ -10,7 +10,7 @@ public class DefaultEventLogger implements IEventLogger{
     @Override
     public void logEventPublish(String publisherId, EventMessage<?> eventMessage) {
         if(eventMessage != null)
-            logger.info("PUBLISHER [{}] -> PUBLISH TOPIC: {} Message: {}", publisherId, eventMessage.getTopic(), eventMessage);
+            logger.info("PUBLISHER [{}] -> PUBLISH TOPIC: {} Message: {}", publisherId, eventMessage.getType(), eventMessage);
         else
             logger.error("PUBLISHER [{}] -> NULL MESSAGE !", publisherId);
     }
@@ -18,7 +18,7 @@ public class DefaultEventLogger implements IEventLogger{
     @Override
     public void logEventForwarded(String publisherId, String subscriberId, EventMessage<?> eventMessage) {
         if(eventMessage != null)
-            logger.info("PUBLISHER [{}] / SUBSCRIBER [{}] -> TOPIC: {} Message: {}", publisherId, subscriberId, eventMessage.getTopic(), eventMessage);
+            logger.info("PUBLISHER [{}] / SUBSCRIBER [{}] -> TOPIC: {} Message: {}", publisherId, subscriberId, eventMessage.getType(), eventMessage);
         else
             logger.error("PUBLISHER [{}] -> NULL MESSAGE !", subscriberId);
     }

@@ -5,7 +5,7 @@ import java.util.*;
 public class EventMessage<T> {
 
     private String id;
-    private String topic;
+    private String type;
     private T body;
     private Map<String, Object> metadata;
     private long creationTimestamp;
@@ -16,30 +16,30 @@ public class EventMessage<T> {
         this.creationTimestamp = System.currentTimeMillis();
     }
 
-    public EventMessage(String topic) {
+    public EventMessage(String type) {
         this();
-        this.topic = topic;
+        this.type = type;
     }
 
-    public EventMessage(String topic, T body) {
+    public EventMessage(String type, T body) {
         this();
-        this.topic = topic;
+        this.type = type;
         this.body = body;
     }
 
-    public EventMessage(String topic, T body, Map<String, Object> metadata) {
+    public EventMessage(String type, T body, Map<String, Object> metadata) {
         this();
-        this.topic = topic;
+        this.type = type;
         this.body = body;
         this.metadata = metadata;
     }
 
-    public String getTopic() {
-        return topic;
+    public String getType() {
+        return type;
     }
 
-    public void setTopic(String topic) {
-        this.topic = topic;
+    public void setType(String type) {
+        this.type = type;
     }
 
     public T getBody() {
@@ -98,7 +98,7 @@ public class EventMessage<T> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EventMessage<?> that = (EventMessage<?>) o;
-        return id.equals(that.id) && topic.equals(that.topic);
+        return id.equals(that.id) && type.equals(that.type);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class EventMessage<T> {
     public String toString() {
         final StringBuilder sb = new StringBuilder("EventMessage{");
         sb.append("id='").append(id).append('\'');
-        sb.append(", topic='").append(topic).append('\'');
+        sb.append(", topic='").append(type).append('\'');
         sb.append(", body=").append(body);
         sb.append(", metadata=").append(metadata);
         sb.append(", creationTimestamp=").append(creationTimestamp);

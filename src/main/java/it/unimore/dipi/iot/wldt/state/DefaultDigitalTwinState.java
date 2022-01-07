@@ -1,5 +1,7 @@
 package it.unimore.dipi.iot.wldt.state;
 
+import it.unimore.dipi.iot.wldt.event.EventBus;
+import it.unimore.dipi.iot.wldt.event.EventMessage;
 import it.unimore.dipi.iot.wldt.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,14 +12,22 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultDigitalTwinState.class);
 
+    public static final String DT_STATE_PUBLISHER_ID = "'dt-state-publisher";
+    public static final String DT_STATE_SUBSCRIBER_ID = "'dt-state-subscriber";
+
+    private static final String DT_STATE_PROPERTY_BASE_TOPIC = "dt.state.property";
+
+    public static final String DT_STATE_PROPERTY_CREATED = DT_STATE_PROPERTY_BASE_TOPIC + ".created";
+    public static final String DT_STATE_PROPERTY_UPDATED = DT_STATE_PROPERTY_BASE_TOPIC + ".updated";
+    public static final String DT_STATE_PROPERTY_DELETED = DT_STATE_PROPERTY_BASE_TOPIC + ".deleted";
+
+    public static final String DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY = "dt.state.property.metadata.key";
+    public static final String DT_STATE_PROPERTY_METADATA_KEY_PREVIOUS_PROPERTY_VALUE = "dt.state.property.metadata.previousvalue";
+
     private Map<String, DigitalTwinStateProperty<?>> properties;
-    private List<DigitalTwinStateListener> listenerList;
-    private Map<String, List<DigitalTwinStatePropertyListener>> propertyListenerMap = null;
 
     public DefaultDigitalTwinState() {
         this.properties = new HashMap<>();
-        this.listenerList = new ArrayList<>();
-        this.propertyListenerMap = new HashMap<>();
     }
 
     @Override
@@ -50,7 +60,7 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         try {
             this.properties.put(propertyKey, dtStateProperty);
 
-            notifyStateListenersPropertyCreated(propertyKey, dtStateProperty);
+            notifyPropertyCreated(propertyKey, dtStateProperty);
         } catch (Exception e) {
             throw new WldtDigitalTwinStatePropertyException(e.getLocalizedMessage());
         }
@@ -107,8 +117,7 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
             DigitalTwinStateProperty<?> originalValue = this.properties.get(propertyKey);
             this.properties.put(propertyKey, dtStateProperty);
 
-            notifyStateListenersPropertyUpdated(propertyKey, originalValue, dtStateProperty);
-            notifyPropertyUpdatedListeners(propertyKey, originalValue, dtStateProperty);
+            notifyPropertyUpdated(propertyKey, originalValue, dtStateProperty);
 
         }catch (Exception e){
             throw new WldtDigitalTwinStatePropertyException(e.getLocalizedMessage());
@@ -131,158 +140,93 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
             DigitalTwinStateProperty<?> originalValue = this.properties.get(propertyKey);
             this.properties.remove(propertyKey);
 
-            notifyStateListenersPropertyDeleted(propertyKey, originalValue);
+            notifyPropertyDeleted(propertyKey, originalValue);
 
-            notifyPropertyDeletedListeners(propertyKey, originalValue);
-
-            //Remove all listener for the target property
-            this.propertyListenerMap.remove(propertyKey);
         }catch (Exception e){
             throw  new WldtDigitalTwinStatePropertyException(e.getLocalizedMessage());
         }
     }
 
-    @Override
-    public void observeState(DigitalTwinStateListener digitalTwinStateListener) throws WldtDigitalTwinStateException, WldtDigitalTwinStateBadRequestException {
-
-        if (this.listenerList == null)
-            throw new WldtDigitalTwinStateException("DefaultDigitalTwinState: Listener List = Null !");
-
-        if (digitalTwinStateListener == null)
-            throw new WldtDigitalTwinStateBadRequestException("Null Listener provided to observe DigitalTwinState !");
-
-        try{
-            this.listenerList.add(digitalTwinStateListener);
-        }catch (Exception e){
-            throw new WldtDigitalTwinStateException(e.getLocalizedMessage());
-        }
-    }
-
-    @Override
-    public void unObserveState(DigitalTwinStateListener digitalTwinStateListener) throws WldtDigitalTwinStateException, WldtDigitalTwinStateBadRequestException {
-
-        if (this.listenerList == null)
-            throw new WldtDigitalTwinStateException("DefaultDigitalTwinState: Listener List = Null !");
-
-        if (digitalTwinStateListener == null)
-            throw new WldtDigitalTwinStateBadRequestException("Null Listener provided to observe DigitalTwinState !");
-
-        try{
-            this.listenerList.remove(digitalTwinStateListener);
-        }catch (Exception e){
-            throw new WldtDigitalTwinStateException(e.getLocalizedMessage());
-        }
-    }
-
-    @Override
-    public void observeProperty(String propertyKey, DigitalTwinStatePropertyListener listener) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyNotFoundException {
-
-        if (listener == null)
-            throw new WldtDigitalTwinStatePropertyBadRequestException(String.format("Null Listener provided to observe property: %s!", propertyKey));
-
-        if (this.properties == null)
-            throw new WldtDigitalTwinStatePropertyException("DefaultDigitalTwinState: Properties Map = Null !");
-
-        if (propertyKey == null)
-            throw new WldtDigitalTwinStatePropertyBadRequestException("DefaultDigitalTwinState: propertyKey = Null !");
-
-        if (!this.properties.containsKey(propertyKey))
-            throw new WldtDigitalTwinStatePropertyNotFoundException(String.format("DefaultDigitalTwinState: property with Key: %s not found !", propertyKey));
-
-        try{
-            //If required init the list of listener for the target property
-            if (!this.propertyListenerMap.containsKey(propertyKey))
-                this.propertyListenerMap.put(propertyKey, new ArrayList<>());
-
-            this.propertyListenerMap.get(propertyKey).add(listener);
-        }catch (Exception e){
-            throw new WldtDigitalTwinStatePropertyException(e.getLocalizedMessage());
-        }
-    }
-
-    @Override
-    public void unObserveProperty(String propertyKey, DigitalTwinStatePropertyListener listener) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyNotFoundException {
-
-        if (this.properties == null)
-            throw new WldtDigitalTwinStatePropertyException("DefaultDigitalTwinState: Properties Map = Null !");
-
-        if (listener == null)
-            throw new WldtDigitalTwinStatePropertyBadRequestException(String.format("Null Listener provided to observe property: %s!", propertyKey));
-
-        if (propertyKey == null)
-            throw new WldtDigitalTwinStatePropertyBadRequestException("DefaultDigitalTwinState: propertyKey = Null !");
-
-        if (!this.properties.containsKey(propertyKey))
-            throw new WldtDigitalTwinStatePropertyNotFoundException(String.format("DefaultDigitalTwinState: property with Key: %s not found !", propertyKey));
-
-        if (!this.propertyListenerMap.containsKey(propertyKey))
-            throw new WldtDigitalTwinStatePropertyNotFoundException(String.format("DefaultDigitalTwinState: property with Key: %s not found in Listener Map !", propertyKey));
-
-        try{
-            this.propertyListenerMap.get(propertyKey).remove(listener);
-        }catch (Exception e){
-            throw new WldtDigitalTwinStatePropertyException(e.getLocalizedMessage());
-        }
-    }
-
-    private void notifyStateListenersPropertyCreated(String propertyKey, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
+    private void notifyPropertyCreated(String propertyKey, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         try {
-            if (this.listenerList != null)
-                for (DigitalTwinStateListener listener : this.listenerList)
-                    listener.onPropertyCreated(propertyKey, Optional.ofNullable(digitalTwinStateProperty));
-            else
-                logger.warn("notifyStateListenersPropertyCreated() -> DT State Listener List Empty ! No one is observing ...");
+
+            EventMessage<DigitalTwinStateProperty<?>> eventMessage = new EventMessage<>(DT_STATE_PROPERTY_CREATED);
+            eventMessage.setBody(digitalTwinStateProperty);
+            eventMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
+
+            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventMessage);
+
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyCreated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
         }
     }
 
-    private void notifyStateListenersPropertyUpdated(String propertyKey, DigitalTwinStateProperty<?> previousDigitalTwinStateProperty, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
+    private void notifyPropertyUpdated(String propertyKey, DigitalTwinStateProperty<?> previousDigitalTwinStateProperty, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         try {
-            if (this.listenerList != null)
-                for (DigitalTwinStateListener listener : this.listenerList)
-                    listener.onPropertyUpdated(propertyKey, Optional.ofNullable(previousDigitalTwinStateProperty), Optional.ofNullable(digitalTwinStateProperty));
-            else
-                logger.warn("notifyStateListenersPropertyUpdated() -> DT State Listener List Empty ! No one is observing ...");
+
+            //Publish the event for state observer
+            EventMessage<DigitalTwinStateProperty<?>> eventStateMessage = new EventMessage<>(DT_STATE_PROPERTY_UPDATED);
+            eventStateMessage.setBody(digitalTwinStateProperty);
+            eventStateMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
+            eventStateMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PREVIOUS_PROPERTY_VALUE, previousDigitalTwinStateProperty);
+
+            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventStateMessage);
+
+            //Publish the event for property observers
+            EventMessage<DigitalTwinStateProperty<?>> eventPropertyMessage = new EventMessage<>(getPropertyUpdatedEventMessageType(propertyKey));
+            eventPropertyMessage.setBody(digitalTwinStateProperty);
+            eventPropertyMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
+            eventPropertyMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PREVIOUS_PROPERTY_VALUE, previousDigitalTwinStateProperty);
+
+            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventPropertyMessage);
+
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyUpdated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
         }
     }
 
-    private void notifyPropertyUpdatedListeners(String propertyKey, DigitalTwinStateProperty<?> previousDigitalTwinStateProperty, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
+    private void notifyPropertyDeleted(String propertyKey, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         try {
-            if (this.propertyListenerMap != null && this.propertyListenerMap.containsKey(propertyKey) && this.propertyListenerMap.get(propertyKey) != null)
-                for (DigitalTwinStatePropertyListener listener : this.propertyListenerMap.get(propertyKey))
-                    listener.onChange(propertyKey, Optional.ofNullable(previousDigitalTwinStateProperty), Optional.ofNullable(digitalTwinStateProperty));
-            else
-                logger.warn("notifyPropertyUpdateListeners() -> DT Property Listener List Empty for propertyKey: {} ! No one is observing ...", propertyKey);
-        } catch (Exception e) {
-            logger.error("notifyPropertyUpdateListeners() -> Error Notifying State Listeners for propertyKey: {} ! Error: {}", propertyKey, e.getLocalizedMessage());
-        }
-    }
+            //Publish the event for state observer
+            EventMessage<DigitalTwinStateProperty<?>> eventStateMessage = new EventMessage<>(DT_STATE_PROPERTY_DELETED);
+            eventStateMessage.setBody(digitalTwinStateProperty);
+            eventStateMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
 
-    private void notifyStateListenersPropertyDeleted(String propertyKey, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
-        try {
-            if (this.listenerList != null)
-                for (DigitalTwinStateListener listener : this.listenerList)
-                    listener.onPropertyDeleted(propertyKey, Optional.ofNullable(digitalTwinStateProperty));
-            else
-                logger.warn("notifyStateListenersPropertyDeleted() -> DT State Listener List Empty ! No one is observing ...");
+            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventStateMessage);
+
+            //Publish the event for property observers
+            EventMessage<DigitalTwinStateProperty<?>> eventPropertyMessage = new EventMessage<>(getPropertyDeletedEventMessageType(propertyKey));
+            eventPropertyMessage.setBody(digitalTwinStateProperty);
+            eventPropertyMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
+
+            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventPropertyMessage);
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyDeleted() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
         }
     }
 
-    private void notifyPropertyDeletedListeners(String propertyKey, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
-        try {
-            if (this.propertyListenerMap != null && this.propertyListenerMap.containsKey(propertyKey) && this.propertyListenerMap.get(propertyKey) != null)
-                for (DigitalTwinStatePropertyListener listener : this.propertyListenerMap.get(propertyKey))
-                    listener.onDelete(propertyKey, Optional.ofNullable(digitalTwinStateProperty));
-            else
-                logger.warn("notifyPropertyUpdateListeners() -> DT Property Listener List Empty for propertyKey: {} ! No one is observing ...", propertyKey);
-        } catch (Exception e) {
-            logger.error("notifyPropertyUpdateListeners() -> Error Notifying State Listeners for propertyKey: {} ! Error: {}", propertyKey, e.getLocalizedMessage());
-        }
+    @Override
+    public String getPropertyUpdatedEventMessageType(String propertyKey) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyNotFoundException {
+
+        if (this.properties == null)
+            throw new WldtDigitalTwinStatePropertyException("DefaultDigitalTwinState: Properties Map = Null !");
+
+        if (!this.properties.containsKey(propertyKey))
+            throw new WldtDigitalTwinStatePropertyNotFoundException(String.format("DefaultDigitalTwinState: property with Key: %s not found !", propertyKey));
+
+        return String.format("%s.%s.updated", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey);
+    }
+
+    @Override
+    public String getPropertyDeletedEventMessageType(String propertyKey) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyNotFoundException {
+
+        if (this.properties == null)
+            throw new WldtDigitalTwinStatePropertyException("DefaultDigitalTwinState: Properties Map = Null !");
+
+        if (!this.properties.containsKey(propertyKey))
+            throw new WldtDigitalTwinStatePropertyNotFoundException(String.format("DefaultDigitalTwinState: property with Key: %s not found !", propertyKey));
+
+        return String.format("%s.%s.deleted", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey);
     }
 
 }

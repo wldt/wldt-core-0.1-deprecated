@@ -17,11 +17,8 @@ public interface IDigitalTwinState {
 
     public void deleteProperty(String propertyKey) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyNotFoundException;
 
-    public void observeState(DigitalTwinStateListener digitalTwinStateListener) throws WldtDigitalTwinStateException, WldtDigitalTwinStateBadRequestException;
+    public String getPropertyUpdatedEventMessageType(String propertyKey)  throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyNotFoundException;
 
-    public void unObserveState(DigitalTwinStateListener digitalTwinStateListener) throws WldtDigitalTwinStateException, WldtDigitalTwinStateBadRequestException;
+    public String getPropertyDeletedEventMessageType(String propertyKey)  throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyNotFoundException;
 
-    public void observeProperty(String propertyKey, DigitalTwinStatePropertyListener listener) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyNotFoundException;
-
-    public void unObserveProperty(String propertyKey, DigitalTwinStatePropertyListener listener) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyNotFoundException;
 }

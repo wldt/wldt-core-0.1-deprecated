@@ -33,14 +33,14 @@ public class EventBus {
         if(this.subscriberMap == null)
             throw new EventBusException("EventBus-publishEvent() -> Error: SubscriberMap = NULL !");
 
-        if(eventMessage == null || eventMessage.getTopic() == null || (eventMessage.getTopic() != null && eventMessage.getTopic().length() == 0))
-            throw new EventBusException(String.format("EventBus-publishEvent() -> Error: eventMessage = NULL or event-type (%s) is invalid !", eventMessage != null ? eventMessage.getTopic() : "null"));
+        if(eventMessage == null || eventMessage.getType() == null || (eventMessage.getType() != null && eventMessage.getType().length() == 0))
+            throw new EventBusException(String.format("EventBus-publishEvent() -> Error: eventMessage = NULL or event-type (%s) is invalid !", eventMessage != null ? eventMessage.getType() : "null"));
 
         if(eventLogger != null)
             eventLogger.logEventPublish(publisherId, eventMessage);
 
-        if(this.subscriberMap.containsKey(eventMessage.getTopic()) && this.subscriberMap.get(eventMessage.getTopic()).size() > 0)
-            this.subscriberMap.get(eventMessage.getTopic()).forEach(subscriberInfo -> {
+        if(this.subscriberMap.containsKey(eventMessage.getType()) && this.subscriberMap.get(eventMessage.getType()).size() > 0)
+            this.subscriberMap.get(eventMessage.getType()).forEach(subscriberInfo -> {
                 subscriberInfo.getEventListener().onEvent(Optional.ofNullable(eventMessage));
 
                 if(eventLogger != null)
