@@ -1,8 +1,11 @@
 package it.unimore.dipi.iot.wldt.engine;
 
+import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
+import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
 import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.*;
+import it.unimore.dipi.iot.wldt.model.ModelEngine;
 import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
 import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import it.unimore.dipi.iot.wldt.worker.WldtWorker;
@@ -41,6 +44,8 @@ public class WldtEngine {
 
     private IDigitalTwinState digitalTwinState = null;
 
+    private ModelEngine modelEngine = null;
+
     public WldtEngine(WldtConfiguration wldtConfiguration) throws WldtConfigurationException {
         this.wldtConfiguration = wldtConfiguration;
         init();
@@ -58,6 +63,11 @@ public class WldtEngine {
 
         //Initialize the Digital Twin State
         this.digitalTwinState = new DefaultDigitalTwinState();
+
+        //Setup EventBus Logger
+        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+
+        this.modelEngine = new ModelEngine(this.digitalTwinState);
 
         this.workerList = new ArrayList<>();
 
@@ -184,6 +194,10 @@ public class WldtEngine {
 
     public void setWldtConfiguration(WldtConfiguration wldtConfiguration) {
         this.wldtConfiguration = wldtConfiguration;
+    }
+
+    public ModelEngine getModelEngine() {
+        return modelEngine;
     }
 
 }

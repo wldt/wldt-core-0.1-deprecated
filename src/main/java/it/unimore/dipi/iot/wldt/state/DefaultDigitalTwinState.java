@@ -17,9 +17,13 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
 
     private static final String DT_STATE_PROPERTY_BASE_TOPIC = "dt.state.property";
 
-    public static final String DT_STATE_PROPERTY_CREATED = DT_STATE_PROPERTY_BASE_TOPIC + ".created";
-    public static final String DT_STATE_PROPERTY_UPDATED = DT_STATE_PROPERTY_BASE_TOPIC + ".updated";
-    public static final String DT_STATE_PROPERTY_DELETED = DT_STATE_PROPERTY_BASE_TOPIC + ".deleted";
+    public static final String CREATED_STRING = "created";
+    public static final String UPDATED_STRING = "update";
+    public static final String DELETED_STRING = "deleted";
+
+    public static final String DT_STATE_PROPERTY_CREATED = DT_STATE_PROPERTY_BASE_TOPIC + "." + CREATED_STRING;
+    public static final String DT_STATE_PROPERTY_UPDATED = DT_STATE_PROPERTY_BASE_TOPIC + "." + UPDATED_STRING;
+    public static final String DT_STATE_PROPERTY_DELETED = DT_STATE_PROPERTY_BASE_TOPIC + "." + DELETED_STRING;
 
     public static final String DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY = "dt.state.property.metadata.key";
 
@@ -200,12 +204,12 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
 
     @Override
     public String getPropertyUpdatedEventMessageType(String propertyKey){
-        return String.format("%s.%s.updated", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey);
+        return String.format("%s.%s.%s", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey, CREATED_STRING);
     }
 
     @Override
     public String getPropertyDeletedEventMessageType(String propertyKey) {
-        return String.format("%s.%s.deleted", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey);
+        return String.format("%s.%s.%s", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey, UPDATED_STRING);
     }
 
 }
