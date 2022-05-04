@@ -19,18 +19,18 @@ public class StateUpdateStateModelFunction extends StateModelFunction {
     }
 
     @Override
-    protected void onAdded() throws ModelFunctionException {
+    protected void onAdded() {
         try {
-            logger.debug("onStart()");
+            logger.debug("onAdded()");
             createTestStateProperty();
         }catch (Exception e){
-            throw new ModelFunctionException(e.getLocalizedMessage());
+            logger.error("Error Creating new Property ! Msg: {}", e.getLocalizedMessage());
         }
     }
 
     @Override
-    protected void onRemoved() throws ModelFunctionException {
-        logger.debug("onStop()");
+    protected void onRemoved() {
+        logger.debug("onRemoved()");
     }
 
     private void createTestStateProperty() throws WldtDigitalTwinStateException, WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyConflictException {

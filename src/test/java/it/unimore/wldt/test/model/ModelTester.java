@@ -57,14 +57,15 @@ public class ModelTester {
 
         //Init the Engine
         WldtEngine wldtEngine = new WldtEngine(new ShadowingModelFunction("test-shadowing-function") {
+
             @Override
-            protected void onStart() throws ModelFunctionException {
-                logger.info("onStart()");
+            protected void onStart() {
+                logger.info("ShadowingModelFunction - onStart()");
             }
 
             @Override
-            protected void onStop() throws ModelFunctionException {
-                logger.info("onStop()");
+            protected void onStop() {
+                logger.info("ShadowingModelFunction - onStop()");
             }
 
             @Override
@@ -83,6 +84,8 @@ public class ModelTester {
             }
         }, buildWldtConfiguration());
 
+        wldtEngine.startWorkers();
+
         //Generate an emulated Physical Event
         PhysicalEventMessage<String> physicalEventMessage = new PhysicalEventMessage<>(DEMO_MQTT_MESSAGE_TYPE);
         physicalEventMessage.setBody(DEMO_MQTT_BODY);
@@ -97,6 +100,8 @@ public class ModelTester {
         assertEquals(physicalEventMessage, receivedMessage);
         assertEquals(DEMO_MQTT_BODY, receivedMessage.getBody());
         assertEquals(PhysicalEventMessage.buildEventType(DEMO_MQTT_MESSAGE_TYPE), receivedMessage.getType());
+
+        wldtEngine.stopWorkers();
     }
 
     @Test
@@ -109,12 +114,12 @@ public class ModelTester {
         WldtEngine wldtEngine = new WldtEngine(new ShadowingModelFunction("test-shadowing-function") {
 
             @Override
-            protected void onStart() throws ModelFunctionException {
+            protected void onStart() {
                 logger.info("onStart()");
             }
 
             @Override
-            protected void onStop() throws ModelFunctionException {
+            protected void onStop() {
                 logger.info("onStop()");
             }
 

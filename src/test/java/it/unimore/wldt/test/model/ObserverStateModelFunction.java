@@ -15,13 +15,13 @@ public class ObserverStateModelFunction extends StateModelFunction {
     }
 
     @Override
-    protected void onAdded() throws ModelFunctionException {
-        logger.debug("onStart()");
+    protected void onAdded() {
+        logger.debug("onAdded()");
     }
 
     @Override
-    protected void onRemoved() throws ModelFunctionException {
-        logger.debug("onStop()");
+    protected void onRemoved() {
+        logger.debug("onRemoved()");
     }
 
     @Override

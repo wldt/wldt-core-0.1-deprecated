@@ -124,9 +124,9 @@ public abstract class StateModelFunction {
         this.digitalTwinState = digitalTwinState;
     }
 
-    abstract protected void onAdded() throws ModelFunctionException;
+    abstract protected void onAdded();
 
-    abstract protected void onRemoved() throws ModelFunctionException;;
+    abstract protected void onRemoved();
 
     abstract protected void onStateChangePropertyCreated(DigitalTwinStateProperty<?> digitalTwinStateProperty);
 

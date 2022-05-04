@@ -39,7 +39,7 @@ public class WldtEngine {
 
     private ExecutorService executor = null;
 
-    private List<WldtWorker<?,?,?>> workerList = null;
+    private List<WldtWorker> workerList = null;
 
     private WldtConfiguration wldtConfiguration;
 
@@ -68,19 +68,19 @@ public class WldtEngine {
         //Setup EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
-        this.modelEngine = new ModelEngine(this.digitalTwinState, shadowingModelFunction);
-
+        //Create the WorkerList
         this.workerList = new ArrayList<>();
 
-        executor = Executors.newFixedThreadPool((wldtConfiguration.getThreadPoolSize() > 0) ? wldtConfiguration.getThreadPoolSize() : THREAD_POOL_SIZE);
+        //executor = Executors.newFixedThreadPool((wldtConfiguration.getThreadPoolSize() > 0) ? wldtConfiguration.getThreadPoolSize() : THREAD_POOL_SIZE);
 
         if(this.wldtConfiguration.getApplicationMetricsEnabled() && this.wldtConfiguration.getMetricsReporterList() != null && this.wldtConfiguration.getMetricsReporterList().size() > 0) {
-
             enableMetricsReporter(this.wldtConfiguration.getMetricsReporterList());
             WldtMetricsManager.getInstance().startMonitoring(this.wldtConfiguration.getApplicationMetricsReportingPeriodSeconds());
         }
 
-        loadConfigurationFileProtocolModules();
+        //Init Model Engine & Add to the List of Workers
+        this.modelEngine = new ModelEngine(this.digitalTwinState, shadowingModelFunction);
+        addNewWorker(this.modelEngine);
     }
 
     private void enableMetricsReporter(List<String> metricsReporterList) {
@@ -104,7 +104,7 @@ public class WldtEngine {
     public void addNewWorker(WldtWorker wldtWorker) throws WldtConfigurationException {
         if(wldtWorker != null && this.workerList != null && this.workerList.size() < THREAD_POOL_SIZE) {
             this.workerList.add(wldtWorker);
-            logger.debug("{} New Worker Added to the List ! List Size: {}", TAG, this.workerList.size());
+            logger.debug("{} New Worker ({}) Added to the List ! List Size: {}", TAG, wldtWorker.getClass().getName(), this.workerList.size());
         }
         else
             throw new WldtConfigurationException("Invalid Worker/WorkerList or Worker List Limit Reached !");
@@ -123,6 +123,9 @@ public class WldtEngine {
         if(this.workerList == null || this.workerList.isEmpty())
             throw new WldtConfigurationException("Empty enabled protocol list !");
 
+        //Init the thread pool
+        executor = Executors.newFixedThreadPool(workerList.size());
+
         this.workerList.forEach(wldtWorker -> {
             logger.info("Executing worker: {}", wldtWorker.getClass());
             executor.execute(wldtWorker);
@@ -134,52 +137,15 @@ public class WldtEngine {
 
     }
 
-    //TODO Improve Stop Management for Executor Service
     public void stopWorkers(){
+
         this.executor.shutdownNow();
-        this.executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+        this.executor = null;
+
+        //Notify workers
+        for(WldtWorker worker : this.workerList)
+            worker.onStop();
     }
-
-    public void loadConfigurationFileProtocolModules() throws WldtConfigurationException {
-
-        logger.error("{} WldtEngine.loadConfigurationFileProtocolModules() -> NOT IMPLEMENTED !", TAG);
-
-        /*
-        if(this.wldtConfiguration.getActiveProtocolList() == null || this.wldtConfiguration.getActiveProtocolList().size() == 0)
-            logger.debug("{} Provided Protocol Modules List is EMPTY !", TAG);
-        else {
-            for(String protocolId: this.wldtConfiguration.getActiveProtocolList()){
-                if(protocolId.equals(WorkerIdentifier.MQTT_TO_MQTT_MODULE.value))
-                    this.addNewWorker(new Mqtt2MqttWorker(this.getWldtId()));
-                if(protocolId.equals(WorkerIdentifier.COAP_TO_COAP_MODULE.value))
-                    this.addNewWorker(new Coap2CoapWorker());
-            }
-        }
-        */
-    }
-
-    /*
-    private void readConfigurationFile() throws WldtConfigurationException {
-        try{
-
-            //ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            //File file = new File(classLoader.getResource(WLDT_CONFIGURATION_FILE).getFile());
-            File file = new File(String.format("%s/%s", WLDT_CONFIGURATION_FOLDER, WLDT_CONFIGURATION_FILE));
-
-            ObjectMapper om = new ObjectMapper(new YAMLFactory());
-
-            wldtConfiguration = om.readValue(file, WldtConfiguration.class);
-
-            logger.info("{} WLDT Configuration Loaded ! Conf: {}", TAG, wldtConfiguration);
-
-        }catch (Exception e){
-            e.printStackTrace();
-            String errorMessage = String.format("ERROR LOADING CONFIGURATION FILE ! Error: %s", e.getLocalizedMessage());
-            logger.error("{} {}", TAG, errorMessage);
-            throw new WldtConfigurationException(errorMessage);
-        }
-    }
-    */
 
     public String getWldtId() {
         return wldtId;

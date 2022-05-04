@@ -78,9 +78,9 @@ public abstract class ShadowingModelFunction {
         this.digitalTwinState = digitalTwinState;
     }
 
-    abstract protected void onStart() throws ModelFunctionException;
+    abstract protected void onStart();
 
-    abstract protected void onStop() throws ModelFunctionException;;
+    abstract protected void onStop();
 
     abstract protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage);
 
@@ -93,6 +93,8 @@ public abstract class ShadowingModelFunction {
     public void setId(String id) {
         this.id = id;
     }
+
+
 
     @Override
     public boolean equals(Object o) {
