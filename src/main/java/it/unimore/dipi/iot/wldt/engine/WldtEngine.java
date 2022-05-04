@@ -6,6 +6,7 @@ import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
 import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ModelEngine;
+import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
 import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
 import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import it.unimore.dipi.iot.wldt.worker.WldtWorker;
@@ -46,18 +47,18 @@ public class WldtEngine {
 
     private ModelEngine modelEngine = null;
 
-    public WldtEngine(WldtConfiguration wldtConfiguration) throws WldtConfigurationException {
+    public WldtEngine(ShadowingModelFunction shadowingModelFunction, WldtConfiguration wldtConfiguration) throws WldtConfigurationException, ModelException, EventBusException {
         this.wldtConfiguration = wldtConfiguration;
-        init();
+        init(shadowingModelFunction);
     }
 
-    public WldtEngine() throws WldtConfigurationException {
+    public WldtEngine(ShadowingModelFunction shadowingModelFunction) throws WldtConfigurationException, ModelException, EventBusException {
         this.wldtConfiguration = (WldtConfiguration) WldtUtils.readConfigurationFile(WLDT_CONFIGURATION_FOLDER, WLDT_CONFIGURATION_FILE, WldtConfiguration.class);
         logger.info("{} WLDT Configuration Loaded ! Conf: {}", TAG, wldtConfiguration);
-        init();
+        init(shadowingModelFunction);
     }
 
-    private void init() throws WldtConfigurationException {
+    private void init(ShadowingModelFunction shadowingModelFunction) throws WldtConfigurationException, ModelException, EventBusException {
 
         this.wldtId = WldtUtils.generateRandomWldtId(this.wldtConfiguration.getDeviceNameSpace(), this.wldtConfiguration.getWldtBaseIdentifier());
 
@@ -67,7 +68,7 @@ public class WldtEngine {
         //Setup EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
-        this.modelEngine = new ModelEngine(this.digitalTwinState);
+        this.modelEngine = new ModelEngine(this.digitalTwinState, shadowingModelFunction);
 
         this.workerList = new ArrayList<>();
 

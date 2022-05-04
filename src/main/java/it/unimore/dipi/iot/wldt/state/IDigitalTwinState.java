@@ -17,6 +17,8 @@ public interface IDigitalTwinState {
 
     public void deleteProperty(String propertyKey) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyBadRequestException, WldtDigitalTwinStatePropertyNotFoundException;
 
+    public String getPropertyCreatedEventMessageType(String propertyKey);
+
     public String getPropertyUpdatedEventMessageType(String propertyKey);
 
     public String getPropertyDeletedEventMessageType(String propertyKey);

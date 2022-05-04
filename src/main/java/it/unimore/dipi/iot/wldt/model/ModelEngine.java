@@ -6,7 +6,6 @@ import it.unimore.dipi.iot.wldt.exception.ModelFunctionException;
 import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,33 +21,42 @@ public class ModelEngine {
 
     private IDigitalTwinState digitalTwinState = null;
 
-    private Map<String, ModelFunction> modelFunctionMap = null;
+    private Map<String, StateModelFunction> modelFunctionMap = null;
 
-    public ModelEngine(IDigitalTwinState digitalTwinState){
+    private ShadowingModelFunction shadowingModelFunction = null;
+
+    public ModelEngine(IDigitalTwinState digitalTwinState, ShadowingModelFunction shadowingModelFunction) throws ModelException, EventBusException {
+
         this.digitalTwinState = digitalTwinState;
         this.modelFunctionMap = new HashMap<>();
+
+        if(shadowingModelFunction == null)
+            throw new ModelException("Error ! Provided ShadowingModelFunction == Null !");
+
+        this.shadowingModelFunction = shadowingModelFunction;
+        this.shadowingModelFunction.observePhysicalEvents();
     }
 
     /**
      *
-     * @param modelFunction
+     * @param stateModelFunction
      * @throws ModelException
      */
-    public void startModelFunction(ModelFunction modelFunction, boolean observeState, List<String> observePropertyList) throws ModelException, EventBusException, ModelFunctionException {
-        if(modelFunction == null || modelFunction.getId() == null)
+    public void addStateModelFunction(StateModelFunction stateModelFunction, boolean observeState, List<String> observePropertyList) throws ModelException, EventBusException, ModelFunctionException {
+        if(stateModelFunction == null || stateModelFunction.getId() == null)
             throw new ModelException("Error ! ModelFunction = Null or ModelFunction-Id = Null !");
 
-        modelFunction.init(this.digitalTwinState);
+        stateModelFunction.init(this.digitalTwinState);
 
-        this.modelFunctionMap.put(modelFunction.getId(), modelFunction);
+        this.modelFunctionMap.put(stateModelFunction.getId(), stateModelFunction);
 
-        this.modelFunctionMap.get(modelFunction.getId()).onStart();
+        this.modelFunctionMap.get(stateModelFunction.getId()).onAdded();
 
         if(observeState)
-            this.modelFunctionMap.get(modelFunction.getId()).observeDigitalTwinState();
+            this.modelFunctionMap.get(stateModelFunction.getId()).observeDigitalTwinState();
 
         if(observePropertyList != null && observePropertyList.size() > 0)
-            this.modelFunctionMap.get(modelFunction.getId()).observeDigitalTwinProperties(observePropertyList);
+            this.modelFunctionMap.get(stateModelFunction.getId()).observeDigitalTwinProperties(observePropertyList);
     }
 
     /**
@@ -56,11 +64,11 @@ public class ModelEngine {
      * @param modelFunctionId
      * @throws ModelException
      */
-    public void stopModelFunction(String modelFunctionId) throws ModelException, ModelFunctionException {
+    public void remoteModelFunction(String modelFunctionId) throws ModelException, ModelFunctionException {
         if(modelFunctionId == null || !modelFunctionMap.containsKey(modelFunctionId))
             throw new ModelException(String.format("Error ! Provided modelFunctionId(%s) invalid or not found !", modelFunctionId));
 
-        this.modelFunctionMap.get(modelFunctionId).onStop();
+        this.modelFunctionMap.get(modelFunctionId).onRemoved();
         this.modelFunctionMap.remove(modelFunctionId);
     }
 

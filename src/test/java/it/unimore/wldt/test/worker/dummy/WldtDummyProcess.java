@@ -37,13 +37,15 @@ public class WldtDummyProcess {
             wldtConfiguration.setWldtStartupTimeSeconds(10);
             wldtConfiguration.setApplicationMetricsEnabled(true);
             wldtConfiguration.setApplicationMetricsReportingPeriodSeconds(10);
-            wldtConfiguration.setMetricsReporterList(Arrays.asList("csv", "graphite"));
+            wldtConfiguration.setMetricsReporterList(Arrays.asList("csv"));
+            //wldtConfiguration.setMetricsReporterList(Arrays.asList("csv", "graphite"));
             wldtConfiguration.setGraphitePrefix("wldt");
             wldtConfiguration.setGraphiteReporterAddress("127.0.0.1");
             wldtConfiguration.setGraphiteReporterPort(2003);
 
             //Init the Engine
-            WldtEngine wldtEngine = new WldtEngine(wldtConfiguration);
+            //TODO Check Constructor
+            WldtEngine wldtEngine = new WldtEngine(null, wldtConfiguration);
 
             //Init Dummy Worker with Cache
             WldtDummyWorker wldtDummyWorker = new WldtDummyWorker(
@@ -59,7 +61,6 @@ public class WldtDummyProcess {
 
             //Init with Worker Cache
             wldtEngine.addNewWorker(wldtDummyWorker);
-
 
             wldtEngine.startWorkers();
 

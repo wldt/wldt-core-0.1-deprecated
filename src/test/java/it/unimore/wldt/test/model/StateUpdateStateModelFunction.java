@@ -1,25 +1,25 @@
 package it.unimore.wldt.test.model;
 
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.model.ModelFunction;
+import it.unimore.dipi.iot.wldt.model.StateModelFunction;
 import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StateUpdateModelFunction extends ModelFunction {
+public class StateUpdateStateModelFunction extends StateModelFunction {
 
-    private static final Logger logger = LoggerFactory.getLogger(StateUpdateModelFunction.class);
+    private static final Logger logger = LoggerFactory.getLogger(StateUpdateStateModelFunction.class);
 
     public static final String TEST_PROPERTY_KEY_0001 = "testKey0001";
     public static final String TEST_PROPERTY_VALUE_0001 = "TEST-STRING";
     public static final String TEST_PROPERTY_VALUE_0001_UPDATED = "TEST-STRING-UPDATED";
 
-    public StateUpdateModelFunction(String id) {
+    public StateUpdateStateModelFunction(String id) {
         super(id);
     }
 
     @Override
-    protected void onStart() throws ModelFunctionException {
+    protected void onAdded() throws ModelFunctionException {
         try {
             logger.debug("onStart()");
             createTestStateProperty();
@@ -29,7 +29,7 @@ public class StateUpdateModelFunction extends ModelFunction {
     }
 
     @Override
-    protected void onStop() throws ModelFunctionException {
+    protected void onRemoved() throws ModelFunctionException {
         logger.debug("onStop()");
     }
 

@@ -41,6 +41,7 @@ public class EventBusTester {
 
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
+
             @Override
             public void onSubscribe(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);

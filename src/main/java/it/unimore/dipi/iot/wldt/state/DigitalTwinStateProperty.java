@@ -42,17 +42,17 @@ public class DigitalTwinStateProperty<T> {
     private String type = null;
 
     /**
-     * Identify if the property is readable to external modules
+     * Identify if the property is readable by external modules
      */
     private boolean readable = true;
 
     /**
-     * Identify if the property is writable to external modules
+     * Identify if the property is writable by external modules
      */
     private boolean writable = true;
 
     /**
-     * Identify if the property is exposed to external modules or if is it just an internal resource
+     * Identify if the property is exposed to external modules or if is it just for internal purposes
      */
     private boolean exposed = true;
 

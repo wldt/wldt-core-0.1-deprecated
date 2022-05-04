@@ -1,5 +1,7 @@
 package it.unimore.dipi.iot.wldt.event;
 
+import it.unimore.dipi.iot.wldt.exception.EventBusException;
+
 import java.util.*;
 
 public class EventMessage<T> {
@@ -17,21 +19,19 @@ public class EventMessage<T> {
         this.creationTimestamp = System.currentTimeMillis();
     }
 
-    public EventMessage(String type) {
+    public EventMessage(String type) throws EventBusException {
         this();
         this.type = type;
     }
 
-    public EventMessage(String type, T body) {
-        this();
-        this.type = type;
+    public EventMessage(String type, T body) throws EventBusException {
+        this(type);
         this.body = body;
         this.contentType = body.getClass().getName();
     }
 
-    public EventMessage(String type, T body, Map<String, Object> metadata) {
-        this();
-        this.type = type;
+    public EventMessage(String type, T body, Map<String, Object> metadata) throws EventBusException {
+        this(type);
         this.body = body;
         this.metadata = metadata;
         this.contentType = body.getClass().getName();

@@ -1,26 +1,26 @@
 package it.unimore.wldt.test.model;
 
 import it.unimore.dipi.iot.wldt.exception.ModelFunctionException;
-import it.unimore.dipi.iot.wldt.model.ModelFunction;
+import it.unimore.dipi.iot.wldt.model.StateModelFunction;
 import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ObserverModelFunction extends ModelFunction {
+public class ObserverStateModelFunction extends StateModelFunction {
 
-    private static final Logger logger = LoggerFactory.getLogger(ObserverModelFunction.class);
+    private static final Logger logger = LoggerFactory.getLogger(ObserverStateModelFunction.class);
 
-    public ObserverModelFunction(String id) {
+    public ObserverStateModelFunction(String id) {
         super(id);
     }
 
     @Override
-    protected void onStart() throws ModelFunctionException {
+    protected void onAdded() throws ModelFunctionException {
         logger.debug("onStart()");
     }
 
     @Override
-    protected void onStop() throws ModelFunctionException {
+    protected void onRemoved() throws ModelFunctionException {
         logger.debug("onStop()");
     }
 

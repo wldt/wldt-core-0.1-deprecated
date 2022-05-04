@@ -203,13 +203,18 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
     }
 
     @Override
-    public String getPropertyUpdatedEventMessageType(String propertyKey){
+    public String getPropertyCreatedEventMessageType(String propertyKey) {
         return String.format("%s.%s.%s", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey, CREATED_STRING);
     }
 
     @Override
-    public String getPropertyDeletedEventMessageType(String propertyKey) {
+    public String getPropertyUpdatedEventMessageType(String propertyKey){
         return String.format("%s.%s.%s", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey, UPDATED_STRING);
+    }
+
+    @Override
+    public String getPropertyDeletedEventMessageType(String propertyKey) {
+        return String.format("%s.%s.%s", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey, DELETED_STRING);
     }
 
 }
