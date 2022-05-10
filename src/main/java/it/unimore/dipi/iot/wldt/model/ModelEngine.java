@@ -74,13 +74,13 @@ public class ModelEngine extends WldtWorker {
     }
 
     @Override
-    public void onStart() {
+    public void onWorkerStart() {
         if(this.shadowingModelFunction != null)
             this.shadowingModelFunction.onStart();
     }
 
     @Override
-    public void onStop() {
+    public void onWorkerStop() {
 
         //Stop Shadowing Function
         if(this.shadowingModelFunction != null)
@@ -96,7 +96,7 @@ public class ModelEngine extends WldtWorker {
     }
 
     @Override
-    public void executeWorkerJob() throws WldtRuntimeException {
+    public void handleWorkerJob() throws WldtRuntimeException {
         try {
             this.shadowingModelFunction.observePhysicalEvents();
         } catch (EventBusException | ModelException e) {

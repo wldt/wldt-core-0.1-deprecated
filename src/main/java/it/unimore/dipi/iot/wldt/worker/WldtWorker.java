@@ -1,6 +1,5 @@
 package it.unimore.dipi.iot.wldt.worker;
 
-import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
 import it.unimore.dipi.iot.wldt.exception.WldtRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,17 +19,17 @@ public abstract class WldtWorker implements Runnable {
     @Override
     public void run() {
         try {
-            onStart();
-            executeWorkerJob();
+            onWorkerStart();
+            handleWorkerJob();
         } catch (Exception e) {
             logger.error("WLDT WORKER ERROR: {}", e.getLocalizedMessage());
-            onStop();
+            onWorkerStop();
         }
     }
 
-    abstract public void onStart();
+    abstract public void onWorkerStart();
 
-    abstract public void onStop();
+    abstract public void onWorkerStop();
 
-    abstract public void executeWorkerJob() throws WldtRuntimeException;
+    abstract public void handleWorkerJob() throws WldtRuntimeException;
 }

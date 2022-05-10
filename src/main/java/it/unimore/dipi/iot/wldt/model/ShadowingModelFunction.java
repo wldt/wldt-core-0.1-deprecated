@@ -3,7 +3,6 @@ package it.unimore.dipi.iot.wldt.model;
 import it.unimore.dipi.iot.wldt.event.*;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.exception.ModelException;
-import it.unimore.dipi.iot.wldt.exception.ModelFunctionException;
 import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +34,7 @@ public abstract class ShadowingModelFunction {
 
     protected void observePhysicalEvents() throws EventBusException, ModelException {
 
-        Optional<List<String>> optionalEventTypeList = getPhysicalEventTypeList();
+        Optional<List<String>> optionalEventTypeList = getPhysicalEventRawTypeList();
 
         if(!optionalEventTypeList.isPresent())
             throw new ModelException("Error ! Missing PhysicalEvent Type List in Shadowing Function ...");
@@ -84,7 +83,7 @@ public abstract class ShadowingModelFunction {
 
     abstract protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage);
 
-    abstract protected Optional<List<String>> getPhysicalEventTypeList();
+    abstract protected Optional<List<String>> getPhysicalEventRawTypeList();
 
     public String getId() {
         return id;
@@ -94,7 +93,9 @@ public abstract class ShadowingModelFunction {
         this.id = id;
     }
 
-
+    public EventFilter getPhysicalEventsFilter() {
+        return physicalEventsFilter;
+    }
 
     @Override
     public boolean equals(Object o) {

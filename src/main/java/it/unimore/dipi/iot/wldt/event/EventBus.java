@@ -44,7 +44,7 @@ public class EventBus {
                 subscriberInfo.getEventListener().onEvent(Optional.ofNullable(eventMessage));
 
                 if(eventLogger != null)
-                    eventLogger.logEventForwarded(subscriberInfo.getId(), publisherId, eventMessage);
+                    eventLogger.logEventForwarded(publisherId, subscriberInfo.getId(), eventMessage);
             });
     }
 

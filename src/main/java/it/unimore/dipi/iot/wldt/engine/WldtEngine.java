@@ -1,5 +1,6 @@
 package it.unimore.dipi.iot.wldt.engine;
 
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapter;
 import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
@@ -27,7 +28,7 @@ public class WldtEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(WldtEngine.class);
 
-    private static final int THREAD_POOL_SIZE = 5;
+    private static final int THREAD_POOL_SIZE_LIMIT = 5;
 
     private static final String TAG = "[WLDT-Engine]";
 
@@ -101,8 +102,18 @@ public class WldtEngine {
 
     }
 
+    public void addPhysicalAdapter(PhysicalAdapter<?> physicalAdapter) throws WldtConfigurationException {
+
+        if(physicalAdapter != null && this.workerList != null && this.workerList.size() < THREAD_POOL_SIZE_LIMIT) {
+            this.workerList.add(physicalAdapter);
+            logger.debug("{} New PhysicalAdapter ({}) Added to the Worker List ! Worker List Size: {}", TAG, physicalAdapter.getClass().getName(), this.workerList.size());
+        }
+        else
+            throw new WldtConfigurationException("Invalid Worker/WorkerList or Worker List Limit Reached !");
+    }
+
     public void addNewWorker(WldtWorker wldtWorker) throws WldtConfigurationException {
-        if(wldtWorker != null && this.workerList != null && this.workerList.size() < THREAD_POOL_SIZE) {
+        if(wldtWorker != null && this.workerList != null && this.workerList.size() < THREAD_POOL_SIZE_LIMIT) {
             this.workerList.add(wldtWorker);
             logger.debug("{} New Worker ({}) Added to the List ! List Size: {}", TAG, wldtWorker.getClass().getName(), this.workerList.size());
         }
@@ -144,7 +155,7 @@ public class WldtEngine {
 
         //Notify workers
         for(WldtWorker worker : this.workerList)
-            worker.onStop();
+            worker.onWorkerStop();
     }
 
     public String getWldtId() {

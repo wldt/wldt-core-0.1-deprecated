@@ -77,7 +77,7 @@ public class ModelTester {
             }
 
             @Override
-            protected Optional<List<String>> getPhysicalEventTypeList() {
+            protected Optional<List<String>> getPhysicalEventRawTypeList() {
                 return Optional.of(new ArrayList<String>() {{
                     add(DEMO_MQTT_MESSAGE_TYPE);
                 }});
@@ -130,7 +130,7 @@ public class ModelTester {
             }
 
             @Override
-            protected Optional<List<String>> getPhysicalEventTypeList() {
+            protected Optional<List<String>> getPhysicalEventRawTypeList() {
                 return Optional.of(new ArrayList<String>() {{
                     add(DEMO_MQTT_MESSAGE_TYPE);
                 }});
