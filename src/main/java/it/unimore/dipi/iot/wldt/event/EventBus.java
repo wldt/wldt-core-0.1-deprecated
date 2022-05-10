@@ -37,7 +37,7 @@ public class EventBus {
             throw new EventBusException(String.format("EventBus-publishEvent() -> Error: eventMessage = NULL or event-type (%s) is invalid !", eventMessage != null ? eventMessage.getType() : "null"));
 
         if(eventLogger != null)
-            eventLogger.logEventPublish(publisherId, eventMessage);
+            eventLogger.logEventPublished(publisherId, eventMessage);
 
         if(this.subscriberMap.containsKey(eventMessage.getType()) && this.subscriberMap.get(eventMessage.getType()).size() > 0)
             this.subscriberMap.get(eventMessage.getType()).forEach(subscriberInfo -> {

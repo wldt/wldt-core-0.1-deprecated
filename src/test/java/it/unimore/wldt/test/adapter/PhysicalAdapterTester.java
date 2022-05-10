@@ -2,15 +2,15 @@ package it.unimore.wldt.test.adapter;
 
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
-import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
-import it.unimore.dipi.iot.wldt.event.EventBus;
-import it.unimore.dipi.iot.wldt.event.PhysicalEventMessage;
+import it.unimore.dipi.iot.wldt.event.*;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.exception.ModelException;
 import it.unimore.dipi.iot.wldt.exception.ModelFunctionException;
 import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,13 +21,16 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PhysicalAdapterTester {
 
     private static final Logger logger = LoggerFactory.getLogger(PhysicalAdapterTester.class);
 
     private CountDownLatch lock = null;
 
-    private List<PhysicalEventMessage<Double>> receivedPhysicalEventMessageList = null;
+    private List<PhysicalEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
+
+    private List<PhysicalEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
 
     private static final String DEMO_MQTT_BODY = "DEMO_BODY_MQTT";
 
@@ -52,9 +55,9 @@ public class PhysicalAdapterTester {
 
 
     @Test
-    public void testPhysicalAdapter() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException {
+    public void testPhysicalAdapterEvents() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException {
 
-        this.receivedPhysicalEventMessageList = new ArrayList<>();
+        this.receivedPhysicalTelemetryEventMessageList = new ArrayList<>();
 
         lock = new CountDownLatch(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES);
 
@@ -62,7 +65,7 @@ public class PhysicalAdapterTester {
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
         //Create Physical Adapter
-        DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration());
+        DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), true);
 
         //Init the Engine
         WldtEngine wldtEngine = new WldtEngine(new ShadowingModelFunction("test-shadowing-function") {
@@ -87,7 +90,7 @@ public class PhysicalAdapterTester {
                         && physicalEventMessage.getBody() instanceof Double){
                     logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalEventMessage.getType(), physicalEventMessage);
                     lock.countDown();
-                    receivedPhysicalEventMessageList.add((PhysicalEventMessage<Double>) physicalEventMessage);
+                    receivedPhysicalTelemetryEventMessageList.add((PhysicalEventMessage<Double>) physicalEventMessage);
                 }
                 else
                     logger.error("WRONG Physical Event Message Received !");
@@ -108,8 +111,87 @@ public class PhysicalAdapterTester {
                         + (DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES*DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS)),
                 TimeUnit.MILLISECONDS);
 
-        assertNotNull(receivedPhysicalEventMessageList);
-        assertEquals(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES, receivedPhysicalEventMessageList.size());
+        assertNotNull(receivedPhysicalTelemetryEventMessageList);
+        assertEquals(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES, receivedPhysicalTelemetryEventMessageList.size());
+
+        Thread.sleep(2000);
+
+        wldtEngine.stopWorkers();
+    }
+
+    @Test
+    public void testPhysicalAdapterActions() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException {
+
+        this.receivedPhysicalSwitchEventMessageList = new ArrayList<>();
+
+        //Our target is to received two event changes associated to switch changes
+        lock = new CountDownLatch(2);
+
+        //Set EventBus Logger
+        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+
+        //Create Physical Adapter disabling the telemetry since we would like only to test actions and the associated swith events generation
+        DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), false);
+
+        //Init the Engine
+        WldtEngine wldtEngine = new WldtEngine(new ShadowingModelFunction("test-shadowing-function") {
+
+            @Override
+            protected void onStart() {
+                logger.debug("ShadowingModelFunction - onStart()");
+            }
+
+            @Override
+            protected void onStop() {
+                logger.debug("ShadowingModelFunction - onStop()");
+            }
+
+            @Override
+            protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage) {
+                logger.info("onPhysicalEvent()-> {}", physicalEventMessage);
+
+                if(physicalEventMessage != null
+                        && PhysicalEventMessage.buildEventType(DummyPhysicalAdapter.EVENT_SWITCH_MESSAGE_TYPE).equals(physicalEventMessage.getType())
+                        && physicalEventMessage.getBody() instanceof String){
+                    logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalEventMessage.getType(), physicalEventMessage);
+                    lock.countDown();
+                    receivedPhysicalSwitchEventMessageList.add((PhysicalEventMessage<String>) physicalEventMessage);
+                }
+                else
+                logger.error("WRONG Physical Event Message Received !");
+            }
+
+            @Override
+            protected Optional<List<String>> getPhysicalEventRawTypeList() {
+                //In that case we want only to receive event updates and not telemetry data
+                return Optional.of(new ArrayList<String>() {{
+                    add(DummyPhysicalAdapter.EVENT_SWITCH_MESSAGE_TYPE);
+                }});
+            }
+        }, buildWldtConfiguration());
+
+        wldtEngine.addPhysicalAdapter(dummyPhysicalAdapter);
+        wldtEngine.startWorkers();
+
+        logger.info("WLDT Started ! Sleeping (5s) before sending actions ...");
+        Thread.sleep(5000);
+
+        //Send a Demo OFF PhysicalAction to the Adapter
+        PhysicalActionEventMessage<String> switchOffPhysicalActionEvent = new PhysicalActionEventMessage<String>(DummyPhysicalAdapter.SWITCH_OFF_ACTION, "OFF");
+        EventBus.getInstance().publishEvent("demo-action-tester", switchOffPhysicalActionEvent);
+        logger.info("Physical Action OFF Sent ! Sleeping (5s) ...");
+        Thread.sleep(5000);
+
+        //Send a Demo OFF PhysicalAction to the Adapter
+        PhysicalActionEventMessage<String> switchOnPhysicalActionEvent = new PhysicalActionEventMessage<String>(DummyPhysicalAdapter.SWITCH_ON_ACTION, "ON");
+        EventBus.getInstance().publishEvent("demo-action-tester", switchOnPhysicalActionEvent);
+        logger.info("Physical Action ON Sent ! Sleeping (5s) ...");
+
+        //Wait until all the messages have been received
+        lock.await(5000, TimeUnit.MILLISECONDS);
+
+        assertNotNull(receivedPhysicalSwitchEventMessageList);
+        assertEquals(2, receivedPhysicalSwitchEventMessageList.size());
 
         Thread.sleep(2000);
 

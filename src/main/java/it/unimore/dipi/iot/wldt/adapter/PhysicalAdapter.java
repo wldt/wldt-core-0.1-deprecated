@@ -40,7 +40,12 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
 
     @Override
     public void handleWorkerJob() throws WldtRuntimeException {
-        handleBinding();
+        try{
+            observePhysicalActionEvents();
+            handleBinding();
+        }catch (Exception e){
+            throw new WldtRuntimeException(e.getLocalizedMessage());
+        }
     }
 
     public String getId() {
@@ -53,7 +58,7 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
 
     protected void observePhysicalActionEvents() throws EventBusException, ModelException {
 
-        Optional<List<String>> optionalEventTypeList = getSupportedDigitalActionEventTypeList();
+        Optional<List<String>> optionalEventTypeList = getSupportedPhysicalActionEventTypeList();
 
         if(!optionalEventTypeList.isPresent())
             throw new ModelException("Error ! Missing PhysicalEvent Type List in Shadowing Function ...");
@@ -61,7 +66,7 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
         //Define EventFilter and add the target topics
         EventFilter eventFilter = new EventFilter();
         for(String eventType : optionalEventTypeList.get())
-            eventFilter.add(DigitalActionEventMessage.buildEventType(eventType));
+            eventFilter.add(PhysicalActionEventMessage.buildEventType(eventType));
 
         //Save the adopted EventFilter
         this.digitalActionEventsFilter = eventFilter;
@@ -69,29 +74,29 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
         EventBus.getInstance().subscribe(this.id, this.digitalActionEventsFilter, new EventListener() {
             @Override
             public void onSubscribe(String eventType) {
-                logger.debug("Shadowing Model Function -> Subscribed to: {}", eventType);
+                logger.debug("{} -> Subscribed to: {}", id, eventType);
             }
 
             @Override
             public void onUnSubscribe(String eventType) {
-                logger.debug("Shadowing Model Function -> Unsubscribed from: {}", eventType);
+                logger.debug("{} -> Unsubscribed from: {}", id, eventType);
             }
 
             @Override
             public void onEvent(Optional<EventMessage<?>> eventMessage) {
-                logger.debug("Shadowing Model Function -> Received Event: {}", eventMessage);
-                if(eventMessage.isPresent() && eventMessage.get() instanceof DigitalActionEventMessage){
-                    onIncomingDigitalAction((DigitalActionEventMessage<?>) eventMessage.get());
+                logger.debug("{} -> Received Event: {}", id, eventMessage);
+                if(eventMessage.isPresent() && eventMessage.get() instanceof PhysicalActionEventMessage){
+                    onIncomingPhysicalAction((PhysicalActionEventMessage<?>) eventMessage.get());
                 }
             }
         });
     }
 
-    abstract protected Optional<List<String>> getSupportedDigitalActionEventTypeList();
+    abstract protected Optional<List<String>> getSupportedPhysicalActionEventTypeList();
 
     abstract protected Optional<List<String>> getGeneratedPhysicalEventTypeList();
 
-    public abstract void onIncomingDigitalAction(DigitalActionEventMessage<?> physicalEventMessage);
+    public abstract void onIncomingPhysicalAction(PhysicalActionEventMessage<?> physicalActionEventMessage);
 
     public abstract void handleBinding();
 

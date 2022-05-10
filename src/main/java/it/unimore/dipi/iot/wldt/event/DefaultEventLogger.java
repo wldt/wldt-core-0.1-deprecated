@@ -8,9 +8,9 @@ public class DefaultEventLogger implements IEventLogger{
     private static final Logger logger = LoggerFactory.getLogger(DefaultEventLogger.class);
 
     @Override
-    public void logEventPublish(String publisherId, EventMessage<?> eventMessage) {
+    public void logEventPublished(String publisherId, EventMessage<?> eventMessage) {
         if(eventMessage != null)
-            logger.info("PUBLISHER [{}] -> PUBLISH EVENT TYPE: {} Message: {}", publisherId, eventMessage.getType(), eventMessage);
+            logger.info("PUBLISHER [{}] -> PUBLISHED EVENT TYPE: {} Message: {}", publisherId, eventMessage.getType(), eventMessage);
         else
             logger.error("PUBLISHER [{}] -> NULL MESSAGE !", publisherId);
     }
