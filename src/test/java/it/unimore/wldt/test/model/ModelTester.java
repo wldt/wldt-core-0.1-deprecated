@@ -7,6 +7,8 @@ import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.event.PhysicalEventMessage;
 import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
+import it.unimore.wldt.test.adapter.DummyPhysicalAdapter;
+import it.unimore.wldt.test.adapter.DummyPhysicalAdapterConfiguration;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +86,11 @@ public class ModelTester {
             }
         }, buildWldtConfiguration());
 
-        wldtEngine.startWorkers();
+        wldtEngine.addPhysicalAdapter(new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), false));
+        wldtEngine.startLifeCycle();
+
+        //Wait just to complete the correct startup of the DT instance
+        Thread.sleep(2000);
 
         //Generate an emulated Physical Event
         PhysicalEventMessage<String> physicalEventMessage = new PhysicalEventMessage<>(DEMO_MQTT_MESSAGE_TYPE);
@@ -101,7 +107,7 @@ public class ModelTester {
         assertEquals(DEMO_MQTT_BODY, receivedMessage.getBody());
         assertEquals(PhysicalEventMessage.buildEventType(DEMO_MQTT_MESSAGE_TYPE), receivedMessage.getType());
 
-        wldtEngine.stopWorkers();
+        wldtEngine.stopLifeCycle();
     }
 
     @Test

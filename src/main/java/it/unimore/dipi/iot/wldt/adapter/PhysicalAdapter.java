@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public abstract class PhysicalAdapter<C> extends WldtWorker {
@@ -19,7 +20,9 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
 
     private C configuration;
 
-    private EventFilter digitalActionEventsFilter;
+    private EventFilter physicalActionEventsFilter;
+
+    private PhysicalAdapterListener physicalAdapterListener;
 
     private PhysicalAdapter(){}
 
@@ -56,7 +59,7 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
         return configuration;
     }
 
-    protected void observePhysicalActionEvents() throws EventBusException, ModelException {
+    private void observePhysicalActionEvents() throws EventBusException, ModelException {
 
         Optional<List<String>> optionalEventTypeList = getSupportedPhysicalActionEventTypeList();
 
@@ -69,9 +72,9 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
             eventFilter.add(PhysicalActionEventMessage.buildEventType(eventType));
 
         //Save the adopted EventFilter
-        this.digitalActionEventsFilter = eventFilter;
+        this.physicalActionEventsFilter = eventFilter;
 
-        EventBus.getInstance().subscribe(this.id, this.digitalActionEventsFilter, new EventListener() {
+        EventBus.getInstance().subscribe(this.id, this.physicalActionEventsFilter, new EventListener() {
             @Override
             public void onSubscribe(String eventType) {
                 logger.debug("{} -> Subscribed to: {}", id, eventType);
@@ -92,9 +95,17 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
         });
     }
 
-    abstract protected Optional<List<String>> getSupportedPhysicalActionEventTypeList();
+    public PhysicalAdapterListener getPhysicalAdapterListener() {
+        return physicalAdapterListener;
+    }
 
-    abstract protected Optional<List<String>> getGeneratedPhysicalEventTypeList();
+    public void setPhysicalAdapterListener(PhysicalAdapterListener physicalAdapterListener) {
+        this.physicalAdapterListener = physicalAdapterListener;
+    }
+
+    abstract public Optional<List<String>> getSupportedPhysicalActionEventTypeList();
+
+    abstract public Optional<List<String>> getGeneratedPhysicalEventTypeList();
 
     public abstract void onIncomingPhysicalAction(PhysicalActionEventMessage<?> physicalActionEventMessage);
 
@@ -104,4 +115,16 @@ public abstract class PhysicalAdapter<C> extends WldtWorker {
 
     public abstract void onAdapterStop();
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PhysicalAdapter<?> that = (PhysicalAdapter<?>) o;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

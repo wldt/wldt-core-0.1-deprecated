@@ -104,7 +104,7 @@ public class PhysicalAdapterTester {
         }, buildWldtConfiguration());
 
         wldtEngine.addPhysicalAdapter(dummyPhysicalAdapter);
-        wldtEngine.startWorkers();
+        wldtEngine.startLifeCycle();
 
         //Wait until all the messages have been received
         lock.await((DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS
@@ -116,7 +116,7 @@ public class PhysicalAdapterTester {
 
         Thread.sleep(2000);
 
-        wldtEngine.stopWorkers();
+        wldtEngine.stopLifeCycle();
     }
 
     @Test
@@ -171,7 +171,7 @@ public class PhysicalAdapterTester {
         }, buildWldtConfiguration());
 
         wldtEngine.addPhysicalAdapter(dummyPhysicalAdapter);
-        wldtEngine.startWorkers();
+        wldtEngine.startLifeCycle();
 
         logger.info("WLDT Started ! Sleeping (5s) before sending actions ...");
         Thread.sleep(5000);
@@ -195,7 +195,7 @@ public class PhysicalAdapterTester {
 
         Thread.sleep(2000);
 
-        wldtEngine.stopWorkers();
+        wldtEngine.stopLifeCycle();
     }
 
 }

@@ -1,6 +1,7 @@
 package it.unimore.dipi.iot.wldt.engine;
 
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapter;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapterListener;
 import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
@@ -8,14 +9,14 @@ import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ModelEngine;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
+import it.unimore.dipi.iot.wldt.model.ShadowingModelListener;
 import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
 import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
-import it.unimore.dipi.iot.wldt.worker.WldtWorker;
 import it.unimore.dipi.iot.wldt.utils.WldtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,11 +25,11 @@ import java.util.concurrent.Executors;
  * Date: 24/03/2020
  * Project: White Label Digital Twin Java Framework - (whitelabel-digitaltwin)
  */
-public class WldtEngine {
+public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListener {
 
     private static final Logger logger = LoggerFactory.getLogger(WldtEngine.class);
 
-    private static final int THREAD_POOL_SIZE_LIMIT = 5;
+    private static final int PHYSICAL_ADAPTERS_THREAD_POOL_SIZE_LIMIT = 5;
 
     private static final String TAG = "[WLDT-Engine]";
 
@@ -38,15 +39,21 @@ public class WldtEngine {
 
     private String wldtId;
 
-    private ExecutorService executor = null;
+    private ExecutorService physicalAdapterExecutor = null;
 
-    private List<WldtWorker> workerList = null;
+    private List<PhysicalAdapter<?>> physicalAdapterList = null;
+
+    private Map<String, Boolean> physicalAdapterBoundStatusMap = null;
 
     private WldtConfiguration wldtConfiguration;
 
     private IDigitalTwinState digitalTwinState = null;
 
     private ModelEngine modelEngine = null;
+
+    private List<LifeCycleListener> lifeCycleListenerList = null;
+
+    private Thread modelEngineThread = null;
 
     public WldtEngine(ShadowingModelFunction shadowingModelFunction, WldtConfiguration wldtConfiguration) throws WldtConfigurationException, ModelException, EventBusException {
         this.wldtConfiguration = wldtConfiguration;
@@ -63,14 +70,18 @@ public class WldtEngine {
 
         this.wldtId = WldtUtils.generateRandomWldtId(this.wldtConfiguration.getDeviceNameSpace(), this.wldtConfiguration.getWldtBaseIdentifier());
 
+        //Init Life Cycle Listeners & Status Map
+        this.lifeCycleListenerList = new ArrayList<>();
+        this.physicalAdapterBoundStatusMap = new HashMap<>();
+
         //Initialize the Digital Twin State
         this.digitalTwinState = new DefaultDigitalTwinState();
 
         //Setup EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
-        //Create the WorkerList
-        this.workerList = new ArrayList<>();
+        //Create List of Physical Adapter
+        this.physicalAdapterList = new ArrayList<>();
 
         //executor = Executors.newFixedThreadPool((wldtConfiguration.getThreadPoolSize() > 0) ? wldtConfiguration.getThreadPoolSize() : THREAD_POOL_SIZE);
 
@@ -79,9 +90,75 @@ public class WldtEngine {
             WldtMetricsManager.getInstance().startMonitoring(this.wldtConfiguration.getApplicationMetricsReportingPeriodSeconds());
         }
 
-        //Init Model Engine & Add to the List of Workers
+        //Set ShadowingListener, Init Model Engine & Add to the List of Workers
+        shadowingModelFunction.setShadowingModelListener(this);
         this.modelEngine = new ModelEngine(this.digitalTwinState, shadowingModelFunction);
-        addNewWorker(this.modelEngine);
+        executeModelEngine();
+    }
+
+    private void executeModelEngine(){
+        modelEngineThread = new Thread(this.modelEngine);
+        modelEngineThread.start();
+    }
+
+    public void addLifeCycleListener(LifeCycleListener listener){
+        if(listener != null && this.lifeCycleListenerList != null && !this.lifeCycleListenerList.contains(listener))
+            this.lifeCycleListenerList.add(listener);
+    }
+
+    public void removeLifeCycleListener(LifeCycleListener listener){
+        if(listener != null && this.lifeCycleListenerList != null)
+            this.lifeCycleListenerList.remove(listener);
+    }
+
+    private void notifyLifeCycleOnCreate(){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onCreate();
+    }
+
+    private void notifyLifeCycleOnStart(){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onStart();
+    }
+
+    private void notifyLifeCycleOnBound(){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onBound();
+    }
+
+    private void notifyLifeCycleOnUnBound(Optional<String> errorMessage){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onUnBound(errorMessage);
+    }
+
+    private void notifyLifeCycleOnAdapterBound(String adapterId){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onAdapterBound(adapterId);
+    }
+
+    private void notifyLifeCycleOnAdapterUnBound(String adapterId, Optional<String> errorMessage){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onAdapterUnBound(adapterId, errorMessage);
+    }
+
+    private void notifyLifeCycleOnSync(){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onSync();
+    }
+
+    private void notifyLifeCycleOnUnSync(){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onUnSync();
+    }
+
+    private void notifyLifeCycleOnStop(){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onStop();
+    }
+
+    private void notifyLifeCycleOnDestroy(){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onDestroy();
     }
 
     private void enableMetricsReporter(List<String> metricsReporterList) {
@@ -104,58 +181,75 @@ public class WldtEngine {
 
     public void addPhysicalAdapter(PhysicalAdapter<?> physicalAdapter) throws WldtConfigurationException {
 
-        if(physicalAdapter != null && this.workerList != null && this.workerList.size() < THREAD_POOL_SIZE_LIMIT) {
-            this.workerList.add(physicalAdapter);
-            logger.debug("{} New PhysicalAdapter ({}) Added to the Worker List ! Worker List Size: {}", TAG, physicalAdapter.getClass().getName(), this.workerList.size());
+        if(physicalAdapter != null
+                && this.physicalAdapterList != null
+                && !this.physicalAdapterList.contains(physicalAdapter)
+                && this.physicalAdapterList.size() < PHYSICAL_ADAPTERS_THREAD_POOL_SIZE_LIMIT) {
+            physicalAdapter.setPhysicalAdapterListener(this);
+            this.physicalAdapterList.add(physicalAdapter);
+
+            //Save BoundStatus to False. It will be changed through a call back by the adpter
+            this.physicalAdapterBoundStatusMap.put(physicalAdapter.getId(), false);
+
+            logger.debug("{} New PhysicalAdapter ({}) Added to the Worker List ! Worker List Size: {}", TAG, physicalAdapter.getClass().getName(), this.physicalAdapterList.size());
         }
         else
-            throw new WldtConfigurationException("Invalid Worker/WorkerList or Worker List Limit Reached !");
+            throw new WldtConfigurationException("Invalid PhysicalAdapter, Already added or List Limit Reached !");
     }
 
-    public void addNewWorker(WldtWorker wldtWorker) throws WldtConfigurationException {
-        if(wldtWorker != null && this.workerList != null && this.workerList.size() < THREAD_POOL_SIZE_LIMIT) {
-            this.workerList.add(wldtWorker);
-            logger.debug("{} New Worker ({}) Added to the List ! List Size: {}", TAG, wldtWorker.getClass().getName(), this.workerList.size());
+    public void clearPhysicalAdapterList() throws WldtConfigurationException{
+        if(this.physicalAdapterList != null){
+            this.physicalAdapterList.clear();
         }
         else
-            throw new WldtConfigurationException("Invalid Worker/WorkerList or Worker List Limit Reached !");
+            throw new WldtConfigurationException("Error Cleaning Physical Adapters ! List is Null !");
     }
 
-    public void clearWorkersList() throws WldtConfigurationException{
-        if(this.workerList != null){
-            this.workerList.clear();
-        }
-        else
-            throw new WldtConfigurationException("Error Cleaning Workers ! Worker List is Null !");
-    }
+    public void startLifeCycle() throws WldtConfigurationException {
 
-    public void startWorkers() throws WldtConfigurationException {
+        if(this.physicalAdapterList == null || this.physicalAdapterList.isEmpty())
+            throw new WldtConfigurationException("Empty PhysicalAdapter List !");
 
-        if(this.workerList == null || this.workerList.isEmpty())
-            throw new WldtConfigurationException("Empty enabled protocol list !");
+        notifyLifeCycleOnCreate();
 
-        //Init the thread pool
-        executor = Executors.newFixedThreadPool(workerList.size());
+        //Init PhysicalAdapter Executor
+        physicalAdapterExecutor = Executors.newFixedThreadPool(physicalAdapterList.size());
 
-        this.workerList.forEach(wldtWorker -> {
-            logger.info("Executing worker: {}", wldtWorker.getClass());
-            executor.execute(wldtWorker);
+        this.physicalAdapterList.forEach(physicalAdapter -> {
+            logger.info("Executing PhysicalAdapter: {}", physicalAdapter.getClass());
+            physicalAdapterExecutor.execute(physicalAdapter);
         });
 
-        executor.shutdown();
+        //When all PhysicalAdapters have been started the DT moves to the Start State
+        notifyLifeCycleOnStart();
 
-        while (!executor.isTerminated()) {}
+        physicalAdapterExecutor.shutdown();
+
+        while (!physicalAdapterExecutor.isTerminated()) {}
 
     }
 
-    public void stopWorkers(){
+    public void stopLifeCycle(){
+        try{
 
-        this.executor.shutdownNow();
-        this.executor = null;
+            //Stop and Notify Model Engine
+            this.modelEngineThread.interrupt();
+            this.modelEngineThread = null;
+            this.modelEngine.onWorkerStop();
 
-        //Notify workers
-        for(WldtWorker worker : this.workerList)
-            worker.onWorkerStop();
+            //Stop and Notify Physical Adapters
+            this.physicalAdapterExecutor.shutdownNow();
+            this.physicalAdapterExecutor = null;
+            for(PhysicalAdapter<?> physicalAdapter : this.physicalAdapterList)
+                physicalAdapter.onWorkerStop();
+
+            notifyLifeCycleOnStop();
+            notifyLifeCycleOnDestroy();
+
+        } catch (Exception e){
+            logger.error("ERROR Stopping DT LifeCycle ! Error: {}", e.getLocalizedMessage());
+        }
+
     }
 
     public String getWldtId() {
@@ -178,4 +272,54 @@ public class WldtEngine {
         return modelEngine;
     }
 
+    /**
+     * Check if all the registered Physical Adapters are correctly bound
+     * @return
+     */
+    private boolean isDtBound(){
+        for(boolean status : this.physicalAdapterBoundStatusMap.values())
+            if(!status)
+                return false;
+        return true;
+    }
+
+    @Override
+    public void onShadowingSync() {
+        notifyLifeCycleOnSync();
+    }
+
+    @Override
+    public void onShadowingOutOfSync() {
+        notifyLifeCycleOnUnSync();
+    }
+
+    @Override
+    public void onBound(String adapterId) {
+        logger.info("PhysicalAdapter {} BOUND !", adapterId);
+        this.physicalAdapterBoundStatusMap.put(adapterId, true);
+        notifyLifeCycleOnAdapterBound(adapterId);
+
+        if(isDtBound()) {
+            logger.info("Digital Twin BOUND !");
+            notifyLifeCycleOnBound();
+        }
+    }
+
+    @Override
+    public void onUnBound(String adapterId, Optional<String> errorMessage) {
+
+        //If the DT is currently bound
+        if(isDtBound()) {
+            logger.info("PhysicalAdapter {} UN-BOUND ! Reason: {}", adapterId, errorMessage);
+            this.physicalAdapterBoundStatusMap.put(adapterId, false);
+            notifyLifeCycleOnAdapterUnBound(adapterId, errorMessage);
+            logger.info("Digital Twin UN-BOUND !");
+            notifyLifeCycleOnUnBound(Optional.of(String.format("Adapter %s UnBound - Error ?: %b", adapterId, errorMessage.isPresent())));
+        }
+        else{
+            logger.info("PhysicalAdapter {} UN-BOUND ! Reason: {}", adapterId, errorMessage);
+            this.physicalAdapterBoundStatusMap.put(adapterId, false);
+            notifyLifeCycleOnAdapterUnBound(adapterId, errorMessage);
+        }
+    }
 }

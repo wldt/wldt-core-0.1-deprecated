@@ -82,6 +82,8 @@ public class ModelEngine extends WldtWorker {
     @Override
     public void onWorkerStop() {
 
+        logger.info("Stopping Model Engine ....");
+
         //Stop Shadowing Function
         if(this.shadowingModelFunction != null)
             this.shadowingModelFunction.onStop();
@@ -93,6 +95,8 @@ public class ModelEngine extends WldtWorker {
             }catch (Exception e){
                 logger.error("Error Removing State Model Function: {}", e.getLocalizedMessage());
             }
+
+        logger.info("Model Engine Correctly Stopped !");
     }
 
     @Override

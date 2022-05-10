@@ -28,6 +28,8 @@ public abstract class ShadowingModelFunction {
 
     private ShadowingModelFunction(){}
 
+    private ShadowingModelListener shadowingModelListener;
+
     public ShadowingModelFunction(String id){
         this.id = id;
     }
@@ -95,6 +97,14 @@ public abstract class ShadowingModelFunction {
 
     public EventFilter getPhysicalEventsFilter() {
         return physicalEventsFilter;
+    }
+
+    public ShadowingModelListener getShadowingModelListener() {
+        return shadowingModelListener;
+    }
+
+    public void setShadowingModelListener(ShadowingModelListener shadowingModelListener) {
+        this.shadowingModelListener = shadowingModelListener;
     }
 
     @Override

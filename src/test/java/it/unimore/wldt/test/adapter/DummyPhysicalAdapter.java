@@ -43,7 +43,7 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
     }
 
     @Override
-    protected Optional<List<String>> getSupportedPhysicalActionEventTypeList() {
+    public Optional<List<String>> getSupportedPhysicalActionEventTypeList() {
         return Optional.of(new ArrayList<String>() {{
             add(SWITCH_OFF_ACTION);
             add(SWITCH_ON_ACTION);
@@ -51,7 +51,7 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
     }
 
     @Override
-    protected Optional<List<String>> getGeneratedPhysicalEventTypeList() {
+    public Optional<List<String>> getGeneratedPhysicalEventTypeList() {
         return Optional.of(new ArrayList<String>() {{
             add(ENERGY_MESSAGE_TYPE);
             add(EVENT_SWITCH_MESSAGE_TYPE);
@@ -87,6 +87,10 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
                 @Override
                 public void run() {
                     try {
+
+                        if(getPhysicalAdapterListener() != null)
+                            getPhysicalAdapterListener().onBound(getId());
+
                         for(int i=0; i<TARGET_GENERATED_MESSAGES; i++){
                             Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
                             double randomEnergyValue = 10 + (100 - 10) * random.nextDouble();
@@ -107,5 +111,7 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
     @Override
     public void onAdapterStop() {
         logger.info("DummyPhysicalAdapter Stopped !");
+        if(getPhysicalAdapterListener() != null)
+            getPhysicalAdapterListener().onUnBound(this.getId(), Optional.empty());
     }
 }
