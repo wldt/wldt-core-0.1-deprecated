@@ -1,5 +1,7 @@
 package it.unimore.dipi.iot.wldt.model;
 
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapterListener;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetState;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.exception.ModelException;
 import it.unimore.dipi.iot.wldt.exception.ModelFunctionException;
@@ -11,13 +13,14 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Author: Marco Picone, Ph.D. (marco.picone@unimore.it)
  * Date: 24/03/2020
  * Project: White Label Digital Twin Java Framework - (whitelabel-digitaltwin)
  */
-public class ModelEngine extends WldtWorker {
+public class ModelEngine extends WldtWorker implements PhysicalAdapterListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ModelEngine.class);
 
@@ -74,9 +77,9 @@ public class ModelEngine extends WldtWorker {
     }
 
     @Override
-    public void onWorkerStart() {
+    public void onWorkerCreated() {
         if(this.shadowingModelFunction != null)
-            this.shadowingModelFunction.onStart();
+            this.shadowingModelFunction.onCreate();
     }
 
     @Override
@@ -100,13 +103,28 @@ public class ModelEngine extends WldtWorker {
     }
 
     @Override
-    public void handleWorkerJob() throws WldtRuntimeException {
+    public void onWorkerStart() throws WldtRuntimeException {
         try {
-            this.shadowingModelFunction.observePhysicalEvents();
-        } catch (EventBusException | ModelException e) {
+            this.shadowingModelFunction.onStart();
+        } catch (Exception e) {
             String errorMessage = String.format("Shadowing Function Error Observing Physical Event: %s", e.getLocalizedMessage());
             logger.error(errorMessage);
             throw new WldtRuntimeException(errorMessage);
         }
+    }
+
+    @Override
+    public void onBound(String adapterId, PhysicalAssetState physicalAssetState) {
+
+    }
+
+    @Override
+    public void onBindingUpdate(String adapterId, PhysicalAssetState physicalAssetState) {
+
+    }
+
+    @Override
+    public void onUnBound(String adapterId, Optional<String> errorMessage) {
+
     }
 }

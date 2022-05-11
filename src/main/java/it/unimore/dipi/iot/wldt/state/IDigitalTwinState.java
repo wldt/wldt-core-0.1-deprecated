@@ -23,4 +23,10 @@ public interface IDigitalTwinState {
 
     public String getPropertyDeletedEventMessageType(String propertyKey);
 
+    public void enableAction(DigitalTwinStateAction digitalTwinStateAction) throws WldtDigitalTwinStateActionException, WldtDigitalTwinStateActionConflictException;
+
+    public void updateAction(DigitalTwinStateAction digitalTwinStateAction) throws WldtDigitalTwinStateActionException, WldtDigitalTwinStateActionNotFoundException;
+
+    public void disableAction(String actionKey) throws WldtDigitalTwinStateActionException, WldtDigitalTwinStateActionNotFoundException;
+
 }

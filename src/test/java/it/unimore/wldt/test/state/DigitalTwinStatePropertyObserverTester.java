@@ -65,12 +65,12 @@ public class DigitalTwinStatePropertyObserverTester {
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
             @Override
-            public void onSubscribe(String eventType) {
+            public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe(String eventType) {
+            public void onEventUnSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 
@@ -127,12 +127,12 @@ public class DigitalTwinStatePropertyObserverTester {
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
             @Override
-            public void onSubscribe(String eventType) {
+            public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe(String eventType) {
+            public void onEventUnSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 
@@ -191,12 +191,12 @@ public class DigitalTwinStatePropertyObserverTester {
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
             @Override
-            public void onSubscribe(String eventType) {
+            public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe(String eventType) {
+            public void onEventUnSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 
@@ -252,12 +252,12 @@ public class DigitalTwinStatePropertyObserverTester {
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
             @Override
-            public void onSubscribe(String eventType) {
+            public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe(String eventType) {
+            public void onEventUnSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 
@@ -314,12 +314,12 @@ public class DigitalTwinStatePropertyObserverTester {
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
             @Override
-            public void onSubscribe(String eventType) {
+            public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe(String eventType) {
+            public void onEventUnSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 

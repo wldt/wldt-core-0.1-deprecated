@@ -16,21 +16,33 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
     public static final String DT_STATE_SUBSCRIBER_ID = "dt-state-subscriber";
 
     private static final String DT_STATE_PROPERTY_BASE_TOPIC = "dt.state.property";
+    private static final String DT_STATE_ACTION_BASE_TOPIC = "dt.state.action";
 
-    public static final String CREATED_STRING = "created";
-    public static final String UPDATED_STRING = "update";
-    public static final String DELETED_STRING = "deleted";
+    public static final String CREATED_STRING  = "created";
+    public static final String UPDATED_STRING  = "updated";
+    public static final String DELETED_STRING  = "deleted";
+    public static final String ENABLED_STRING  = "enabled";
+    public static final String DISABLED_STRING = "disabled";
+
 
     public static final String DT_STATE_PROPERTY_CREATED = DT_STATE_PROPERTY_BASE_TOPIC + "." + CREATED_STRING;
     public static final String DT_STATE_PROPERTY_UPDATED = DT_STATE_PROPERTY_BASE_TOPIC + "." + UPDATED_STRING;
     public static final String DT_STATE_PROPERTY_DELETED = DT_STATE_PROPERTY_BASE_TOPIC + "." + DELETED_STRING;
 
+    public static final String DT_STATE_ACTION_ENABLED = DT_STATE_ACTION_BASE_TOPIC + "." + ENABLED_STRING;
+    public static final String DT_STATE_ACTION_UPDATED = DT_STATE_ACTION_BASE_TOPIC + "." + UPDATED_STRING;
+    public static final String DT_STATE_ACTION_DISABLED = DT_STATE_ACTION_BASE_TOPIC + "." + DISABLED_STRING;
+
     public static final String DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY = "dt.state.property.metadata.key";
+    public static final String DT_STATE_ACTION_METADATA_KEY_PROPERTY_KEY = "dt.state.action.metadata.key";
 
     private Map<String, DigitalTwinStateProperty<?>> properties;
 
+    private Map<String, DigitalTwinStateAction> actions;
+
     public DefaultDigitalTwinState() {
         this.properties = new HashMap<>();
+        this.actions = new HashMap<>();
     }
 
     @Override
@@ -215,6 +227,101 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
     @Override
     public String getPropertyDeletedEventMessageType(String propertyKey) {
         return String.format("%s.%s.%s", DT_STATE_PROPERTY_BASE_TOPIC, propertyKey, DELETED_STRING);
+    }
+
+    @Override
+    public void enableAction(DigitalTwinStateAction digitalTwinStateAction) throws WldtDigitalTwinStateActionException, WldtDigitalTwinStateActionConflictException {
+
+        if (this.actions == null)
+            throw new WldtDigitalTwinStateActionException("DefaultDigitalTwinState: Action Map = Null !");
+
+        if (digitalTwinStateAction == null || digitalTwinStateAction.getKey() == null)
+            throw new WldtDigitalTwinStateActionException("DefaultDigitalTwinState: digitalTwinStateAction or its Key = Null !");
+
+        if (this.actions.containsKey(digitalTwinStateAction.getKey()))
+            throw new WldtDigitalTwinStateActionConflictException(String.format("DefaultDigitalTwinState: action with Key: %s already existing ! Conflict !", digitalTwinStateAction.getKey()));
+
+        try {
+            this.actions.put(digitalTwinStateAction.getKey(), digitalTwinStateAction);
+            notifyActionEnabled(digitalTwinStateAction);
+        } catch (Exception e) {
+            throw new WldtDigitalTwinStateActionException(e.getLocalizedMessage());
+        }
+    }
+
+    @Override
+    public void updateAction(DigitalTwinStateAction digitalTwinStateAction) throws WldtDigitalTwinStateActionException, WldtDigitalTwinStateActionNotFoundException {
+
+        if (this.actions == null)
+            throw new WldtDigitalTwinStateActionException("DefaultDigitalTwinState: Action Map = Null !");
+
+        if (digitalTwinStateAction == null || digitalTwinStateAction.getKey() == null)
+            throw new WldtDigitalTwinStateActionException("DefaultDigitalTwinState: digitalTwinStateAction or its Key = Null !");
+
+        if (!this.actions.containsKey(digitalTwinStateAction.getKey()))
+            throw new WldtDigitalTwinStateActionNotFoundException(String.format("DefaultDigitalTwinState: Action with Key: %s not found !", digitalTwinStateAction.getKey()));
+
+        try {
+            this.actions.put(digitalTwinStateAction.getKey(), digitalTwinStateAction);
+            notifyActionUpdated(digitalTwinStateAction);
+        }catch (Exception e){
+            throw new WldtDigitalTwinStateActionException(e.getLocalizedMessage());
+        }
+
+    }
+
+    @Override
+    public void disableAction(String actionKey) throws WldtDigitalTwinStateActionException, WldtDigitalTwinStateActionNotFoundException {
+
+        if (this.actions == null)
+            throw new WldtDigitalTwinStateActionException("DefaultDigitalTwinState: Action Map = Null !");
+
+        if (actionKey == null)
+            throw new WldtDigitalTwinStateActionException("DefaultDigitalTwinState: digitalTwinStateAction Key = Null !");
+
+        if (!this.actions.containsKey(actionKey))
+            throw new WldtDigitalTwinStateActionNotFoundException(String.format("DefaultDigitalTwinState: Action with Key: %s not found !", actionKey));
+
+        try {
+            DigitalTwinStateAction originalValue = this.actions.get(actionKey);
+            this.actions.remove(actionKey);
+            notifyActionDisabled(originalValue);
+        }catch (Exception e){
+            throw new WldtDigitalTwinStateActionException(e.getLocalizedMessage());
+        }
+    }
+
+    private void notifyActionEnabled(DigitalTwinStateAction digitalTwinStateAction) {
+        try {
+            EventMessage<DigitalTwinStateAction> eventMessage = new EventMessage<>(DT_STATE_ACTION_ENABLED);
+            eventMessage.setBody(digitalTwinStateAction);
+            eventMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
+            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventMessage);
+        } catch (Exception e) {
+            logger.error("notifyStateListenersPropertyCreated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
+        }
+    }
+
+    private void notifyActionUpdated(DigitalTwinStateAction digitalTwinStateAction) {
+        try {
+            EventMessage<DigitalTwinStateAction> eventMessage = new EventMessage<>(DT_STATE_ACTION_UPDATED);
+            eventMessage.setBody(digitalTwinStateAction);
+            eventMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
+            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventMessage);
+        } catch (Exception e) {
+            logger.error("notifyStateListenersPropertyCreated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
+        }
+    }
+
+    private void notifyActionDisabled(DigitalTwinStateAction digitalTwinStateAction) {
+        try {
+            EventMessage<DigitalTwinStateAction> eventMessage = new EventMessage<>(DT_STATE_ACTION_DISABLED);
+            eventMessage.setBody(digitalTwinStateAction);
+            eventMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
+            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventMessage);
+        } catch (Exception e) {
+            logger.error("notifyStateListenersPropertyCreated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
+        }
     }
 
 }

@@ -1,14 +1,15 @@
 package it.unimore.wldt.test.event;
 
 import it.unimore.dipi.iot.wldt.event.*;
+import it.unimore.dipi.iot.wldt.event.EventListener;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import org.junit.Test;
 
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.Assert.*;
 
 
 public class EventBusTester {
@@ -20,6 +21,10 @@ public class EventBusTester {
     public static final String METADATA_VALUE_TEST_1 = "metadata-value-1";
     public static final String SUBSCRIBER_ID_1 = "testModuleSubscriber1";
 
+    public static final String TEST_TOPIC_2 = "topic0002";
+    public static final String TEST_TOPIC_3 = "topic0003";
+    public static final String TEST_TOPIC_4 = "topic0004";
+
     public static final int MESSAGE_COUNT = 100;
     public static final int PUBLISHER_SLEEP_TIME_MS = 10;
     public static int receivedMessageCount = 0;
@@ -28,6 +33,114 @@ public class EventBusTester {
     private CountDownLatch lock = new CountDownLatch(1);
 
     private Optional<EventMessage<?>> receivedMessage;
+
+    private List<String> targetSubscriptionList = new ArrayList<>();
+
+    @Test
+    public void testMultipleSubscriptions() throws InterruptedException, EventBusException {
+
+        //Set EventBus Logger
+        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+
+        EventListener myEventListener = new EventListener() {
+            @Override
+            public void onEventSubscribed(String eventType) {
+                System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
+                targetSubscriptionList.add(eventType);
+            }
+
+            @Override
+            public void onEventUnSubscribed(String eventType) {
+                System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
+                targetSubscriptionList.remove(eventType);
+            }
+
+            @Override
+            public void onEvent(Optional<EventMessage<?>> eventMessage) {
+                if(eventMessage.isPresent()){
+                    EventMessage<String> msg = (EventMessage<String>)eventMessage.get();
+                    long diff = System.currentTimeMillis() - msg.getCreationTimestamp();
+                    System.out.println("Message Received in: " + diff);
+                }
+
+                receivedMessage = eventMessage;
+                lock.countDown();
+            }
+        };
+
+
+        //Subscribe to TOPIC 1
+        testSubscribeToEventTypes(SUBSCRIBER_ID_1, Collections.singletonList(TEST_TOPIC_1), myEventListener);
+        testEventTransmission(TEST_TOPIC_1, TEST_VALUE_0001);
+        Thread.sleep(1000);
+
+        //ReSubscribe to TOPIC 1
+        testSubscribeToEventTypes(SUBSCRIBER_ID_1, Collections.singletonList(TEST_TOPIC_1), myEventListener);
+        testEventTransmission(TEST_TOPIC_1, TEST_VALUE_0001);
+        Thread.sleep(1000);
+
+        //UnSubscribe from Topic 1
+        testUnsubscribe(SUBSCRIBER_ID_1, Collections.singletonList(TEST_TOPIC_1), myEventListener);
+        testSubscribeToEventTypes(SUBSCRIBER_ID_1, Collections.singletonList(TEST_TOPIC_1), myEventListener);
+        testEventTransmission(TEST_TOPIC_1, TEST_VALUE_0001);
+        Thread.sleep(1000);
+
+        //Subscribe to Topic 1 and Topic 2
+        testSubscribeToEventTypes(SUBSCRIBER_ID_1, Arrays.asList(TEST_TOPIC_1, TEST_TOPIC_2), myEventListener);
+        testEventTransmission(TEST_TOPIC_1, TEST_VALUE_0001);
+        testEventTransmission(TEST_TOPIC_2, TEST_VALUE_0001);
+        Thread.sleep(1000);
+
+        //UnSubscribe from Topic1
+        testUnsubscribe(SUBSCRIBER_ID_1, Arrays.asList(TEST_TOPIC_1), myEventListener);
+        testEventTransmission(TEST_TOPIC_2, TEST_VALUE_0001);
+        Thread.sleep(1000);
+
+    }
+
+    private void testUnsubscribe(String subscriberId, List<String> typeList, EventListener eventListener) throws EventBusException, InterruptedException {
+
+        //Define EventFilter and add the target topic
+        EventFilter eventFilter = new EventFilter();
+        eventFilter.addAll(typeList);
+        EventBus.getInstance().unSubscribe(subscriberId, eventFilter, eventListener);
+
+        Thread.sleep(1000);
+
+        for(String type : typeList)
+            assertFalse(targetSubscriptionList.contains(type));
+    }
+
+    private void testSubscribeToEventTypes(String subscriberId, List<String> typeList, EventListener eventListener) throws EventBusException, InterruptedException {
+
+        //Define EventFilter and add the target topic
+        EventFilter eventFilter = new EventFilter();
+        eventFilter.addAll(typeList);
+        EventBus.getInstance().subscribe(subscriberId, eventFilter, eventListener);
+
+        Thread.sleep(1000);
+        assertEquals(targetSubscriptionList, typeList);
+    }
+
+    private void testEventTransmission(String targetTopic, String body) throws InterruptedException, EventBusException {
+
+        lock = new CountDownLatch(1);
+
+        //Define New Message
+        EventMessage<String> eventMessage = new EventMessage<>(targetTopic);
+        eventMessage.setBody(body);
+        eventMessage.putMetadata(METADATA_KEY_TEST_1, METADATA_VALUE_TEST_1);
+
+        //Publish Message on the target Topic1
+        EventBus.getInstance().publishEvent(PUBLISHER_ID_1, eventMessage);
+
+        lock.await(2000, TimeUnit.MILLISECONDS);
+
+        assertTrue(receivedMessage.isPresent());
+        assertEquals(eventMessage, receivedMessage.get());
+        assertEquals(TEST_VALUE_0001, receivedMessage.get().getBody());
+        assertEquals(eventMessage.getMetadata(), receivedMessage.get().getMetadata());
+    }
 
     @Test
     public void singlePubSubTest() throws InterruptedException, EventBusException {
@@ -43,12 +156,12 @@ public class EventBusTester {
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
 
             @Override
-            public void onSubscribe(String eventType) {
+            public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe(String eventType) {
+            public void onEventUnSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 
@@ -97,12 +210,12 @@ public class EventBusTester {
         //Subscribe for target topic
         EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
             @Override
-            public void onSubscribe(String eventType) {
+            public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
             }
 
             @Override
-            public void onUnSubscribe(String eventType) {
+            public void onEventUnSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onUnSubscribe() called ! Event-Type:" + eventType);
             }
 

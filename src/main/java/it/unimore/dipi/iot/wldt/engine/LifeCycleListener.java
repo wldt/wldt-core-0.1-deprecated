@@ -1,7 +1,8 @@
 package it.unimore.dipi.iot.wldt.engine;
 
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapter;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetState;
 
+import java.util.Map;
 import java.util.Optional;
 
 public interface LifeCycleListener {
@@ -10,13 +11,13 @@ public interface LifeCycleListener {
 
     public void onStart();
 
-    public void onAdapterBound(String adapterId);
+    public void onAdapterBound(String adapterId, PhysicalAssetState physicalAssetState);
 
-    public void onAdapterUnBound(String adapterId, Optional<String> errorMessage);
+    public void onAdapterUnBound(String adapterId, PhysicalAssetState physicalAssetState, Optional<String> errorMessage);
 
-    public void onBound();
+    public void onBound(Map<String, PhysicalAssetState> adaptersPhysicalStateMap);
 
-    public void onUnBound(Optional<String> errorMessage);
+    public void onUnBound(Map<String, PhysicalAssetState> adaptersPhysicalStateMap, Optional<String> errorMessage);
 
     public void onSync();
 

@@ -2,6 +2,7 @@ package it.unimore.dipi.iot.wldt.engine;
 
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapter;
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapterListener;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetState;
 import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
@@ -294,7 +295,7 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
     }
 
     @Override
-    public void onBound(String adapterId) {
+    public void onBound(String adapterId, PhysicalAssetState physicalAssetState) {
         logger.info("PhysicalAdapter {} BOUND !", adapterId);
         this.physicalAdapterBoundStatusMap.put(adapterId, true);
         notifyLifeCycleOnAdapterBound(adapterId);
@@ -306,7 +307,12 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
     }
 
     @Override
-    public void onUnBound(String adapterId, Optional<String> errorMessage) {
+    public void onBindingUpdate(String adapterId, PhysicalAssetState physicalAssetState) {
+        //TODO HANDLE !
+    }
+
+    @Override
+    public void onUnBound(String adapterId,  PhysicalAssetState physicalAssetState, Optional<String> errorMessage) {
 
         //If the DT is currently bound
         if(isDtBound()) {

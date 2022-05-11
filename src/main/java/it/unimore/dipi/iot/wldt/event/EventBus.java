@@ -61,11 +61,18 @@ public class EventBus {
             if (!this.subscriberMap.containsKey(eventType))
                 this.subscriberMap.put(eventType, new ArrayList<>());
 
-            this.subscriberMap.get(eventType).add(new SubscriberInfo(subscriberId, eventListener));
-            eventListener.onSubscribe(eventType);
+            SubscriberInfo newSubscriberInfo = new SubscriberInfo(subscriberId, eventListener);
 
-            if(eventLogger != null)
-                eventLogger.logClientSubscription(eventType, subscriberId);
+            if(!this.subscriberMap.get(eventType).contains(newSubscriberInfo)) {
+
+                this.subscriberMap.get(eventType).add(newSubscriberInfo);
+                eventListener.onEventSubscribed(eventType);
+
+                if(eventLogger != null)
+                    eventLogger.logClientSubscription(eventType, subscriberId);
+            }
+            else
+                logger.debug("Subscriber {} already registered for {}", subscriberId, eventType);
         }
     }
 
@@ -82,7 +89,7 @@ public class EventBus {
         for(String eventType: eventFilter) {
             if(this.subscriberMap.get(eventType) != null && this.subscriberMap.get(eventType).contains(subscriberInfo)) {
                 this.subscriberMap.get(eventType).remove(subscriberInfo);
-                eventListener.onUnSubscribe(eventType);
+                eventListener.onEventUnSubscribed(eventType);
 
                 if(eventLogger != null)
                     eventLogger.logClientUnSubscription(eventType, subscriberId);

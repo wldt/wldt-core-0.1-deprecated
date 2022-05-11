@@ -1,15 +1,15 @@
 package it.unimore.wldt.test.adapter;
 
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAction;
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapter;
-import it.unimore.dipi.iot.wldt.event.DigitalActionEventMessage;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetState;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalProperty;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.event.PhysicalActionEventMessage;
 import it.unimore.dipi.iot.wldt.event.PhysicalEventMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -21,9 +21,9 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
 
     public static long MESSAGE_SLEEP_PERIOD_MS = 2000;
 
-    public static final String ENERGY_MESSAGE_TYPE = "telemetry.energy";
+    public static final String ENERGY_PROPERTY_KEY = "energy";
 
-    public static final String EVENT_SWITCH_MESSAGE_TYPE = "switch";
+    public static final String SWITCH_PROPERTY_KEY = "switch";
 
     public static final String SWITCH_OFF_ACTION = "switch_off";
 
@@ -43,22 +43,6 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
     }
 
     @Override
-    public Optional<List<String>> getSupportedPhysicalActionEventTypeList() {
-        return Optional.of(new ArrayList<String>() {{
-            add(SWITCH_OFF_ACTION);
-            add(SWITCH_ON_ACTION);
-        }});
-    }
-
-    @Override
-    public Optional<List<String>> getGeneratedPhysicalEventTypeList() {
-        return Optional.of(new ArrayList<String>() {{
-            add(ENERGY_MESSAGE_TYPE);
-            add(EVENT_SWITCH_MESSAGE_TYPE);
-        }});
-    }
-
-    @Override
     public void onIncomingPhysicalAction(PhysicalActionEventMessage<?> physicalActionEventMessage) {
         try{
             logger.info("Received PhysicalActionEventMessage: {}", physicalActionEventMessage);
@@ -66,11 +50,11 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
             if(physicalActionEventMessage != null && physicalActionEventMessage.getType().equals(PhysicalActionEventMessage.buildEventType(SWITCH_ON_ACTION))) {
                 logger.info("{} Received ! Switching ON the device ...", physicalActionEventMessage.getType());
                 Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
-                EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(EVENT_SWITCH_MESSAGE_TYPE, "ON"));
+                EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(SWITCH_PROPERTY_KEY, "ON"));
             } else if(physicalActionEventMessage != null && physicalActionEventMessage.getType().equals(PhysicalActionEventMessage.buildEventType(SWITCH_OFF_ACTION))){
                 logger.info("{} Received ! Switching OFF the device ...", physicalActionEventMessage.getType());
                 Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
-                EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(EVENT_SWITCH_MESSAGE_TYPE, "OFF"));
+                EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(SWITCH_PROPERTY_KEY, "OFF"));
             } else
                 logger.error("WRONG OR NULL ACTION RECEIVED !");
 
@@ -80,31 +64,43 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
     }
 
     @Override
-    public void handleBinding() {
+    public Optional<PhysicalAssetState> onAdapterStart() {
         //Emulate the real device on a different Thread and then send the PhysicalEvent
         if(isTelemetryOn)
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     try {
-
-                        if(getPhysicalAdapterListener() != null)
-                            getPhysicalAdapterListener().onBound(getId());
-
                         for(int i=0; i<TARGET_GENERATED_MESSAGES; i++){
                             Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
                             double randomEnergyValue = 10 + (100 - 10) * random.nextDouble();
-                            EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(ENERGY_MESSAGE_TYPE, randomEnergyValue));
+                            EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(ENERGY_PROPERTY_KEY, randomEnergyValue));
                         }
                     }catch (Exception e){
                         e.printStackTrace();
                     }
                 }
             }).start();
+
+
+        PhysicalAssetState physicalAssetState = new PhysicalAssetState();
+
+        physicalAssetState.setActions(new ArrayList<PhysicalAction>() {{
+            add(new PhysicalAction(SWITCH_OFF_ACTION, "demo.actuation", "application/json"));
+            add(new PhysicalAction(SWITCH_ON_ACTION, "demo.actuation", "application/json"));
+        }});
+
+        physicalAssetState.setProperties(new ArrayList<PhysicalProperty<?>>() {{
+            add(new PhysicalProperty<String>(SWITCH_PROPERTY_KEY, "OFF"));
+            add(new PhysicalProperty<Double>(ENERGY_PROPERTY_KEY, 0.0));
+        }});
+
+        return Optional.of(physicalAssetState);
     }
 
     @Override
-    public void onAdapterStart() {
+    public void onAdapterCreate() {
         logger.info("DummyPhysicalAdapter Started !");
     }
 
