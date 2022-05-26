@@ -1,6 +1,6 @@
 package it.unimore.dipi.iot.wldt.model;
 
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetState;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
 import it.unimore.dipi.iot.wldt.adapter.PhysicalProperty;
 import it.unimore.dipi.iot.wldt.event.*;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -112,7 +113,11 @@ public abstract class ShadowingModelFunction implements EventListener {
 
     abstract protected void onStop();
 
-    abstract protected void onPhysicalAdapterBound(String adapterId, PhysicalAssetState adapterPhysicalAssetState);
+    abstract protected void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap);
+
+    abstract protected void onDigitalTwinUnBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap, String errorMessage);
+
+    abstract protected void onPhysicalAdapterBidingUpdate(String adapterId, PhysicalAssetDescription adapterPhysicalAssetDescription);
 
     abstract protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage);
 
@@ -134,6 +139,16 @@ public abstract class ShadowingModelFunction implements EventListener {
 
     public void setShadowingModelListener(ShadowingModelListener shadowingModelListener) {
         this.shadowingModelListener = shadowingModelListener;
+    }
+
+    protected void notifyShadowingSync(){
+        if(getShadowingModelListener() != null)
+            getShadowingModelListener().onShadowingSync();
+    }
+
+    protected void notifyShadowingOutOfSync(){
+        if(getShadowingModelListener() != null)
+            getShadowingModelListener().onShadowingOutOfSync();
     }
 
     @Override

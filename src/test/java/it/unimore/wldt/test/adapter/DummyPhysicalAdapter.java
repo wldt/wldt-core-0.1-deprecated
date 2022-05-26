@@ -2,7 +2,7 @@ package it.unimore.wldt.test.adapter;
 
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAction;
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapter;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetState;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
 import it.unimore.dipi.iot.wldt.adapter.PhysicalProperty;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.event.PhysicalActionEventMessage;
@@ -64,10 +64,10 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
     }
 
     @Override
-    public Optional<PhysicalAssetState> onAdapterStart() {
+    public void onAdapterStart() {
+
         //Emulate the real device on a different Thread and then send the PhysicalEvent
         if(isTelemetryOn)
-
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -75,7 +75,7 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
                         for(int i=0; i<TARGET_GENERATED_MESSAGES; i++){
                             Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
                             double randomEnergyValue = 10 + (100 - 10) * random.nextDouble();
-                            EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(ENERGY_PROPERTY_KEY, randomEnergyValue));
+                            publishPhysicalEventMessage(new PhysicalEventMessage<>(ENERGY_PROPERTY_KEY, randomEnergyValue));
                         }
                     }catch (Exception e){
                         e.printStackTrace();
@@ -83,20 +83,25 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
                 }
             }).start();
 
+        try{
 
-        PhysicalAssetState physicalAssetState = new PhysicalAssetState();
+            PhysicalAssetDescription physicalAssetDescription = new PhysicalAssetDescription();
 
-        physicalAssetState.setActions(new ArrayList<PhysicalAction>() {{
-            add(new PhysicalAction(SWITCH_OFF_ACTION, "demo.actuation", "application/json"));
-            add(new PhysicalAction(SWITCH_ON_ACTION, "demo.actuation", "application/json"));
-        }});
+            physicalAssetDescription.setActions(new ArrayList<PhysicalAction>() {{
+                add(new PhysicalAction(SWITCH_OFF_ACTION, "demo.actuation", "application/json"));
+                add(new PhysicalAction(SWITCH_ON_ACTION, "demo.actuation", "application/json"));
+            }});
 
-        physicalAssetState.setProperties(new ArrayList<PhysicalProperty<?>>() {{
-            add(new PhysicalProperty<String>(SWITCH_PROPERTY_KEY, "OFF"));
-            add(new PhysicalProperty<Double>(ENERGY_PROPERTY_KEY, 0.0));
-        }});
+            physicalAssetDescription.setProperties(new ArrayList<PhysicalProperty<?>>() {{
+                add(new PhysicalProperty<String>(SWITCH_PROPERTY_KEY, "OFF"));
+                add(new PhysicalProperty<Double>(ENERGY_PROPERTY_KEY, 0.0));
+            }});
 
-        return Optional.of(physicalAssetState);
+            this.notifyPhysicalAdapterBound(physicalAssetDescription);
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -107,7 +112,5 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
     @Override
     public void onAdapterStop() {
         logger.info("DummyPhysicalAdapter Stopped !");
-        if(getPhysicalAdapterListener() != null)
-            getPhysicalAdapterListener().onUnBound(this.getId(), Optional.empty());
     }
 }

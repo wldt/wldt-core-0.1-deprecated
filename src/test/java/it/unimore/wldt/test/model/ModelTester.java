@@ -1,5 +1,6 @@
 package it.unimore.wldt.test.model;
 
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
 import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
@@ -12,10 +13,8 @@ import it.unimore.wldt.test.adapter.DummyPhysicalAdapterConfiguration;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +31,44 @@ public class ModelTester {
     private static final String DEMO_MQTT_BODY = "DEMO_BODY_MQTT";
 
     private static final String DEMO_MQTT_MESSAGE_TYPE = "mqtt.telemetry";
+
+    private ShadowingModelFunction testShadowingFunctionModel = new ShadowingModelFunction("demo-shadowing-model-function") {
+
+        @Override
+        protected void onCreate() {
+            logger.debug("Shadowing Function - onCreate()");
+        }
+
+        @Override
+        protected void onStart() {
+            logger.debug("Shadowing Function - onStart()");
+        }
+
+        @Override
+        protected void onStop() {
+            logger.debug("Shadowing Function - onStop()");
+        }
+
+        @Override
+        protected void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
+            logger.debug("DigitalTwin - LifeCycleListener - onDigitalTwinBound()");
+        }
+
+        @Override
+        protected void onDigitalTwinUnBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap, String errorMessage) {
+            logger.debug("DigitalTwin - LifeCycleListener - onDigitalTwinUnBound()");
+        }
+
+        @Override
+        protected void onPhysicalAdapterBidingUpdate(String adapterId, PhysicalAssetDescription adapterPhysicalAssetDescription) {
+            logger.debug("DigitalTwin - LifeCycleListener - onPhysicalAdapterBidingUpdate()");
+        }
+
+        @Override
+        protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage) {
+            logger.debug("DigitalTwin - LifeCycleListener - onPhysicalAdapterBidingUpdate()");
+        }
+    };
 
     private WldtConfiguration buildWldtConfiguration() throws WldtConfigurationException, ModelException {
 
@@ -58,33 +95,7 @@ public class ModelTester {
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
         //Init the Engine
-        WldtEngine wldtEngine = new WldtEngine(new ShadowingModelFunction("test-shadowing-function") {
-
-            @Override
-            protected void onStart() {
-                logger.info("ShadowingModelFunction - onStart()");
-            }
-
-            @Override
-            protected void onStop() {
-                logger.info("ShadowingModelFunction - onStop()");
-            }
-
-            @Override
-            protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage) {
-                logger.info("onPhysicalEvent()-> {}", physicalEventMessage);
-                lock.countDown();
-
-                receivedMessage = (PhysicalEventMessage<String>) physicalEventMessage;
-            }
-
-            @Override
-            protected Optional<List<String>> getPhysicalEventRawTypeList() {
-                return Optional.of(new ArrayList<String>() {{
-                    add(DEMO_MQTT_MESSAGE_TYPE);
-                }});
-            }
-        }, buildWldtConfiguration());
+        WldtEngine wldtEngine = new WldtEngine(testShadowingFunctionModel, buildWldtConfiguration());
 
         wldtEngine.addPhysicalAdapter(new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), false));
         wldtEngine.startLifeCycle();
@@ -117,31 +128,7 @@ public class ModelTester {
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
         //Init the Engine
-        WldtEngine wldtEngine = new WldtEngine(new ShadowingModelFunction("test-shadowing-function") {
-
-            @Override
-            protected void onStart() {
-                logger.info("onStart()");
-            }
-
-            @Override
-            protected void onStop() {
-                logger.info("onStop()");
-            }
-
-            @Override
-            protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage) {
-                logger.info("onPhysicalEvent()-> {}", physicalEventMessage);
-                lock.countDown();
-            }
-
-            @Override
-            protected Optional<List<String>> getPhysicalEventRawTypeList() {
-                return Optional.of(new ArrayList<String>() {{
-                    add(DEMO_MQTT_MESSAGE_TYPE);
-                }});
-            }
-        }, buildWldtConfiguration());
+        WldtEngine wldtEngine = new WldtEngine(testShadowingFunctionModel, buildWldtConfiguration());
 
         //Add two Model Function. The first observe the DT status and the second one creates a new property
         wldtEngine.getModelEngine().addStateModelFunction(new ObserverStateModelFunction("state-observer-model-function"), true, null);

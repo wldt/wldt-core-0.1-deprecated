@@ -2,7 +2,7 @@ package it.unimore.dipi.iot.wldt.engine;
 
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapter;
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapterListener;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetState;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
 import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
@@ -16,7 +16,6 @@ import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import it.unimore.dipi.iot.wldt.utils.WldtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +42,8 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
     private ExecutorService physicalAdapterExecutor = null;
 
     private List<PhysicalAdapter<?>> physicalAdapterList = null;
+
+    private Map<String, PhysicalAssetDescription> physicalAdaptersPhysicalAssetDescriptionMap;
 
     private Map<String, Boolean> physicalAdapterBoundStatusMap = null;
 
@@ -84,6 +85,9 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
         //Create List of Physical Adapter
         this.physicalAdapterList = new ArrayList<>();
 
+        //Create a Map to hold the last PhysicalAssetDescription for each active adapter
+        this.physicalAdaptersPhysicalAssetDescriptionMap = new HashMap<>();
+
         //executor = Executors.newFixedThreadPool((wldtConfiguration.getThreadPoolSize() > 0) ? wldtConfiguration.getThreadPoolSize() : THREAD_POOL_SIZE);
 
         if(this.wldtConfiguration.getApplicationMetricsEnabled() && this.wldtConfiguration.getMetricsReporterList() != null && this.wldtConfiguration.getMetricsReporterList().size() > 0) {
@@ -94,6 +98,10 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
         //Set ShadowingListener, Init Model Engine & Add to the List of Workers
         shadowingModelFunction.setShadowingModelListener(this);
         this.modelEngine = new ModelEngine(this.digitalTwinState, shadowingModelFunction);
+
+        //Save the Model Engine as Digital Twin Life Cycle Listener
+        addLifeCycleListener(this.modelEngine);
+
         executeModelEngine();
     }
 
@@ -124,22 +132,27 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
 
     private void notifyLifeCycleOnBound(){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
-            listener.onBound();
+            listener.onDigitalTwinBound(this.physicalAdaptersPhysicalAssetDescriptionMap);
     }
 
-    private void notifyLifeCycleOnUnBound(Optional<String> errorMessage){
+    private void notifyLifeCycleOnUnBound(String errorMessage){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
-            listener.onUnBound(errorMessage);
+            listener.onDigitalTwinUnBound(this.physicalAdaptersPhysicalAssetDescriptionMap, errorMessage);
     }
 
-    private void notifyLifeCycleOnAdapterBound(String adapterId){
+    private void notifyLifeCycleOnAdapterBound(String adapterId, PhysicalAssetDescription physicalAssetDescription){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
-            listener.onAdapterBound(adapterId);
+            listener.onPhysicalAdapterBound(adapterId, physicalAssetDescription);
     }
 
-    private void notifyLifeCycleOnAdapterUnBound(String adapterId, Optional<String> errorMessage){
+    private void notifyLifeCycleOnAdapterBindingUpdate(String adapterId, PhysicalAssetDescription physicalAssetDescription){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
-            listener.onAdapterUnBound(adapterId, errorMessage);
+            listener.onPhysicalAdapterBindingUpdate(adapterId, physicalAssetDescription);
+    }
+
+    private void notifyLifeCycleOnAdapterUnBound(String adapterId, PhysicalAssetDescription physicalAssetDescription, String errorMessage){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onPhysicalAdapterUnBound(adapterId, physicalAssetDescription, errorMessage);
     }
 
     private void notifyLifeCycleOnSync(){
@@ -237,6 +250,7 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
             this.modelEngineThread.interrupt();
             this.modelEngineThread = null;
             this.modelEngine.onWorkerStop();
+            removeLifeCycleListener(this.modelEngine);
 
             //Stop and Notify Physical Adapters
             this.physicalAdapterExecutor.shutdownNow();
@@ -295,10 +309,17 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
     }
 
     @Override
-    public void onBound(String adapterId, PhysicalAssetState physicalAssetState) {
+    public void onPhysicalAdapterBound(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
+
         logger.info("PhysicalAdapter {} BOUND !", adapterId);
+
+        //Store the information that the adapter is correctly bound
         this.physicalAdapterBoundStatusMap.put(adapterId, true);
-        notifyLifeCycleOnAdapterBound(adapterId);
+
+        //Save the last Physical Asset Description from the adapter
+        this.physicalAdaptersPhysicalAssetDescriptionMap.put(adapterId, physicalAssetDescription);
+
+        notifyLifeCycleOnAdapterBound(adapterId, physicalAssetDescription);
 
         if(isDtBound()) {
             logger.info("Digital Twin BOUND !");
@@ -307,25 +328,34 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
     }
 
     @Override
-    public void onBindingUpdate(String adapterId, PhysicalAssetState physicalAssetState) {
-        //TODO HANDLE !
+    public void onPhysicalBindingUpdate(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
+
+        //Update the last Physical Asset Description from the adapter
+        this.physicalAdaptersPhysicalAssetDescriptionMap.put(adapterId, physicalAssetDescription);
+
+        //Notify Biding Change
+        notifyLifeCycleOnAdapterBindingUpdate(adapterId, physicalAssetDescription);
     }
 
     @Override
-    public void onUnBound(String adapterId,  PhysicalAssetState physicalAssetState, Optional<String> errorMessage) {
+    public void onPhysicalAdapterUnBound(String adapterId, PhysicalAssetDescription physicalAssetDescription, String errorMessage) {
 
-        //If the DT is currently bound
-        if(isDtBound()) {
-            logger.info("PhysicalAdapter {} UN-BOUND ! Reason: {}", adapterId, errorMessage);
-            this.physicalAdapterBoundStatusMap.put(adapterId, false);
-            notifyLifeCycleOnAdapterUnBound(adapterId, errorMessage);
+        //Set the current adapter to unbound
+        logger.info("PhysicalAdapter {} UN-BOUND ! Reason: {}", adapterId, errorMessage);
+
+        //Store the information that the adapter is UnBound
+        this.physicalAdapterBoundStatusMap.put(adapterId, false);
+
+        //Retrieve the last physical asset description of the associated physical asset
+        PhysicalAssetDescription currentPhysicalAssetDescription = this.physicalAdaptersPhysicalAssetDescriptionMap.get(adapterId);
+
+        //Notify the adapter unbound status
+        notifyLifeCycleOnAdapterUnBound(adapterId, currentPhysicalAssetDescription, errorMessage);
+
+        //Check if the DT is still bound
+        if(!isDtBound()) {
             logger.info("Digital Twin UN-BOUND !");
-            notifyLifeCycleOnUnBound(Optional.of(String.format("Adapter %s UnBound - Error ?: %b", adapterId, errorMessage.isPresent())));
-        }
-        else{
-            logger.info("PhysicalAdapter {} UN-BOUND ! Reason: {}", adapterId, errorMessage);
-            this.physicalAdapterBoundStatusMap.put(adapterId, false);
-            notifyLifeCycleOnAdapterUnBound(adapterId, errorMessage);
+            notifyLifeCycleOnUnBound(String.format("Adapter %s UnBound - Error ?: %b", adapterId, errorMessage));
         }
     }
 }

@@ -1,7 +1,7 @@
 package it.unimore.dipi.iot.wldt.model;
 
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapterListener;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetState;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
+import it.unimore.dipi.iot.wldt.engine.LifeCycleListener;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.exception.ModelException;
 import it.unimore.dipi.iot.wldt.exception.ModelFunctionException;
@@ -13,14 +13,13 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Author: Marco Picone, Ph.D. (marco.picone@unimore.it)
  * Date: 24/03/2020
  * Project: White Label Digital Twin Java Framework - (whitelabel-digitaltwin)
  */
-public class ModelEngine extends WldtWorker implements PhysicalAdapterListener {
+public class ModelEngine extends WldtWorker implements LifeCycleListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ModelEngine.class);
 
@@ -114,17 +113,59 @@ public class ModelEngine extends WldtWorker implements PhysicalAdapterListener {
     }
 
     @Override
-    public void onBound(String adapterId, PhysicalAssetState physicalAssetState) {
-
+    public void onCreate() {
+        logger.debug("DT-LifeCycle: onCreate()");
     }
 
     @Override
-    public void onBindingUpdate(String adapterId, PhysicalAssetState physicalAssetState) {
-
+    public void onStart() {
+        logger.debug("DT-LifeCycle: onCreate()");
     }
 
     @Override
-    public void onUnBound(String adapterId, Optional<String> errorMessage) {
+    public void onPhysicalAdapterBound(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
+    }
 
+    @Override
+    public void onPhysicalAdapterBindingUpdate(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
+        logger.debug("DT-LifeCycle: onPhysicalAdapterBindingUpdate()");
+        this.shadowingModelFunction.onPhysicalAdapterBidingUpdate(adapterId, physicalAssetDescription);
+    }
+
+    @Override
+    public void onPhysicalAdapterUnBound(String adapterId, PhysicalAssetDescription physicalAssetDescription, String errorMessage) {
+        //logger.debug("DT-LifeCycle: onCreate()");
+    }
+
+    @Override
+    public void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
+        logger.debug("DT-LifeCycle: onDigitalTwinBound()");
+        this.shadowingModelFunction.onDigitalTwinBound(adaptersPhysicalAssetDescriptionMap);
+    }
+
+    @Override
+    public void onDigitalTwinUnBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap, String errorMessage) {
+        logger.debug("DT-LifeCycle: onDigitalTwinUnBound()");
+        this.shadowingModelFunction.onDigitalTwinUnBound(adaptersPhysicalAssetDescriptionMap, errorMessage);
+    }
+
+    @Override
+    public void onSync() {
+        //logger.debug("DT-LifeCycle: onCreate()");
+    }
+
+    @Override
+    public void onUnSync() {
+        //logger.debug("DT-LifeCycle: onCreate()");
+    }
+
+    @Override
+    public void onStop() {
+        logger.debug("DT-LifeCycle: onStop()");
+    }
+
+    @Override
+    public void onDestroy() {
+        logger.debug("DT-LifeCycle: onDestroy()");
     }
 }

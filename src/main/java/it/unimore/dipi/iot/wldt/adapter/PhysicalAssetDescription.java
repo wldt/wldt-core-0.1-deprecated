@@ -2,16 +2,16 @@ package it.unimore.dipi.iot.wldt.adapter;
 
 import java.util.List;
 
-public class PhysicalAssetState {
+public class PhysicalAssetDescription {
 
     private List<PhysicalAction> actions;
 
     private List<PhysicalProperty<?>> properties;
 
-    public PhysicalAssetState() {
+    public PhysicalAssetDescription() {
     }
 
-    public PhysicalAssetState(List<PhysicalAction> actions, List<PhysicalProperty<?>> properties) {
+    public PhysicalAssetDescription(List<PhysicalAction> actions, List<PhysicalProperty<?>> properties) {
         this.actions = actions;
         this.properties = properties;
     }

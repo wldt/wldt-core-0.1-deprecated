@@ -7,8 +7,6 @@ import it.unimore.dipi.iot.wldt.exception.WldtRuntimeException;
 import it.unimore.dipi.iot.wldt.worker.WldtWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -26,7 +24,7 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
 
     private PhysicalAdapter(){}
 
-    private PhysicalAssetState adapterPhysicalAssetState;
+    private PhysicalAssetDescription adapterPhysicalAssetDescription;
 
     public PhysicalAdapter(String id, C configuration){
         this.id = id;
@@ -38,6 +36,10 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
         try{
             onAdapterCreate();
         }catch (Exception e){
+            //Notify Listeners
+            if(getPhysicalAdapterListener() != null)
+                getPhysicalAdapterListener().onPhysicalAdapterUnBound(this.id, this.adapterPhysicalAssetDescription, e.getLocalizedMessage());
+
             throw new WldtRuntimeException(e.getLocalizedMessage());
         }
     }
@@ -45,8 +47,18 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
     @Override
     public void onWorkerStop() throws WldtRuntimeException {
         try{
+
             onAdapterStop();
+
+            if(getPhysicalAdapterListener() != null)
+                getPhysicalAdapterListener().onPhysicalAdapterUnBound(this.id, this.adapterPhysicalAssetDescription, null);
+
         }catch (Exception e){
+
+            //Notify Listeners
+            if(getPhysicalAdapterListener() != null)
+                getPhysicalAdapterListener().onPhysicalAdapterUnBound(this.id, this.adapterPhysicalAssetDescription, e.getLocalizedMessage());
+
             throw new WldtRuntimeException(e.getLocalizedMessage());
         }
     }
@@ -54,16 +66,13 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
     @Override
     public void onWorkerStart() throws WldtRuntimeException {
         try{
-
-            Optional<PhysicalAssetState> optionalPhysicalAssetState = onAdapterStart();
-
-            if(optionalPhysicalAssetState.isPresent())
-                updateAdapterPhysicalAssetState(optionalPhysicalAssetState.get());
-
-            if(getPhysicalAdapterListener() != null)
-                getPhysicalAdapterListener().onBound(getId(), this.adapterPhysicalAssetState);
-
+            onAdapterStart();
         }catch (Exception e){
+
+            //Notify Listeners
+            if(getPhysicalAdapterListener() != null)
+                getPhysicalAdapterListener().onPhysicalAdapterUnBound(this.id, this.adapterPhysicalAssetDescription, e.getLocalizedMessage());
+
             throw new WldtRuntimeException(e.getLocalizedMessage());
         }
     }
@@ -88,31 +97,61 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
 
     public abstract void onAdapterCreate();
 
-    public abstract Optional<PhysicalAssetState> onAdapterStart();
+    public abstract void onAdapterStart();
 
     public abstract void onAdapterStop();
 
-    public PhysicalAssetState getAdapterPhysicalAssetState() {
-        return adapterPhysicalAssetState;
+    protected void publishPhysicalEventMessage(PhysicalEventMessage<?> targetPhysicalEventMessage) throws EventBusException {
+        EventBus.getInstance().publishEvent(getId(), targetPhysicalEventMessage);
+    }
+
+    public PhysicalAssetDescription getAdapterPhysicalAssetState() {
+        return adapterPhysicalAssetDescription;
     }
 
     /**
      * This method allows an implementation of a PhysicalAdapter to notify the DigitalTwin that the representation
      * of the PhysicalAssetState is changed and should be potentially handled by other modules and core components.
      *
-     * @param physicalAssetState
+     * @param physicalAssetDescription
      * @throws PhysicalAdapterException
      * @throws EventBusException
      */
-    protected void notifyPhysicalAssetStateVariation(PhysicalAssetState physicalAssetState) throws PhysicalAdapterException, EventBusException {
+    protected void notifyPhysicalAssetBindingUpdate(PhysicalAssetDescription physicalAssetDescription) throws PhysicalAdapterException, EventBusException {
 
-        if(physicalAssetState == null)
+        if(physicalAssetDescription == null)
             throw new PhysicalAdapterException("Error updating AdapterPhysicalAssetState ! Provided State = Null.");
 
-        updateAdapterPhysicalAssetState(physicalAssetState);
+        updateAdapterPhysicalAssetDescription(physicalAssetDescription);
 
+        //Notify Listeners
         if(getPhysicalAdapterListener() != null)
-            getPhysicalAdapterListener().onBindingUpdate(getId(), this.adapterPhysicalAssetState);
+            getPhysicalAdapterListener().onPhysicalBindingUpdate(getId(), this.adapterPhysicalAssetDescription);
+    }
+
+    /**
+     * This method allows an implementation of a Physical Adapter to notify active listeners
+     * when there is an issue in the binding with the Physical Asset. If the binding is restored
+     * the adapter can use notifyPhysicalAssetBindingUpdate to notify the binding update.
+     *
+     * @param errorMessage
+     */
+    protected void notifyPhysicalAdapterUnBound(String errorMessage){
+        //Notify Listeners
+        if(getPhysicalAdapterListener() != null)
+            getPhysicalAdapterListener().onPhysicalAdapterUnBound(getId(), this.adapterPhysicalAssetDescription, errorMessage);
+    }
+
+    protected void notifyPhysicalAdapterBound(PhysicalAssetDescription physicalAssetDescription) throws PhysicalAdapterException, EventBusException {
+
+        if(physicalAssetDescription == null)
+            throw new PhysicalAdapterException("Error updating AdapterPhysicalAssetState ! Provided Description = Null.");
+
+        updateAdapterPhysicalAssetDescription(physicalAssetDescription);
+
+        //Notify Listeners
+        if(getPhysicalAdapterListener() != null)
+            getPhysicalAdapterListener().onPhysicalAdapterBound(getId(), this.adapterPhysicalAssetDescription);
     }
 
     /**
@@ -124,18 +163,18 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
      * This method manages the proper subscription to receive action events from other DT's modules according to the
      * exposed actions in the PhysicalAssetState.
      *
-     * @param physicalAssetState
+     * @param physicalAssetDescription
      * @throws PhysicalAdapterException
      * @throws EventBusException
      */
-    private void updateAdapterPhysicalAssetState(PhysicalAssetState physicalAssetState) throws PhysicalAdapterException, EventBusException {
+    private void updateAdapterPhysicalAssetDescription(PhysicalAssetDescription physicalAssetDescription) throws PhysicalAdapterException, EventBusException {
 
-        if(physicalAssetState == null)
+        if(physicalAssetDescription == null)
             throw new PhysicalAdapterException("Error updating AdapterPhysicalAssetState ! Provided State = Null.");
 
-        this.adapterPhysicalAssetState = physicalAssetState;
+        this.adapterPhysicalAssetDescription = physicalAssetDescription;
 
-        if(physicalAssetState.getActions() != null && physicalAssetState.getActions().size() > 0) {
+        if(physicalAssetDescription.getActions() != null && physicalAssetDescription.getActions().size() > 0) {
 
             //Handle PhysicalActionEvent EventFilter
             if(this.physicalActionEventsFilter == null)
@@ -147,7 +186,7 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
             }
 
             //Create/Update the event filter and handle subscription
-            for(PhysicalAction physicalAction : physicalAssetState.getActions())
+            for(PhysicalAction physicalAction : physicalAssetDescription.getActions())
                 this.physicalActionEventsFilter.add(PhysicalActionEventMessage.buildEventType(physicalAction.getKey()));
 
             EventBus.getInstance().subscribe(this.id, this.physicalActionEventsFilter, this);
