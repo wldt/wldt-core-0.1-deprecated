@@ -27,7 +27,9 @@ public class PhysicalAdapterTester {
 
     private static final Logger logger = LoggerFactory.getLogger(PhysicalAdapterTester.class);
 
-    private CountDownLatch lock = null;
+    private CountDownLatch telemetryLock = null;
+
+    private CountDownLatch actionLock = null;
 
     private List<PhysicalEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
 
@@ -96,16 +98,27 @@ public class PhysicalAdapterTester {
             logger.info("ShadowingModelFunction Physical Event Received: {}", physicalEventMessage);
 
             if(physicalEventMessage != null
-                    && getPhysicalEventsFilter().contains(physicalEventMessage.getType())
-                    && physicalEventMessage.getBody() instanceof Double){
+                    && getPhysicalEventsFilter().contains(physicalEventMessage.getType())){
 
                 if(!isShadowed){
                     isShadowed = true;
                     notifyShadowingSync();
                 }
 
-                lock.countDown();
-                receivedPhysicalTelemetryEventMessageList.add((PhysicalEventMessage<Double>) physicalEventMessage);
+                //Check if it is a switch change
+                if(PhysicalEventMessage.buildEventType(DummyPhysicalAdapter.SWITCH_PROPERTY_KEY).equals(physicalEventMessage.getType())
+                        && physicalEventMessage.getBody() instanceof String){
+
+                    logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalEventMessage.getType(), physicalEventMessage);
+                    actionLock.countDown();
+                    receivedPhysicalSwitchEventMessageList.add((PhysicalEventMessage<String>) physicalEventMessage);
+                }
+                else{
+
+                    logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalEventMessage.getType(), physicalEventMessage);
+                    telemetryLock.countDown();
+                    receivedPhysicalTelemetryEventMessageList.add((PhysicalEventMessage<Double>) physicalEventMessage);
+                }
             }
             else
                 logger.error("WRONG Physical Event Message Received !");
@@ -135,7 +148,7 @@ public class PhysicalAdapterTester {
 
         this.receivedPhysicalTelemetryEventMessageList = new ArrayList<>();
 
-        lock = new CountDownLatch(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES);
+        telemetryLock = new CountDownLatch(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES);
 
         //Set EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
@@ -150,7 +163,7 @@ public class PhysicalAdapterTester {
         wldtEngine.startLifeCycle();
 
         //Wait until all the messages have been received
-        lock.await((DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS
+        telemetryLock.await((DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS
                         + (DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES*DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS)),
                 TimeUnit.MILLISECONDS);
 
@@ -168,7 +181,7 @@ public class PhysicalAdapterTester {
         this.receivedPhysicalSwitchEventMessageList = new ArrayList<>();
 
         //Our target is to received two event changes associated to switch changes
-        lock = new CountDownLatch(2);
+        actionLock = new CountDownLatch(2);
 
         //Set EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
@@ -197,7 +210,7 @@ public class PhysicalAdapterTester {
         logger.info("Physical Action ON Sent ! Sleeping (5s) ...");
 
         //Wait until all the messages have been received
-        lock.await(5000, TimeUnit.MILLISECONDS);
+        actionLock.await(5000, TimeUnit.MILLISECONDS);
 
         assertNotNull(receivedPhysicalSwitchEventMessageList);
         assertEquals(2, receivedPhysicalSwitchEventMessageList.size());
