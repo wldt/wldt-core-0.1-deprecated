@@ -25,19 +25,25 @@ public class ModelEngine extends WldtWorker implements LifeCycleListener {
 
     private IDigitalTwinState digitalTwinState = null;
 
-    private Map<String, StateModelFunction> modelFunctionMap = null;
+    private Map<String, StateModelFunction> modelFunctionMap;
 
-    private ShadowingModelFunction shadowingModelFunction = null;
+    private ShadowingModelFunction shadowingModelFunction;
 
     public ModelEngine(IDigitalTwinState digitalTwinState, ShadowingModelFunction shadowingModelFunction) throws ModelException, EventBusException {
 
         this.digitalTwinState = digitalTwinState;
         this.modelFunctionMap = new HashMap<>();
 
-        if(shadowingModelFunction == null)
+        if(shadowingModelFunction != null){
+            //Init the Shadowing Model Function with the current Digital Twin State and call the associated onCreate method
+            this.shadowingModelFunction = shadowingModelFunction;
+            this.shadowingModelFunction.init(digitalTwinState);
+            this.shadowingModelFunction.onCreate();
+        }
+        else {
+            logger.error("MODEL ENGINE ERROR ! Shadowing Model Function = NULL !");
             throw new ModelException("Error ! Provided ShadowingModelFunction == Null !");
-
-        this.shadowingModelFunction = shadowingModelFunction;
+        }
     }
 
     /**
@@ -73,12 +79,6 @@ public class ModelEngine extends WldtWorker implements LifeCycleListener {
 
         this.modelFunctionMap.get(modelFunctionId).onRemoved();
         this.modelFunctionMap.remove(modelFunctionId);
-    }
-
-    @Override
-    public void onWorkerCreated() {
-        if(this.shadowingModelFunction != null)
-            this.shadowingModelFunction.onCreate();
     }
 
     @Override

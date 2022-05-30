@@ -4,17 +4,13 @@ import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
 import it.unimore.dipi.iot.wldt.event.*;
-import it.unimore.dipi.iot.wldt.exception.EventBusException;
-import it.unimore.dipi.iot.wldt.exception.ModelException;
-import it.unimore.dipi.iot.wldt.exception.ModelFunctionException;
-import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
+import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -31,9 +27,9 @@ public class PhysicalAdapterTester {
 
     private static CountDownLatch actionLock = null;
 
-    private static List<PhysicalEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
+    private static List<PhysicalPropertyEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
 
-    private static List<PhysicalEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
+    private static List<PhysicalPropertyEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
 
     private WldtConfiguration buildWldtConfiguration() throws WldtConfigurationException, ModelException {
 
@@ -109,12 +105,12 @@ public class PhysicalAdapterTester {
             }
 
             @Override
-            protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage) {
+            protected void onPhysicalEvent(PhysicalPropertyEventMessage<?> physicalPropertyEventMessage) {
 
-                logger.info("ShadowingModelFunction Physical Event Received: {}", physicalEventMessage);
+                logger.info("ShadowingModelFunction Physical Event Received: {}", physicalPropertyEventMessage);
 
-                if(physicalEventMessage != null
-                        && getPhysicalEventsFilter().contains(physicalEventMessage.getType())){
+                if(physicalPropertyEventMessage != null
+                        && getPhysicalEventsFilter().contains(physicalPropertyEventMessage.getType())){
 
                     if(!isShadowed){
                         isShadowed = true;
@@ -122,26 +118,26 @@ public class PhysicalAdapterTester {
                     }
 
                     //Check if it is a switch change
-                    if(PhysicalEventMessage.buildEventType(DummyPhysicalAdapter.SWITCH_PROPERTY_KEY).equals(physicalEventMessage.getType())
-                            && physicalEventMessage.getBody() instanceof String){
+                    if(PhysicalPropertyEventMessage.buildEventType(DummyPhysicalAdapter.SWITCH_PROPERTY_KEY).equals(physicalPropertyEventMessage.getType())
+                            && physicalPropertyEventMessage.getBody() instanceof String){
 
-                        logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalEventMessage.getType(), physicalEventMessage);
+                        logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalPropertyEventMessage.getType(), physicalPropertyEventMessage);
 
                         if(actionLock != null)
                             actionLock.countDown();
 
                         if(receivedPhysicalSwitchEventMessageList != null)
-                            receivedPhysicalSwitchEventMessageList.add((PhysicalEventMessage<String>) physicalEventMessage);
+                            receivedPhysicalSwitchEventMessageList.add((PhysicalPropertyEventMessage<String>) physicalPropertyEventMessage);
                     }
                     else{
 
-                        logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalEventMessage.getType(), physicalEventMessage);
+                        logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalPropertyEventMessage.getType(), physicalPropertyEventMessage);
 
                         if(telemetryLock != null)
                             telemetryLock.countDown();
 
                         if(receivedPhysicalTelemetryEventMessageList != null)
-                            receivedPhysicalTelemetryEventMessageList.add((PhysicalEventMessage<Double>) physicalEventMessage);
+                            receivedPhysicalTelemetryEventMessageList.add((PhysicalPropertyEventMessage<Double>) physicalPropertyEventMessage);
                     }
                 }
                 else
@@ -151,11 +147,11 @@ public class PhysicalAdapterTester {
     }
 
     @Test
-    public void testPhysicalAdapterEvents() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException {
+    public void testPhysicalAdapterEvents() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException, WldtRuntimeException {
 
         receivedPhysicalTelemetryEventMessageList = new ArrayList<>();
 
-        telemetryLock = new CountDownLatch(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES);
+        telemetryLock = new CountDownLatch(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES);
 
         //Set EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
@@ -171,11 +167,11 @@ public class PhysicalAdapterTester {
 
         //Wait until all the messages have been received
         telemetryLock.await((DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS
-                        + (DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES*DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS)),
+                        + (DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES *DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS)),
                 TimeUnit.MILLISECONDS);
 
         assertNotNull(receivedPhysicalTelemetryEventMessageList);
-        assertEquals(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES, receivedPhysicalTelemetryEventMessageList.size());
+        assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES, receivedPhysicalTelemetryEventMessageList.size());
 
         Thread.sleep(2000);
 
@@ -183,7 +179,7 @@ public class PhysicalAdapterTester {
     }
 
     @Test
-    public void testPhysicalAdapterActions() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException {
+    public void testPhysicalAdapterActions() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException, WldtRuntimeException {
 
         receivedPhysicalSwitchEventMessageList = new ArrayList<>();
 

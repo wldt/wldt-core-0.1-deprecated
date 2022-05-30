@@ -6,18 +6,17 @@ import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
 import it.unimore.dipi.iot.wldt.adapter.PhysicalProperty;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.event.PhysicalActionEventMessage;
-import it.unimore.dipi.iot.wldt.event.PhysicalEventMessage;
+import it.unimore.dipi.iot.wldt.event.PhysicalPropertyEventMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.Random;
 
 public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterConfiguration> {
 
     private static final Logger logger = LoggerFactory.getLogger(DummyPhysicalAdapter.class);
 
-    public static final int TARGET_GENERATED_MESSAGES = 10;
+    public static final int TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES = 10;
 
     public static long MESSAGE_SLEEP_PERIOD_MS = 2000;
 
@@ -50,11 +49,11 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
             if(physicalActionEventMessage != null && physicalActionEventMessage.getType().equals(PhysicalActionEventMessage.buildEventType(SWITCH_ON_ACTION))) {
                 logger.info("{} Received ! Switching ON the device ...", physicalActionEventMessage.getType());
                 Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
-                EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(SWITCH_PROPERTY_KEY, "ON"));
+                EventBus.getInstance().publishEvent(getId(), new PhysicalPropertyEventMessage<>(SWITCH_PROPERTY_KEY, "ON"));
             } else if(physicalActionEventMessage != null && physicalActionEventMessage.getType().equals(PhysicalActionEventMessage.buildEventType(SWITCH_OFF_ACTION))){
                 logger.info("{} Received ! Switching OFF the device ...", physicalActionEventMessage.getType());
                 Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
-                EventBus.getInstance().publishEvent(getId(), new PhysicalEventMessage<>(SWITCH_PROPERTY_KEY, "OFF"));
+                EventBus.getInstance().publishEvent(getId(), new PhysicalPropertyEventMessage<>(SWITCH_PROPERTY_KEY, "OFF"));
             } else
                 logger.error("WRONG OR NULL ACTION RECEIVED !");
 
@@ -72,10 +71,10 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
                 @Override
                 public void run() {
                     try {
-                        for(int i=0; i<TARGET_GENERATED_MESSAGES; i++){
+                        for(int i = 0; i< TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES; i++){
                             Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
                             double randomEnergyValue = 10 + (100 - 10) * random.nextDouble();
-                            publishPhysicalEventMessage(new PhysicalEventMessage<>(ENERGY_PROPERTY_KEY, randomEnergyValue));
+                            publishPhysicalEventMessage(new PhysicalPropertyEventMessage<>(ENERGY_PROPERTY_KEY, randomEnergyValue));
                         }
                     }catch (Exception e){
                         e.printStackTrace();
@@ -102,11 +101,6 @@ public class DummyPhysicalAdapter extends PhysicalAdapter<DummyPhysicalAdapterCo
         }catch (Exception e){
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void onAdapterCreate() {
-        logger.info("DummyPhysicalAdapter Started !");
     }
 
     @Override

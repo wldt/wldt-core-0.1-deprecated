@@ -46,6 +46,34 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
     }
 
     @Override
+    public boolean containsProperty(String propertyKey) throws WldtDigitalTwinStatePropertyException {
+        try {
+
+            if (this.properties == null || this.properties.isEmpty())
+                return false;
+
+            return this.properties.containsKey(propertyKey);
+
+        } catch (Exception e) {
+            throw new WldtDigitalTwinStatePropertyException(e.getLocalizedMessage());
+        }
+    }
+
+    @Override
+    public Optional<DigitalTwinStateProperty<?>> getProperty(String propertyKey) throws WldtDigitalTwinStatePropertyException {
+        try {
+
+            if (this.properties == null || this.properties.isEmpty())
+                return Optional.empty();
+
+            return Optional.ofNullable(this.properties.get(propertyKey));
+
+        } catch (Exception e) {
+            throw new WldtDigitalTwinStatePropertyException(e.getLocalizedMessage());
+        }
+    }
+
+    @Override
     public Optional<List<DigitalTwinStateProperty<?>>> getPropertyList() throws WldtDigitalTwinStatePropertyException {
 
         try {

@@ -40,6 +40,26 @@ public abstract class ShadowingModelFunction implements EventListener {
 
     /**
      *
+     * @param physicalProperty
+     * @throws EventBusException
+     * @throws ModelException
+     */
+    protected void observePhysicalProperty(PhysicalProperty<?> physicalProperty) throws EventBusException, ModelException {
+        if(physicalProperty == null)
+            throw new ModelException("Error ! NULL PhysicalProperty ...");
+
+        //Define EventFilter and add the target topics
+        EventFilter eventFilter = new EventFilter();
+        eventFilter.add(PhysicalPropertyEventMessage.buildEventType(physicalProperty.getKey()));
+
+        //Save the adopted EventFilter
+        this.physicalEventsFilter.addAll(eventFilter);
+
+        EventBus.getInstance().subscribe(this.id, eventFilter, this);
+    }
+
+    /**
+     *
      * @param physicalPropertyList
      * @throws EventBusException
      * @throws ModelException
@@ -47,19 +67,40 @@ public abstract class ShadowingModelFunction implements EventListener {
     protected void observePhysicalProperties(List<PhysicalProperty<?>> physicalPropertyList) throws EventBusException, ModelException {
 
         if(physicalPropertyList == null)
-            throw new ModelException("Error ! NULL PhysicalEvent List ...");
+            throw new ModelException("Error ! NULL PhysicalProperty List ...");
 
         //Define EventFilter and add the target topics
         EventFilter eventFilter = new EventFilter();
 
         for(PhysicalProperty<?> physicalProperty : physicalPropertyList)
-            eventFilter.add(PhysicalEventMessage.buildEventType(physicalProperty.getKey()));
+            eventFilter.add(PhysicalPropertyEventMessage.buildEventType(physicalProperty.getKey()));
 
         //Save the adopted EventFilter
         this.physicalEventsFilter.addAll(eventFilter);
 
         EventBus.getInstance().subscribe(this.id, eventFilter, this);
 
+    }
+
+    /**
+     *
+     * @param physicalProperty
+     * @throws EventBusException
+     * @throws ModelException
+     */
+    protected void unObservePhysicalProperty(PhysicalProperty<?> physicalProperty) throws EventBusException, ModelException {
+
+        if(physicalProperty == null)
+            throw new ModelException("Error ! NULL PhysicalProperty ...");
+
+        //Define EventFilter and add the target topics
+        EventFilter eventFilter = new EventFilter();
+        eventFilter.add(PhysicalPropertyEventMessage.buildEventType(physicalProperty.getKey()));
+
+        //Save the adopted EventFilter
+        this.physicalEventsFilter.removeAll(eventFilter);
+
+        EventBus.getInstance().unSubscribe(this.id, eventFilter, this);
     }
 
     /**
@@ -71,13 +112,13 @@ public abstract class ShadowingModelFunction implements EventListener {
     protected void unObservePhysicalProperties(List<PhysicalProperty<?>> physicalPropertyList) throws EventBusException, ModelException {
 
         if(physicalPropertyList == null)
-            throw new ModelException("Error ! NULL PhysicalEvent List ...");
+            throw new ModelException("Error ! NULL PhysicalProperty List ...");
 
         //Define EventFilter and add the target topics
         EventFilter eventFilter = new EventFilter();
 
         for(PhysicalProperty<?> physicalProperty : physicalPropertyList)
-            eventFilter.add(PhysicalEventMessage.buildEventType(physicalProperty.getKey()));
+            eventFilter.add(PhysicalPropertyEventMessage.buildEventType(physicalProperty.getKey()));
 
         //Save the adopted EventFilter
         this.physicalEventsFilter.removeAll(eventFilter);
@@ -98,8 +139,8 @@ public abstract class ShadowingModelFunction implements EventListener {
     @Override
     public void onEvent(Optional<EventMessage<?>> eventMessage) {
         logger.info("Shadowing Model Function -> Received Event: {}", eventMessage);
-        if(eventMessage.isPresent() && eventMessage.get() instanceof PhysicalEventMessage){
-            onPhysicalEvent((PhysicalEventMessage<?>) eventMessage.get());
+        if(eventMessage.isPresent() && eventMessage.get() instanceof PhysicalPropertyEventMessage){
+            onPhysicalEvent((PhysicalPropertyEventMessage<?>) eventMessage.get());
         }
     }
 
@@ -119,7 +160,7 @@ public abstract class ShadowingModelFunction implements EventListener {
 
     abstract protected void onPhysicalAdapterBidingUpdate(String adapterId, PhysicalAssetDescription adapterPhysicalAssetDescription);
 
-    abstract protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage);
+    abstract protected void onPhysicalEvent(PhysicalPropertyEventMessage<?> physicalPropertyEventMessage);
 
     public String getId() {
         return id;

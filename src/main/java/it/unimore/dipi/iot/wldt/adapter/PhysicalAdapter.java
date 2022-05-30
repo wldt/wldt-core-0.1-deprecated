@@ -22,26 +22,11 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
 
     private PhysicalAdapterListener physicalAdapterListener;
 
-    private PhysicalAdapter(){}
-
     private PhysicalAssetDescription adapterPhysicalAssetDescription;
 
     public PhysicalAdapter(String id, C configuration){
         this.id = id;
         this.configuration = configuration;
-    }
-
-    @Override
-    public void onWorkerCreated() throws WldtRuntimeException {
-        try{
-            onAdapterCreate();
-        }catch (Exception e){
-            //Notify Listeners
-            if(getPhysicalAdapterListener() != null)
-                getPhysicalAdapterListener().onPhysicalAdapterUnBound(this.id, this.adapterPhysicalAssetDescription, e.getLocalizedMessage());
-
-            throw new WldtRuntimeException(e.getLocalizedMessage());
-        }
     }
 
     @Override
@@ -95,14 +80,12 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
 
     public abstract void onIncomingPhysicalAction(PhysicalActionEventMessage<?> physicalActionEventMessage);
 
-    public abstract void onAdapterCreate();
-
     public abstract void onAdapterStart();
 
     public abstract void onAdapterStop();
 
-    protected void publishPhysicalEventMessage(PhysicalEventMessage<?> targetPhysicalEventMessage) throws EventBusException {
-        EventBus.getInstance().publishEvent(getId(), targetPhysicalEventMessage);
+    protected void publishPhysicalEventMessage(PhysicalPropertyEventMessage<?> targetPhysicalPropertyEventMessage) throws EventBusException {
+        EventBus.getInstance().publishEvent(getId(), targetPhysicalPropertyEventMessage);
     }
 
     public PhysicalAssetDescription getAdapterPhysicalAssetState() {

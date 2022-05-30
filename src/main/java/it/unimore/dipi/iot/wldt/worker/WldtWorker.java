@@ -13,14 +13,6 @@ public abstract class WldtWorker implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(WldtWorker.class);
 
-    public WldtWorker(){
-        try{
-            onWorkerCreated();
-        }catch (Exception e){
-            logger.error("WLDT WORKER onCreated() ERROR: {}", e.getLocalizedMessage());
-        }
-    }
-
     @Override
     public void run() {
         try {
@@ -34,8 +26,6 @@ public abstract class WldtWorker implements Runnable {
             }
         }
     }
-
-    abstract public void onWorkerCreated() throws WldtRuntimeException;
 
     abstract public void onWorkerStop() throws WldtRuntimeException;
 

@@ -116,20 +116,9 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
 
     abstract protected void onStatePropertyDeleted(DigitalTwinStateProperty<?> digitalTwinStateProperty);
 
-    public abstract void onAdapterCreated();
-
     public abstract void onAdapterStart();
 
     public abstract void onAdapterStop();
-
-    @Override
-    public void onWorkerCreated() throws WldtRuntimeException {
-        try{
-            onAdapterCreated();
-        }catch (Exception e){
-            throw new WldtRuntimeException(e.getLocalizedMessage());
-        }
-    }
 
     @Override
     public void onWorkerStart() throws WldtRuntimeException {

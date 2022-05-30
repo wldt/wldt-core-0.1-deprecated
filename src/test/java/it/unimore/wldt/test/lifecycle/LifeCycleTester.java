@@ -6,11 +6,8 @@ import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
 import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
 import it.unimore.dipi.iot.wldt.event.EventBus;
-import it.unimore.dipi.iot.wldt.event.PhysicalEventMessage;
-import it.unimore.dipi.iot.wldt.exception.EventBusException;
-import it.unimore.dipi.iot.wldt.exception.ModelException;
-import it.unimore.dipi.iot.wldt.exception.ModelFunctionException;
-import it.unimore.dipi.iot.wldt.exception.WldtConfigurationException;
+import it.unimore.dipi.iot.wldt.event.PhysicalPropertyEventMessage;
+import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapter;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapterConfiguration;
@@ -34,9 +31,9 @@ public class LifeCycleTester {
 
     private CountDownLatch lock = null;
 
-    private List<PhysicalEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
+    private List<PhysicalPropertyEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
 
-    private List<PhysicalEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
+    private List<PhysicalPropertyEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
 
     private static final String DEMO_MQTT_BODY = "DEMO_BODY_MQTT";
 
@@ -61,11 +58,11 @@ public class LifeCycleTester {
 
 
     @Test
-    public void testLifeCycle() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException {
+    public void testLifeCycle() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException, WldtRuntimeException {
 
         this.receivedPhysicalTelemetryEventMessageList = new ArrayList<>();
 
-        lock = new CountDownLatch(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES);
+        lock = new CountDownLatch(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES);
 
         //Set EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
@@ -109,7 +106,7 @@ public class LifeCycleTester {
             }
 
             @Override
-            protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage) {
+            protected void onPhysicalEvent(PhysicalPropertyEventMessage<?> physicalEventMessage) {
 
                 //logger.info("onPhysicalEvent()-> {}", physicalEventMessage);
 
@@ -126,7 +123,7 @@ public class LifeCycleTester {
                     }
 
                     lock.countDown();
-                    receivedPhysicalTelemetryEventMessageList.add((PhysicalEventMessage<Double>) physicalEventMessage);
+                    receivedPhysicalTelemetryEventMessageList.add((PhysicalPropertyEventMessage<Double>) physicalEventMessage);
                 }
                 else
                     logger.error("WRONG Physical Event Message Received !");
@@ -196,11 +193,11 @@ public class LifeCycleTester {
 
         //Wait until all the messages have been received
         lock.await((DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS
-                        + (DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES*DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS)),
+                        + (DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES *DummyPhysicalAdapter.MESSAGE_SLEEP_PERIOD_MS)),
                 TimeUnit.MILLISECONDS);
 
         assertNotNull(receivedPhysicalTelemetryEventMessageList);
-        assertEquals(DummyPhysicalAdapter.TARGET_GENERATED_MESSAGES, receivedPhysicalTelemetryEventMessageList.size());
+        assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES, receivedPhysicalTelemetryEventMessageList.size());
 
         Thread.sleep(2000);
 

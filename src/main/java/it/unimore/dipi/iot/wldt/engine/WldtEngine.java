@@ -57,20 +57,25 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
 
     private Thread modelEngineThread = null;
 
-    public WldtEngine(ShadowingModelFunction shadowingModelFunction, WldtConfiguration wldtConfiguration) throws WldtConfigurationException, ModelException, EventBusException {
+    private ShadowingModelFunction shadowingModelFunction = null;
+
+    public WldtEngine(ShadowingModelFunction shadowingModelFunction, WldtConfiguration wldtConfiguration) throws WldtConfigurationException, ModelException, EventBusException, WldtRuntimeException {
         this.wldtConfiguration = wldtConfiguration;
         init(shadowingModelFunction);
     }
 
-    public WldtEngine(ShadowingModelFunction shadowingModelFunction) throws WldtConfigurationException, ModelException, EventBusException {
+    public WldtEngine(ShadowingModelFunction shadowingModelFunction) throws WldtConfigurationException, ModelException, EventBusException, WldtRuntimeException {
         this.wldtConfiguration = (WldtConfiguration) WldtUtils.readConfigurationFile(WLDT_CONFIGURATION_FOLDER, WLDT_CONFIGURATION_FILE, WldtConfiguration.class);
         logger.info("{} WLDT Configuration Loaded ! Conf: {}", TAG, wldtConfiguration);
         init(shadowingModelFunction);
     }
 
-    private void init(ShadowingModelFunction shadowingModelFunction) throws WldtConfigurationException, ModelException, EventBusException {
+    private void init(ShadowingModelFunction shadowingModelFunction) throws WldtConfigurationException, ModelException, EventBusException, WldtRuntimeException {
 
         this.wldtId = WldtUtils.generateRandomWldtId(this.wldtConfiguration.getDeviceNameSpace(), this.wldtConfiguration.getWldtBaseIdentifier());
+
+        if(shadowingModelFunction == null)
+            throw new WldtRuntimeException("Error ! Shadowing Function = NULL !");
 
         //Init Life Cycle Listeners & Status Map
         this.lifeCycleListenerList = new ArrayList<>();
@@ -96,8 +101,9 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
         }
 
         //Set ShadowingListener, Init Model Engine & Add to the List of Workers
-        shadowingModelFunction.setShadowingModelListener(this);
-        this.modelEngine = new ModelEngine(this.digitalTwinState, shadowingModelFunction);
+        this.shadowingModelFunction = shadowingModelFunction;
+        this.shadowingModelFunction.setShadowingModelListener(this);
+        this.modelEngine = new ModelEngine(this.digitalTwinState, this.shadowingModelFunction);
 
         //Save the Model Engine as Digital Twin Life Cycle Listener
         addLifeCycleListener(this.modelEngine);
@@ -202,7 +208,7 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
             physicalAdapter.setPhysicalAdapterListener(this);
             this.physicalAdapterList.add(physicalAdapter);
 
-            //Save BoundStatus to False. It will be changed through a call back by the adpter
+            //Save BoundStatus to False. It will be changed through a call back by the adapter
             this.physicalAdapterBoundStatusMap.put(physicalAdapter.getId(), false);
 
             logger.debug("{} New PhysicalAdapter ({}) Added to the Worker List ! Worker List Size: {}", TAG, physicalAdapter.getClass().getName(), this.physicalAdapterList.size());

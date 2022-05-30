@@ -5,7 +5,7 @@ import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
 import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
 import it.unimore.dipi.iot.wldt.event.EventBus;
-import it.unimore.dipi.iot.wldt.event.PhysicalEventMessage;
+import it.unimore.dipi.iot.wldt.event.PhysicalPropertyEventMessage;
 import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapter;
@@ -26,7 +26,7 @@ public class ModelTester {
 
     private CountDownLatch lock = new CountDownLatch(1);
 
-    private PhysicalEventMessage<String> receivedMessage = null;
+    private PhysicalPropertyEventMessage<String> receivedMessage = null;
 
     private static final String DEMO_MQTT_BODY = "DEMO_BODY_MQTT";
 
@@ -65,7 +65,7 @@ public class ModelTester {
         }
 
         @Override
-        protected void onPhysicalEvent(PhysicalEventMessage<?> physicalEventMessage) {
+        protected void onPhysicalEvent(PhysicalPropertyEventMessage<?> physicalPropertyEventMessage) {
             logger.debug("DigitalTwin - LifeCycleListener - onPhysicalAdapterBidingUpdate()");
         }
     };
@@ -89,7 +89,7 @@ public class ModelTester {
 
 
     @Test
-    public void testShadowingFunction() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException {
+    public void testShadowingFunction() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException, WldtRuntimeException {
 
         //Set EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
@@ -104,25 +104,25 @@ public class ModelTester {
         Thread.sleep(2000);
 
         //Generate an emulated Physical Event
-        PhysicalEventMessage<String> physicalEventMessage = new PhysicalEventMessage<>(DEMO_MQTT_MESSAGE_TYPE);
-        physicalEventMessage.setBody(DEMO_MQTT_BODY);
-        physicalEventMessage.setContentType("text");
+        PhysicalPropertyEventMessage<String> physicalPropertyEventMessage = new PhysicalPropertyEventMessage<>(DEMO_MQTT_MESSAGE_TYPE);
+        physicalPropertyEventMessage.setBody(DEMO_MQTT_BODY);
+        physicalPropertyEventMessage.setContentType("text");
 
         //Publish Message on the target Topic1
-        EventBus.getInstance().publishEvent("demo-physical-adapter", physicalEventMessage);
+        EventBus.getInstance().publishEvent("demo-physical-adapter", physicalPropertyEventMessage);
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
         assertNotNull(receivedMessage);
-        assertEquals(physicalEventMessage, receivedMessage);
+        assertEquals(physicalPropertyEventMessage, receivedMessage);
         assertEquals(DEMO_MQTT_BODY, receivedMessage.getBody());
-        assertEquals(PhysicalEventMessage.buildEventType(DEMO_MQTT_MESSAGE_TYPE), receivedMessage.getType());
+        assertEquals(PhysicalPropertyEventMessage.buildEventType(DEMO_MQTT_MESSAGE_TYPE), receivedMessage.getType());
 
         wldtEngine.stopLifeCycle();
     }
 
     @Test
-    public void testInternalModelFunction() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException {
+    public void testInternalModelFunction() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, WldtRuntimeException {
 
         //Set EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());

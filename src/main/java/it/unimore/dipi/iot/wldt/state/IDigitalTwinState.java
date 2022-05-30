@@ -7,6 +7,10 @@ import java.util.Optional;
 
 public interface IDigitalTwinState {
 
+    public boolean containsProperty(String propertyKey) throws WldtDigitalTwinStatePropertyException;
+
+    public Optional<DigitalTwinStateProperty<?>> getProperty(String propertyKey) throws WldtDigitalTwinStatePropertyException;
+
     public Optional<List<DigitalTwinStateProperty<?>>> getPropertyList() throws WldtDigitalTwinStatePropertyException;
 
     public void createProperty(String propertyKey, DigitalTwinStateProperty<?> dtStateProperty) throws WldtDigitalTwinStatePropertyException, WldtDigitalTwinStatePropertyConflictException, WldtDigitalTwinStatePropertyBadRequestException;
