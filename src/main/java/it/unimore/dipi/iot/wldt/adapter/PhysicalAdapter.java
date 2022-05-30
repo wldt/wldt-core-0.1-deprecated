@@ -190,10 +190,10 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
     }
 
     @Override
-    public void onEvent(Optional<EventMessage<?>> eventMessage) {
+    public void onEvent(EventMessage<?> eventMessage) {
         logger.debug("{} -> Received Event: {}", id, eventMessage);
-        if (eventMessage.isPresent() && eventMessage.get() instanceof PhysicalActionEventMessage) {
-            onIncomingPhysicalAction((PhysicalActionEventMessage<?>) eventMessage.get());
+        if (eventMessage != null && eventMessage instanceof PhysicalActionEventMessage) {
+            onIncomingPhysicalAction((PhysicalActionEventMessage<?>) eventMessage);
         }
     }
 

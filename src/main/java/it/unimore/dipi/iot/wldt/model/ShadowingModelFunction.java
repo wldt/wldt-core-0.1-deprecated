@@ -137,10 +137,10 @@ public abstract class ShadowingModelFunction implements EventListener {
     }
 
     @Override
-    public void onEvent(Optional<EventMessage<?>> eventMessage) {
+    public void onEvent(EventMessage<?> eventMessage) {
         logger.info("Shadowing Model Function -> Received Event: {}", eventMessage);
-        if(eventMessage.isPresent() && eventMessage.get() instanceof PhysicalPropertyEventMessage){
-            onPhysicalEvent((PhysicalPropertyEventMessage<?>) eventMessage.get());
+        if(eventMessage != null && eventMessage instanceof PhysicalPropertyEventMessage){
+            onPhysicalEvent((PhysicalPropertyEventMessage<?>) eventMessage);
         }
     }
 

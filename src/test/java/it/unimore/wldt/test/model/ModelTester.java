@@ -13,7 +13,6 @@ import it.unimore.wldt.test.adapter.DummyPhysicalAdapterConfiguration;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -87,7 +86,7 @@ public class ModelTester {
         return wldtConfiguration;
     }
 
-
+    /*
     @Test
     public void testShadowingFunction() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException, WldtRuntimeException {
 
@@ -134,4 +133,5 @@ public class ModelTester {
         wldtEngine.getModelEngine().addStateModelFunction(new ObserverStateModelFunction("state-observer-model-function"), true, null);
         wldtEngine.getModelEngine().addStateModelFunction(new StateUpdateStateModelFunction("state-updated-model-function"), false, null);
     }
+    */
 }

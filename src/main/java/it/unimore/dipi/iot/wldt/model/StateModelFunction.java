@@ -59,18 +59,18 @@ public abstract class StateModelFunction {
             }
 
             @Override
-            public void onEvent(Optional<EventMessage<?>> eventMessage) {
+            public void onEvent(EventMessage<?> eventMessage) {
 
-                if(eventMessage.isPresent() && eventMessage.get().getBody() != null && (eventMessage.get().getBody() instanceof DigitalTwinStateProperty)){
-                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) eventMessage.get().getBody();
+                if(eventMessage != null && eventMessage.getBody() != null && (eventMessage.getBody() instanceof DigitalTwinStateProperty)){
+                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) eventMessage.getBody();
 
-                    if(eventMessage.get().getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED))
+                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED))
                         onStateChangePropertyCreated(digitalTwinStateProperty);
 
-                    if(eventMessage.get().getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED))
+                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED))
                         onStateChangePropertyUpdated(digitalTwinStateProperty);
 
-                    if(eventMessage.get().getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED))
+                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED))
                         onStateChangePropertyDeleted(digitalTwinStateProperty);
                 }
             }
@@ -102,17 +102,17 @@ public abstract class StateModelFunction {
             }
 
             @Override
-            public void onEvent(Optional<EventMessage<?>> eventMessage) {
-                if(eventMessage.isPresent() && eventMessage.get().getBody() != null && (eventMessage.get().getBody() instanceof DigitalTwinStateProperty)){
-                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) eventMessage.get().getBody();
-                    if(eventMessage.get().getType().equals(digitalTwinState.getPropertyCreatedEventMessageType(digitalTwinStateProperty.getKey())))
+            public void onEvent(EventMessage<?> eventMessage) {
+                if(eventMessage != null && eventMessage.getBody() != null && (eventMessage.getBody() instanceof DigitalTwinStateProperty)){
+                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) eventMessage.getBody();
+                    if(eventMessage.getType().equals(digitalTwinState.getPropertyCreatedEventMessageType(digitalTwinStateProperty.getKey())))
                         onStateChangePropertyCreated(digitalTwinStateProperty);
-                    else if(eventMessage.get().getType().equals(digitalTwinState.getPropertyUpdatedEventMessageType(digitalTwinStateProperty.getKey())))
+                    else if(eventMessage.getType().equals(digitalTwinState.getPropertyUpdatedEventMessageType(digitalTwinStateProperty.getKey())))
                         onStatePropertyUpdated(digitalTwinStateProperty);
-                    else if(eventMessage.get().getType().equals(digitalTwinState.getPropertyDeletedEventMessageType(digitalTwinStateProperty.getKey())))
+                    else if(eventMessage.getType().equals(digitalTwinState.getPropertyDeletedEventMessageType(digitalTwinStateProperty.getKey())))
                         onStatePropertyDeleted(digitalTwinStateProperty);
                     else
-                        logger.error(String.format("ModelFunction(%s) -> observeDigitalTwinProperties: Error received type %s that is not matching", id, eventMessage.get().getType()));
+                        logger.error(String.format("ModelFunction(%s) -> observeDigitalTwinProperties: Error received type %s that is not matching", id, eventMessage.getType()));
                 }
             }
         });

@@ -8,6 +8,6 @@ public interface EventListener {
 
     public void onEventUnSubscribed(String eventType);
 
-    public void onEvent(Optional<EventMessage<?>> eventMessage);
+    public void onEvent(EventMessage<?> eventMessage);
 
 }

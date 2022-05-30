@@ -32,7 +32,7 @@ public class EventBusTester {
 
     private CountDownLatch lock = new CountDownLatch(1);
 
-    private Optional<EventMessage<?>> receivedMessage;
+    private EventMessage<?> receivedMessage;
 
     private List<String> targetSubscriptionList = new ArrayList<>();
 
@@ -56,9 +56,9 @@ public class EventBusTester {
             }
 
             @Override
-            public void onEvent(Optional<EventMessage<?>> eventMessage) {
-                if(eventMessage.isPresent()){
-                    EventMessage<String> msg = (EventMessage<String>)eventMessage.get();
+            public void onEvent(EventMessage<?> eventMessage) {
+                if(eventMessage != null){
+                    EventMessage<String> msg = (EventMessage<String>)eventMessage;
                     long diff = System.currentTimeMillis() - msg.getCreationTimestamp();
                     System.out.println("Message Received in: " + diff);
                 }
@@ -136,10 +136,10 @@ public class EventBusTester {
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
-        assertTrue(receivedMessage.isPresent());
-        assertEquals(eventMessage, receivedMessage.get());
-        assertEquals(TEST_VALUE_0001, receivedMessage.get().getBody());
-        assertEquals(eventMessage.getMetadata(), receivedMessage.get().getMetadata());
+        assertNotNull(receivedMessage);
+        assertEquals(eventMessage, receivedMessage);
+        assertEquals(TEST_VALUE_0001, receivedMessage.getBody());
+        assertEquals(eventMessage.getMetadata(), receivedMessage.getMetadata());
     }
 
     @Test
@@ -166,9 +166,9 @@ public class EventBusTester {
             }
 
             @Override
-            public void onEvent(Optional<EventMessage<?>> eventMessage) {
-                if(eventMessage.isPresent()){
-                    EventMessage<String> msg = (EventMessage<String>)eventMessage.get();
+            public void onEvent(EventMessage<?> eventMessage) {
+                if(eventMessage != null){
+                    EventMessage<String> msg = (EventMessage<String>)eventMessage;
                     long diff = System.currentTimeMillis() - msg.getCreationTimestamp();
                     System.out.println("Message Received in: " + diff);
                 }
@@ -188,10 +188,10 @@ public class EventBusTester {
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
-        assertTrue(receivedMessage.isPresent());
-        assertEquals(eventMessage, receivedMessage.get());
-        assertEquals(TEST_VALUE_0001, receivedMessage.get().getBody());
-        assertEquals(eventMessage.getMetadata(), receivedMessage.get().getMetadata());
+        assertNotNull(receivedMessage);
+        assertEquals(eventMessage, receivedMessage);
+        assertEquals(TEST_VALUE_0001, receivedMessage.getBody());
+        assertEquals(eventMessage.getMetadata(), receivedMessage.getMetadata());
     }
 
     @Test
@@ -220,13 +220,12 @@ public class EventBusTester {
             }
 
             @Override
-            public void onEvent(Optional<EventMessage<?>> eventMessage) {
+            public void onEvent(EventMessage<?> eventMessage) {
 
-                if(eventMessage.isPresent()){
+                if(eventMessage != null){
                     receivedMessageCount++;
-                    EventMessage<String> msg = (EventMessage<String>)eventMessage.get();
+                    EventMessage<String> msg = (EventMessage<String>)eventMessage;
                     long diff = System.currentTimeMillis() - msg.getCreationTimestamp();
-                    //System.out.println("Message Received in: " + diff);
                     delaySum += diff;
                 }
 

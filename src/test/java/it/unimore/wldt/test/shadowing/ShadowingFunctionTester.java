@@ -70,11 +70,11 @@ public class ShadowingFunctionTester {
             }
 
             @Override
-            public void onEvent(Optional<EventMessage<?>> eventMessage) {
+            public void onEvent(EventMessage<?> eventMessage) {
 
-                if(eventMessage.isPresent() && eventMessage.get().getBody() != null && (eventMessage.get().getBody() instanceof DigitalTwinStateProperty)) {
-                    logger.info("DT-State-Observer - onEvent(): Type: {} Event:{}", eventMessage.get().getType(), eventMessage.get());
-                    receivedStateEventMessageList.add(eventMessage.get());
+                if(eventMessage != null && eventMessage.getBody() != null && (eventMessage.getBody() instanceof DigitalTwinStateProperty)) {
+                    logger.info("DT-State-Observer - onEvent(): Type: {} Event:{}", eventMessage.getType(), eventMessage);
+                    receivedStateEventMessageList.add(eventMessage);
                     testCountDownLatch.countDown();
                 }
                 else

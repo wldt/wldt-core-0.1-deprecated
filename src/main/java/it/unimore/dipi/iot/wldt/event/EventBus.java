@@ -41,7 +41,7 @@ public class EventBus {
 
         if(this.subscriberMap.containsKey(eventMessage.getType()) && this.subscriberMap.get(eventMessage.getType()).size() > 0)
             this.subscriberMap.get(eventMessage.getType()).forEach(subscriberInfo -> {
-                subscriberInfo.getEventListener().onEvent(Optional.ofNullable(eventMessage));
+                subscriberInfo.getEventListener().onEvent(eventMessage);
 
                 if(eventLogger != null)
                     eventLogger.logEventForwarded(publisherId, subscriberInfo.getId(), eventMessage);

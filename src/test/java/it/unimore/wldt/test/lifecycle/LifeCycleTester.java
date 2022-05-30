@@ -29,11 +29,11 @@ public class LifeCycleTester {
 
     private static final Logger logger = LoggerFactory.getLogger(LifeCycleTester.class);
 
-    private CountDownLatch lock = null;
+    private static CountDownLatch lock = null;
 
-    private List<PhysicalPropertyEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
+    private static List<PhysicalPropertyEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
 
-    private List<PhysicalPropertyEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
+    private static List<PhysicalPropertyEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
 
     private static final String DEMO_MQTT_BODY = "DEMO_BODY_MQTT";
 
@@ -92,7 +92,27 @@ public class LifeCycleTester {
 
             @Override
             protected void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
+
                 logger.debug("DigitalTwin - LifeCycleListener - onDigitalTwinBound()");
+
+                for(Map.Entry<String, PhysicalAssetDescription> entry : adaptersPhysicalAssetDescriptionMap.entrySet()){
+
+                    String adapterId = entry.getKey();
+                    PhysicalAssetDescription physicalAssetDescription = entry.getValue();
+
+                    logger.info("Adapter ({}) Physical Asset Description: {}", adapterId, physicalAssetDescription);
+
+                    try{
+                        if(physicalAssetDescription != null && physicalAssetDescription.getProperties() != null && physicalAssetDescription.getProperties().size() > 0){
+                            logger.info("Observing Physical Asset Properties: {}", physicalAssetDescription.getProperties());
+                            this.observePhysicalProperties(physicalAssetDescription.getProperties());
+                        }
+                        else
+                            logger.info("Empty property list on adapter {}. Nothing to observe !", adapterId);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                }
             }
 
             @Override
@@ -108,7 +128,7 @@ public class LifeCycleTester {
             @Override
             protected void onPhysicalEvent(PhysicalPropertyEventMessage<?> physicalEventMessage) {
 
-                //logger.info("onPhysicalEvent()-> {}", physicalEventMessage);
+                logger.info("onPhysicalEvent()-> {}", physicalEventMessage);
 
                 if(physicalEventMessage != null
                         && getPhysicalEventsFilter().contains(physicalEventMessage.getType())
