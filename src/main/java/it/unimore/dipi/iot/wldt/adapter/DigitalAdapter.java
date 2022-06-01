@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Author: Marco Picone, Ph.D. (marco.picone@unimore.it)
@@ -37,6 +36,35 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
 
     protected IDigitalTwinState digitalTwinState = null;
 
+    private EventListener digitalTwinStateEventListener = new EventListener() {
+        @Override
+        public void onEventSubscribed(String eventType) {
+            //TODO Implement
+        }
+
+        @Override
+        public void onEventUnSubscribed(String eventType) {
+            //TODO Implement
+        }
+
+        @Override
+        public void onEvent(EventMessage<?> eventMessage) {
+
+            if(eventMessage != null && eventMessage.getBody() != null && (eventMessage.getBody() instanceof DigitalTwinStateProperty)){
+                DigitalTwinStateProperty<?> digitalTwinStateProperty = (DigitalTwinStateProperty<?>) eventMessage.getBody();
+
+                if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED))
+                    onStateChangePropertyCreated(digitalTwinStateProperty);
+
+                if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED))
+                    onStateChangePropertyUpdated(digitalTwinStateProperty);
+
+                if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED))
+                    onStateChangePropertyDeleted(digitalTwinStateProperty);
+            }
+        }
+    };
+
     private DigitalAdapter(){}
 
     public DigitalAdapter(String id, boolean observeDigitalTwinState){
@@ -55,34 +83,21 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
         //Save the adopted EventFilter
         this.stateEventFilter = eventFilter;
 
-        EventBus.getInstance().subscribe(this.id, eventFilter, new EventListener() {
-            @Override
-            public void onEventSubscribed(String eventType) {
-                //TODO Implement
-            }
+        EventBus.getInstance().subscribe(this.id, eventFilter, digitalTwinStateEventListener);
+    }
 
-            @Override
-            public void onEventUnSubscribed(String eventType) {
-                //TODO Implement
-            }
+    protected void unObserveDigitalTwinState() throws EventBusException {
 
-            @Override
-            public void onEvent(EventMessage<?> eventMessage) {
+        //Define EventFilter and add the target topic
+        EventFilter eventFilter = new EventFilter();
+        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED);
+        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED);
+        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED);
 
-                if(eventMessage != null && eventMessage.getBody() != null && (eventMessage.getBody() instanceof DigitalTwinStateProperty)){
-                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) eventMessage.getBody();
+        //Save the adopted EventFilter
+        this.stateEventFilter = eventFilter;
 
-                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED))
-                        onStateChangePropertyCreated(digitalTwinStateProperty);
-
-                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED))
-                        onStateChangePropertyUpdated(digitalTwinStateProperty);
-
-                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED))
-                        onStateChangePropertyDeleted(digitalTwinStateProperty);
-                }
-            }
-        });
+        EventBus.getInstance().unSubscribe(this.id, eventFilter, digitalTwinStateEventListener);
     }
 
     protected void observeDigitalTwinProperties(List<String> propertyList) throws EventBusException {
@@ -96,10 +111,54 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
         }
 
         //Save the adopted EventFilter
-        this.statePropertyEventsFilter = eventFilter;
+        this.statePropertyEventsFilter.addAll(eventFilter);
 
         EventBus.getInstance().subscribe(this.id, eventFilter, this);
 
+    }
+
+    protected void unObserveDigitalTwinProperties(List<String> propertyList) throws EventBusException {
+
+        //Define EventFilter and add the target topic
+        EventFilter eventFilter = new EventFilter();
+
+        for(String propertyKey : propertyList) {
+            eventFilter.add(digitalTwinState.getPropertyUpdatedEventMessageType(propertyKey));
+            eventFilter.add(digitalTwinState.getPropertyDeletedEventMessageType(propertyKey));
+        }
+
+        //Save the adopted EventFilter
+        this.statePropertyEventsFilter.removeAll(eventFilter);
+
+        EventBus.getInstance().unSubscribe(this.id, eventFilter, this);
+    }
+
+    protected void observeDigitalTwinProperty(String propertyKey) throws EventBusException {
+
+        //Define EventFilter and add the target topic
+        EventFilter eventFilter = new EventFilter();
+
+        eventFilter.add(digitalTwinState.getPropertyUpdatedEventMessageType(propertyKey));
+        eventFilter.add(digitalTwinState.getPropertyDeletedEventMessageType(propertyKey));
+
+        //Save the adopted EventFilter
+        this.statePropertyEventsFilter.addAll(eventFilter);
+
+        EventBus.getInstance().subscribe(this.id, eventFilter, this);
+    }
+
+    protected void unObserveDigitalTwinProperty(String propertyKey) throws EventBusException {
+
+        //Define EventFilter and add the target topic
+        EventFilter eventFilter = new EventFilter();
+
+        eventFilter.add(digitalTwinState.getPropertyUpdatedEventMessageType(propertyKey));
+        eventFilter.add(digitalTwinState.getPropertyDeletedEventMessageType(propertyKey));
+
+        //Save the adopted EventFilter
+        this.statePropertyEventsFilter.removeAll(eventFilter);
+
+        EventBus.getInstance().unSubscribe(this.id, eventFilter, this);
     }
 
     public void init(IDigitalTwinState digitalTwinState){
@@ -165,15 +224,6 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("ModelFunction{");
-        sb.append("id='").append(id).append('\'');
-        sb.append(", statePropertyEventsFilter=").append(statePropertyEventsFilter);
-        sb.append('}');
-        return sb.toString();
     }
 
     @Override
