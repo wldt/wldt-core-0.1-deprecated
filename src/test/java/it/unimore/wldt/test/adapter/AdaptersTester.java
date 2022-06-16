@@ -241,7 +241,11 @@ public class AdaptersTester {
                 TimeUnit.MILLISECONDS);
 
         assertNotNull(receivedPhysicalTelemetryEventMessageList);
+
+        //Check Received Physical Event on the Shadowing Function
         assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES, receivedPhysicalTelemetryEventMessageList.size());
+
+        //Check Correct Digital Twin State Property Update Events have been received on the Digital Adapter
         assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES, receivedDigitalAdapterPropertyUpdateMessageList.size());
 
         Thread.sleep(2000);

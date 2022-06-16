@@ -57,7 +57,9 @@ public class DummyDigitalAdapter extends DigitalAdapter<DummyDigitalAdapterConfi
     @Override
     public void onDigitalTwinSync(IDigitalTwinState digitalTwinState) {
         logger.info("DummyDigitalTwinAdapter -> onDigitalTwinSync() - DT State: {}", digitalTwinState);
-        this.receivedDigitalAdapterSyncDigitalTwinStateList.add(digitalTwinState);
+
+        if(this.receivedDigitalAdapterSyncDigitalTwinStateList != null)
+            this.receivedDigitalAdapterSyncDigitalTwinStateList.add(digitalTwinState);
     }
 
     @Override
@@ -68,19 +70,25 @@ public class DummyDigitalAdapter extends DigitalAdapter<DummyDigitalAdapterConfi
     @Override
     protected void onStateChangePropertyCreated(DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         logger.info("DummyDigitalTwinAdapter -> onStateChangePropertyCreated() - Property CREATED: {}", digitalTwinStateProperty);
-        this.receivedDigitalTwinPropertyCreatedMessageList.add(digitalTwinStateProperty);
+
+        if(this.receivedDigitalTwinPropertyCreatedMessageList != null)
+            this.receivedDigitalTwinPropertyCreatedMessageList.add(digitalTwinStateProperty);
     }
 
     @Override
     protected void onStateChangePropertyUpdated(DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         logger.info("DummyDigitalTwinAdapter -> onStateChangePropertyUpdated() - Property UPDATED: {}", digitalTwinStateProperty);
-        this.receivedDigitalTwinPropertyUpdateMessageList.add(digitalTwinStateProperty);
+
+        if(this.receivedDigitalTwinPropertyUpdateMessageList != null)
+            this.receivedDigitalTwinPropertyUpdateMessageList.add(digitalTwinStateProperty);
     }
 
     @Override
     protected void onStateChangePropertyDeleted(DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         logger.info("DummyDigitalTwinAdapter -> onStateChangePropertyDeleted() - Property DELETED: {}", digitalTwinStateProperty);
-        this.receivedDigitalTwinPropertyDeletedMessageList.add(digitalTwinStateProperty);
+
+        if(this.receivedDigitalTwinPropertyDeletedMessageList != null)
+            this.receivedDigitalTwinPropertyDeletedMessageList.add(digitalTwinStateProperty);
     }
 
     @Override
