@@ -10,6 +10,7 @@ import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
 import it.unimore.dipi.iot.wldt.state.DigitalTwinStateAction;
 import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
+import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -35,11 +36,13 @@ public class AdaptersTester {
 
     private static List<PhysicalPropertyEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
 
-    private static List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyCreatedMessageList = null;
+    private static List<DigitalTwinStateProperty<?>> receivedDigitalAdapterPropertyCreatedMessageList = null;
 
-    private static List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyUpdateMessageList = null;
+    private static List<DigitalTwinStateProperty<?>> receivedDigitalAdapterPropertyUpdateMessageList = null;
 
-    private static List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyDeletedMessageList = null;
+    private static List<DigitalTwinStateProperty<?>> receivedDigitalAdapterPropertyDeletedMessageList = null;
+
+    private static List<IDigitalTwinState> receivedDigitalAdapterSyncDigitalTwinStateList = null;
 
     private WldtConfiguration buildWldtConfiguration() throws WldtConfigurationException, ModelException {
 
@@ -64,7 +67,12 @@ public class AdaptersTester {
         DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), physicalTelemetryOn);
 
         //Create Digital Adapter
-        DummyDigitalAdapter dummyDigitalAdapter = new DummyDigitalAdapter("dummy-physical-adapter", new DummyDigitalAdapterConfiguration());
+        DummyDigitalAdapter dummyDigitalAdapter = new DummyDigitalAdapter("dummy-physical-adapter", new DummyDigitalAdapterConfiguration(),
+                receivedDigitalAdapterPropertyCreatedMessageList,
+                receivedDigitalAdapterPropertyUpdateMessageList,
+                receivedDigitalAdapterPropertyDeletedMessageList,
+                receivedDigitalAdapterSyncDigitalTwinStateList
+        );
 
         //Init the Engine
         WldtEngine wldtEngine = new WldtEngine(getTargetShadowingFunction(), buildWldtConfiguration());
@@ -115,8 +123,7 @@ public class AdaptersTester {
 
                            //In that simple case the Digital Twin shadow all the properties and actions available in the physical asset
                            for(PhysicalProperty<?> physicalProperty : physicalAssetDescription.getProperties())
-                               this.digitalTwinState.createProperty(physicalProperty.getKey(),
-                                       new DigitalTwinStateProperty<>(physicalProperty.getKey(), physicalProperty.getInitialValue()));
+                               this.digitalTwinState.createProperty(new DigitalTwinStateProperty<>(physicalProperty.getKey(), physicalProperty.getInitialValue()));
 
                            for(PhysicalAction physicalAction : physicalAssetDescription.getActions())
                                this.digitalTwinState.enableAction(new DigitalTwinStateAction(physicalAction.getKey(),
@@ -166,35 +173,47 @@ public class AdaptersTester {
             @Override
             protected void onPhysicalEvent(PhysicalPropertyEventMessage<?> physicalPropertyEventMessage) {
 
-                logger.info("ShadowingModelFunction Physical Event Received: {}", physicalPropertyEventMessage);
+                try {
 
-                if(physicalPropertyEventMessage != null && getPhysicalEventsFilter().contains(physicalPropertyEventMessage.getType())){
+                    logger.info("ShadowingModelFunction Physical Event Received: {}", physicalPropertyEventMessage);
 
-                    //Check if it is a switch change
-                    if(PhysicalPropertyEventMessage.buildEventType(DummyPhysicalAdapter.SWITCH_PROPERTY_KEY).equals(physicalPropertyEventMessage.getType())
-                            && physicalPropertyEventMessage.getBody() instanceof String){
+                    if(physicalPropertyEventMessage != null && getPhysicalEventsFilter().contains(physicalPropertyEventMessage.getType())){
 
-                        logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalPropertyEventMessage.getType(), physicalPropertyEventMessage);
+                        //Check if it is a switch change
+                        if(PhysicalPropertyEventMessage.buildEventType(DummyPhysicalAdapter.SWITCH_PROPERTY_KEY).equals(physicalPropertyEventMessage.getType())
+                                && physicalPropertyEventMessage.getBody() instanceof String){
 
-                        if(actionLock != null)
-                            actionLock.countDown();
+                            logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalPropertyEventMessage.getType(), physicalPropertyEventMessage);
 
-                        if(receivedPhysicalSwitchEventMessageList != null)
-                            receivedPhysicalSwitchEventMessageList.add((PhysicalPropertyEventMessage<String>) physicalPropertyEventMessage);
+                            if(actionLock != null)
+                                actionLock.countDown();
+
+                            if(receivedPhysicalSwitchEventMessageList != null)
+                                receivedPhysicalSwitchEventMessageList.add((PhysicalPropertyEventMessage<String>) physicalPropertyEventMessage);
+                        }
+                        else{
+
+                            logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalPropertyEventMessage.getType(), physicalPropertyEventMessage);
+
+                            //Update Digital Twin Status
+                            this.digitalTwinState.updateProperty(
+                                    new DigitalTwinStateProperty<>(
+                                            physicalPropertyEventMessage.getPhysicalPropertyId(),
+                                            physicalPropertyEventMessage.getBody()));
+
+                            if(telemetryLock != null)
+                                telemetryLock.countDown();
+
+                            if(receivedPhysicalTelemetryEventMessageList != null)
+                                receivedPhysicalTelemetryEventMessageList.add((PhysicalPropertyEventMessage<Double>) physicalPropertyEventMessage);
+                        }
                     }
-                    else{
+                    else
+                        logger.error("WRONG Physical Event Message Received !");
 
-                        logger.info("CORRECT PhysicalEvent Received -> Type: {} Message: {}", physicalPropertyEventMessage.getType(), physicalPropertyEventMessage);
-
-                        if(telemetryLock != null)
-                            telemetryLock.countDown();
-
-                        if(receivedPhysicalTelemetryEventMessageList != null)
-                            receivedPhysicalTelemetryEventMessageList.add((PhysicalPropertyEventMessage<Double>) physicalPropertyEventMessage);
-                    }
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
-                else
-                    logger.error("WRONG Physical Event Message Received !");
             }
         };
     }
@@ -203,6 +222,10 @@ public class AdaptersTester {
     public void testPhysicalAdapterEvents() throws WldtConfigurationException, EventBusException, ModelException, ModelFunctionException, InterruptedException, WldtRuntimeException {
 
         receivedPhysicalTelemetryEventMessageList = new ArrayList<>();
+        receivedDigitalAdapterPropertyCreatedMessageList = new ArrayList<>();
+        receivedDigitalAdapterPropertyUpdateMessageList = new ArrayList<>();
+        receivedDigitalAdapterPropertyDeletedMessageList = new ArrayList<>();
+        receivedDigitalAdapterSyncDigitalTwinStateList = new ArrayList<>();
 
         telemetryLock = new CountDownLatch(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES);
 
@@ -219,6 +242,7 @@ public class AdaptersTester {
 
         assertNotNull(receivedPhysicalTelemetryEventMessageList);
         assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES, receivedPhysicalTelemetryEventMessageList.size());
+        assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES, receivedDigitalAdapterPropertyUpdateMessageList.size());
 
         Thread.sleep(2000);
 

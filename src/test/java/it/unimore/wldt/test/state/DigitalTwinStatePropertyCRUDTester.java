@@ -28,7 +28,7 @@ public class DigitalTwinStatePropertyCRUDTester {
         testProperty1.setReadable(true);
         testProperty1.setWritable(true);
 
-        digitalTwinState.createProperty(TEST_KEY_0001, testProperty1);
+        digitalTwinState.createProperty(testProperty1);
 
     }
 
@@ -64,7 +64,7 @@ public class DigitalTwinStatePropertyCRUDTester {
 
         DigitalTwinStateProperty<String> updatedProperty = new DigitalTwinStateProperty<String>(TEST_KEY_0001, TEST_VALUE_0001_UPDATED, true, true);
 
-        digitalTwinState.updateProperty(TEST_KEY_0001, updatedProperty);
+        digitalTwinState.updateProperty(updatedProperty);
 
         assertTrue(digitalTwinState.getPropertyList().isPresent());
         assertEquals(1, digitalTwinState.getPropertyList().get().size());

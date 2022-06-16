@@ -39,7 +39,7 @@ public class StateUpdateStateModelFunction extends StateModelFunction {
             DigitalTwinStateProperty<Object> newStateProperty = new DigitalTwinStateProperty<>(TEST_PROPERTY_KEY_0001, TEST_PROPERTY_VALUE_0001);
             newStateProperty.setReadable(true);
             newStateProperty.setWritable(true);
-            digitalTwinState.createProperty(TEST_PROPERTY_KEY_0001, newStateProperty);
+            digitalTwinState.createProperty(newStateProperty);
         }
     }
 

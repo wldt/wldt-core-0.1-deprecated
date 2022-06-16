@@ -45,7 +45,7 @@ public class DigitalTwinStatePropertyObserverTester {
         testProperty1.setReadable(true);
         testProperty1.setWritable(true);
 
-        digitalTwinState.createProperty(TEST_PROPERTY_KEY_0001, testProperty1);
+        digitalTwinState.createProperty(testProperty1);
     }
 
 
@@ -162,7 +162,7 @@ public class DigitalTwinStatePropertyObserverTester {
 
         //Update Property
         DigitalTwinStateProperty<String> updatedProperty = new DigitalTwinStateProperty<String>(TEST_PROPERTY_KEY_0001, TEST_PROPERTY_VALUE_0001_UPDATED, true, true);
-        digitalTwinState.updateProperty(TEST_PROPERTY_KEY_0001, updatedProperty);
+        digitalTwinState.updateProperty(updatedProperty);
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
@@ -286,7 +286,7 @@ public class DigitalTwinStatePropertyObserverTester {
 
         //Update Property
         DigitalTwinStateProperty<String> updatedProperty = new DigitalTwinStateProperty<String>(TEST_PROPERTY_KEY_0001, TEST_PROPERTY_VALUE_0001_UPDATED, true, true);
-        digitalTwinState.updateProperty(TEST_PROPERTY_KEY_0001, updatedProperty);
+        digitalTwinState.updateProperty(updatedProperty);
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 

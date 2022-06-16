@@ -10,6 +10,8 @@ import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
 import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
 import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
+import it.unimore.wldt.test.adapter.DummyDigitalAdapter;
+import it.unimore.wldt.test.adapter.DummyDigitalAdapterConfiguration;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapter;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapterConfiguration;
 import org.junit.FixMethodOrder;
@@ -128,8 +130,7 @@ public class ShadowingFunctionTester {
                             //Update Digital Twin State creating the new Property
                             if(!this.digitalTwinState.containsProperty(physicalPropertyKey)) {
 
-                                this.digitalTwinState.createProperty(physicalPropertyKey,
-                                        new DigitalTwinStateProperty<>(
+                                this.digitalTwinState.createProperty(new DigitalTwinStateProperty<>(
                                                 physicalPropertyKey,
                                                 physicalProperty.getInitialValue()));
 
@@ -176,8 +177,8 @@ public class ShadowingFunctionTester {
 
                         //Update DT State Property
                         this.digitalTwinState.updateProperty(
-                                physicalPropertyEventMessage.getPhysicalPropertyId(),
-                                new DigitalTwinStateProperty<Double>(physicalPropertyEventMessage.getPhysicalPropertyId(),
+                                new DigitalTwinStateProperty<Double>(
+                                        physicalPropertyEventMessage.getPhysicalPropertyId(),
                                         (Double) physicalPropertyEventMessage.getBody()));
 
                         if(!isShadowed){
@@ -212,9 +213,13 @@ public class ShadowingFunctionTester {
         //Create Physical Adapter
         DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), true);
 
+        //Create Digital Adapter
+        DummyDigitalAdapter dummyDigitalAdapter = new DummyDigitalAdapter("dummy-digital-adapter", new DummyDigitalAdapterConfiguration());
+
         //Init the Engine
         WldtEngine wldtEngine = new WldtEngine(getTargetShadowingFunction(), buildWldtConfiguration());
         wldtEngine.addPhysicalAdapter(dummyPhysicalAdapter);
+        wldtEngine.addDigitalAdapter(dummyDigitalAdapter);
         wldtEngine.startLifeCycle();
 
         //Wait until all the messages have been received
