@@ -184,12 +184,12 @@ public abstract class ShadowingModelFunction implements EventListener {
 
     protected void notifyShadowingSync(){
         if(getShadowingModelListener() != null)
-            getShadowingModelListener().onShadowingSync();
+            getShadowingModelListener().onShadowingSync(digitalTwinState);
     }
 
     protected void notifyShadowingOutOfSync(){
         if(getShadowingModelListener() != null)
-            getShadowingModelListener().onShadowingOutOfSync();
+            getShadowingModelListener().onShadowingOutOfSync(digitalTwinState);
     }
 
     @Override

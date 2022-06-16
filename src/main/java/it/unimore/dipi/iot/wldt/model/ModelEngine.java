@@ -114,58 +114,69 @@ public class ModelEngine extends WldtWorker implements LifeCycleListener {
 
     @Override
     public void onCreate() {
-        logger.debug("DT-LifeCycle: onCreate()");
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onCreate()");
     }
 
     @Override
     public void onStart() {
-        logger.debug("DT-LifeCycle: onCreate()");
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onCreate()");
     }
 
     @Override
     public void onPhysicalAdapterBound(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onPhysicalAdapterBound({})", adapterId);
     }
 
     @Override
     public void onPhysicalAdapterBindingUpdate(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
-        logger.debug("DT-LifeCycle: onPhysicalAdapterBindingUpdate()");
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onPhysicalAdapterBindingUpdate()");
         this.shadowingModelFunction.onPhysicalAdapterBidingUpdate(adapterId, physicalAssetDescription);
     }
 
     @Override
     public void onPhysicalAdapterUnBound(String adapterId, PhysicalAssetDescription physicalAssetDescription, String errorMessage) {
-        //logger.debug("DT-LifeCycle: onCreate()");
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onPhysicalAdapterBound({})", adapterId);
+    }
+
+    @Override
+    public void onDigitalAdapterBound(String adapterId) {
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onDigitalAdapterBound({})", adapterId);
+    }
+
+    @Override
+    public void onDigitalAdapterUnBound(String adapterId, String errorMessage) {
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onDigitalAdapterUnBound({})", adapterId);
     }
 
     @Override
     public void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
-        logger.debug("DT-LifeCycle: onDigitalTwinBound()");
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onDigitalTwinBound()");
         this.shadowingModelFunction.onDigitalTwinBound(adaptersPhysicalAssetDescriptionMap);
     }
 
     @Override
     public void onDigitalTwinUnBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap, String errorMessage) {
-        logger.debug("DT-LifeCycle: onDigitalTwinUnBound()");
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onDigitalTwinUnBound()");
         this.shadowingModelFunction.onDigitalTwinUnBound(adaptersPhysicalAssetDescriptionMap, errorMessage);
     }
 
     @Override
-    public void onSync() {
-        //logger.debug("DT-LifeCycle: onCreate()");
+    public void onSync(IDigitalTwinState digitalTwinState) {
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onSync() - DT State: {}", digitalTwinState);
     }
 
     @Override
-    public void onUnSync() {
-        //logger.debug("DT-LifeCycle: onCreate()");
+    public void onUnSync(IDigitalTwinState digitalTwinState) {
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onUnSync() - DT State: {}", digitalTwinState);
     }
 
     @Override
     public void onStop() {
-        logger.debug("DT-LifeCycle: onStop()");
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onStop()");
     }
 
     @Override
     public void onDestroy() {
-        logger.debug("DT-LifeCycle: onDestroy()");
+        logger.debug("ModelEngine-Listener-DT-LifeCycle: onDestroy()");
     }
 }

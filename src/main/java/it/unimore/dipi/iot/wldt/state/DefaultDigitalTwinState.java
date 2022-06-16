@@ -352,4 +352,12 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         }
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("DefaultDigitalTwinState{");
+        sb.append("properties=").append(properties);
+        sb.append(", actions=").append(actions);
+        sb.append('}');
+        return sb.toString();
+    }
 }

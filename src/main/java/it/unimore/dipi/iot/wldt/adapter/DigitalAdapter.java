@@ -1,10 +1,12 @@
 package it.unimore.dipi.iot.wldt.adapter;
 
+import it.unimore.dipi.iot.wldt.engine.LifeCycleListener;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.event.EventFilter;
 import it.unimore.dipi.iot.wldt.event.EventListener;
 import it.unimore.dipi.iot.wldt.event.EventMessage;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
+import it.unimore.dipi.iot.wldt.exception.PhysicalAdapterException;
 import it.unimore.dipi.iot.wldt.exception.WldtRuntimeException;
 import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
 import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
@@ -13,6 +15,7 @@ import it.unimore.dipi.iot.wldt.worker.WldtWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -20,7 +23,7 @@ import java.util.Objects;
  * Date: 27/03/2020
  * Project: White Label Digital Twin Java Framework - (whitelabel-digitaltwin)
  */
-public abstract class DigitalAdapter<C> extends WldtWorker implements EventListener {
+public abstract class DigitalAdapter<C> extends WldtWorker implements EventListener, LifeCycleListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DigitalAdapter.class);
 
@@ -32,11 +35,13 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
 
     private EventFilter statePropertyEventsFilter = null;
 
-    private boolean observeDigitalTwinState = false;
+    private boolean observeDigitalTwinState = true;
 
     protected IDigitalTwinState digitalTwinState = null;
 
-    private EventListener digitalTwinStateEventListener = new EventListener() {
+    private DigitalAdapterListener digitalAdapterListener;
+
+    private final EventListener digitalTwinStateEventListener = new EventListener() {
         @Override
         public void onEventSubscribed(String eventType) {
             //TODO Implement
@@ -66,6 +71,11 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
     };
 
     private DigitalAdapter(){}
+
+    public DigitalAdapter(String id, C configuration){
+        this.id = id;
+        this.configuration = configuration;
+    }
 
     public DigitalAdapter(String id, boolean observeDigitalTwinState){
         this.id = id;
@@ -161,6 +171,32 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
         EventBus.getInstance().unSubscribe(this.id, eventFilter, this);
     }
 
+    /**
+     * This method allows an implementation of a Digital Adapter to notify active listeners
+     * when there is an issue in the binding with the Digital Asset.
+     *
+     * @param errorMessage
+     */
+    protected void notifyDigitalAdapterUnBound(String errorMessage){
+        //Notify Listeners
+        if(getDigitalAdapterListener() != null)
+            getDigitalAdapterListener().onDigitalAdapterUnBound(getId(), errorMessage);
+    }
+
+    /**
+     * This method allows an implementation of a Digital Adapter to notify active listeners when
+     * the adapter is ready to work and correctly bound to the associated external digital services.
+     *
+     * @throws PhysicalAdapterException
+     * @throws EventBusException
+     */
+    protected void notifyPhysicalAdapterBound() throws PhysicalAdapterException, EventBusException {
+
+        //Notify Listeners
+        if(getDigitalAdapterListener() != null)
+            getDigitalAdapterListener().onDigitalAdapterBound(getId());
+    }
+
     public void init(IDigitalTwinState digitalTwinState){
         this.digitalTwinState = digitalTwinState;
     }
@@ -179,6 +215,10 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
 
     public abstract void onAdapterStop();
 
+    public abstract void onDigitalTwinSync(IDigitalTwinState digitalTwinState);
+
+    public abstract void onDigitalTwinUnSync(IDigitalTwinState digitalTwinState);
+
     @Override
     public void onWorkerStart() throws WldtRuntimeException {
         try{
@@ -191,6 +231,7 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
     @Override
     public void onWorkerStop() throws WldtRuntimeException {
         try{
+            unObserveDigitalTwinState();
             onAdapterStop();
         }catch (Exception e){
             throw new WldtRuntimeException(e.getLocalizedMessage());
@@ -211,6 +252,15 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
 
     public void setId(String id) {
         this.id = id;
+    }
+
+
+    public DigitalAdapterListener getDigitalAdapterListener() {
+        return digitalAdapterListener;
+    }
+
+    public void setDigitalAdapterListener(DigitalAdapterListener digitalAdapterListener) {
+        this.digitalAdapterListener = digitalAdapterListener;
     }
 
     @Override
@@ -239,7 +289,7 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
     @Override
     public void onEvent(EventMessage<?> eventMessage) {
         if(eventMessage != null && eventMessage.getBody() != null && (eventMessage.getBody() instanceof DigitalTwinStateProperty)){
-            DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) eventMessage.getBody();
+            DigitalTwinStateProperty<?> digitalTwinStateProperty = (DigitalTwinStateProperty<?>) eventMessage.getBody();
             if(eventMessage.getType().equals(digitalTwinState.getPropertyCreatedEventMessageType(digitalTwinStateProperty.getKey())))
                 onStateChangePropertyCreated(digitalTwinStateProperty);
             else if(eventMessage.getType().equals(digitalTwinState.getPropertyUpdatedEventMessageType(digitalTwinStateProperty.getKey())))
@@ -247,7 +297,81 @@ public abstract class DigitalAdapter<C> extends WldtWorker implements EventListe
             else if(eventMessage.getType().equals(digitalTwinState.getPropertyDeletedEventMessageType(digitalTwinStateProperty.getKey())))
                 onStatePropertyDeleted(digitalTwinStateProperty);
             else
-                logger.error(String.format("ModelFunction(%s) -> observeDigitalTwinProperties: Error received type %s that is not matching", id, eventMessage.getType()));
+                logger.error(String.format("Digital Adapter (%s) -> observeDigitalTwinProperties: Error received type %s that is not matching", id, eventMessage.getType()));
         }
+    }
+
+    @Override
+    public void onSync(IDigitalTwinState digitalTwinState) {
+        logger.info("Digital Adapter ({}) Received DT onSync callback ! Ready to start ...", this.id);
+        onDigitalTwinSync(digitalTwinState);
+
+        try{
+            if(observeDigitalTwinState)
+                observeDigitalTwinState();
+        }catch (Exception e){
+            logger.error(String.format("Digital Adapter (%s) -> observe DigitalTwin State: Error: %s", id, e.getLocalizedMessage()));
+        }
+    }
+
+    @Override
+    public void onUnSync(IDigitalTwinState digitalTwinState) {
+        logger.debug("Digital Adapter ({}) Received DT unSync callback ...", this.id);
+        onDigitalTwinUnSync(digitalTwinState);
+    }
+
+    @Override
+    public void onCreate() {
+
+    }
+
+    @Override
+    public void onStart() {
+
+    }
+
+    @Override
+    public void onPhysicalAdapterBound(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
+
+    }
+
+    @Override
+    public void onPhysicalAdapterBindingUpdate(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
+
+    }
+
+    @Override
+    public void onPhysicalAdapterUnBound(String adapterId, PhysicalAssetDescription physicalAssetDescription, String errorMessage) {
+
+    }
+
+    @Override
+    public void onDigitalAdapterBound(String adapterId) {
+
+    }
+
+    @Override
+    public void onDigitalAdapterUnBound(String adapterId, String errorMessage) {
+
+    }
+
+    @Override
+    public void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
+
+    }
+
+    @Override
+    public void onDigitalTwinUnBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap, String errorMessage) {
+
+    }
+
+    @Override
+    public void onStop() {
+
+    }
+
+    @Override
+    public void onDestroy() {
+
     }
 }

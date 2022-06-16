@@ -9,6 +9,7 @@ import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.event.PhysicalPropertyEventMessage;
 import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
+import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapter;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapterConfiguration;
 import org.junit.FixMethodOrder;
@@ -137,7 +138,7 @@ public class LifeCycleTester {
                     if(!isShadowed){
                         isShadowed = true;
                         if(getShadowingModelListener() != null)
-                            getShadowingModelListener().onShadowingSync();
+                            notifyShadowingSync();
                         else
                             logger.error("ERROR ShadowingListener = NULL !");
                     }
@@ -165,7 +166,7 @@ public class LifeCycleTester {
 
             @Override
             public void onPhysicalAdapterBound(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
-                logger.debug("LifeCycleListener - onAdapterBound({})", adapterId);
+                logger.debug("LifeCycleListener - onPhysicalAdapterBound({})", adapterId);
             }
 
             @Override
@@ -179,6 +180,16 @@ public class LifeCycleTester {
             }
 
             @Override
+            public void onDigitalAdapterBound(String adapterId) {
+                logger.debug("LifeCycleListener - onDigitalAdapterBound({})", adapterId);
+            }
+
+            @Override
+            public void onDigitalAdapterUnBound(String adapterId, String errorMessage) {
+                logger.debug("LifeCycleListener - onDigitalAdapterUnBound({}) Error: {}", adapterId, errorMessage);
+            }
+
+            @Override
             public void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
                 logger.debug("LifeCycleListener - onBound()");
             }
@@ -189,13 +200,13 @@ public class LifeCycleTester {
             }
 
             @Override
-            public void onSync() {
-                logger.debug("LifeCycleListener - onSync()");
+            public void onSync(IDigitalTwinState digitalTwinState) {
+                logger.debug("LifeCycleListener - onSync() - DT State: {}", digitalTwinState);
             }
 
             @Override
-            public void onUnSync() {
-                logger.debug("LifeCycleListener - onUnSync()");
+            public void onUnSync(IDigitalTwinState digitalTwinState) {
+                logger.debug("LifeCycleListener - onUnSync() - DT State: {}", digitalTwinState);
             }
 
             @Override

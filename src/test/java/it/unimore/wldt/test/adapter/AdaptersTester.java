@@ -1,11 +1,15 @@
 package it.unimore.wldt.test.adapter;
 
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAction;
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalProperty;
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
 import it.unimore.dipi.iot.wldt.event.*;
 import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
+import it.unimore.dipi.iot.wldt.state.DigitalTwinStateAction;
+import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -19,9 +23,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class PhysicalAdapterTester {
+public class AdaptersTester {
 
-    private static final Logger logger = LoggerFactory.getLogger(PhysicalAdapterTester.class);
+    private static final Logger logger = LoggerFactory.getLogger(AdaptersTester.class);
 
     private static CountDownLatch telemetryLock = null;
 
@@ -30,6 +34,12 @@ public class PhysicalAdapterTester {
     private static List<PhysicalPropertyEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
 
     private static List<PhysicalPropertyEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
+
+    private static List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyCreatedMessageList = null;
+
+    private static List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyUpdateMessageList = null;
+
+    private static List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyDeletedMessageList = null;
 
     private WldtConfiguration buildWldtConfiguration() throws WldtConfigurationException, ModelException {
 
@@ -46,6 +56,22 @@ public class PhysicalAdapterTester {
         wldtConfiguration.setGraphiteReporterPort(2003);
 
         return wldtConfiguration;
+    }
+
+    private WldtEngine buildWldtEngine(boolean physicalTelemetryOn) throws WldtConfigurationException, ModelException, WldtRuntimeException, EventBusException {
+
+        //Create Physical Adapter
+        DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), physicalTelemetryOn);
+
+        //Create Digital Adapter
+        DummyDigitalAdapter dummyDigitalAdapter = new DummyDigitalAdapter("dummy-physical-adapter", new DummyDigitalAdapterConfiguration());
+
+        //Init the Engine
+        WldtEngine wldtEngine = new WldtEngine(getTargetShadowingFunction(), buildWldtConfiguration());
+        wldtEngine.addPhysicalAdapter(dummyPhysicalAdapter);
+        wldtEngine.addDigitalAdapter(dummyDigitalAdapter);
+
+        return wldtEngine;
     }
 
 
@@ -72,26 +98,59 @@ public class PhysicalAdapterTester {
 
             @Override
             protected void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
-                logger.debug("DigitalTwin - LifeCycleListener - onDigitalTwinBound()");
 
-                for(Map.Entry<String, PhysicalAssetDescription> entry : adaptersPhysicalAssetDescriptionMap.entrySet()){
+               try{
 
-                    String adapterId = entry.getKey();
-                    PhysicalAssetDescription physicalAssetDescription = entry.getValue();
+                   logger.debug("ShadowingModelFunction - DigitalTwin - LifeCycleListener - onDigitalTwinBound()");
 
-                    logger.info("Adapter ({}) Physical Asset Description: {}", adapterId, physicalAssetDescription);
+                   //Handle Shadowing & Update Digital Twin State
+                   if(!isShadowed){
 
-                    try{
-                        if(physicalAssetDescription != null && physicalAssetDescription.getProperties() != null && physicalAssetDescription.getProperties().size() > 0){
-                            logger.info("Observing Physical Asset Properties: {}", physicalAssetDescription.getProperties());
-                            this.observePhysicalProperties(physicalAssetDescription.getProperties());
-                        }
-                        else
-                            logger.info("Empty property list on adapter {}. Nothing to observe !", adapterId);
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
-                }
+                       isShadowed = true;
+
+                       for(Map.Entry<String, PhysicalAssetDescription> entry : adaptersPhysicalAssetDescriptionMap.entrySet()){
+
+                           String adapterId = entry.getKey();
+                           PhysicalAssetDescription physicalAssetDescription = entry.getValue();
+
+                           //In that simple case the Digital Twin shadow all the properties and actions available in the physical asset
+                           for(PhysicalProperty<?> physicalProperty : physicalAssetDescription.getProperties())
+                               this.digitalTwinState.createProperty(physicalProperty.getKey(),
+                                       new DigitalTwinStateProperty<>(physicalProperty.getKey(), physicalProperty.getInitialValue()));
+
+                           for(PhysicalAction physicalAction : physicalAssetDescription.getActions())
+                               this.digitalTwinState.enableAction(new DigitalTwinStateAction(physicalAction.getKey(),
+                                       physicalAction.getType(),
+                                       physicalAction.getContentType()));
+                       }
+
+                       //Notify Shadowing Completed
+                       notifyShadowingSync();
+                   }
+
+                   //Observer Target Physical Properties
+                   for(Map.Entry<String, PhysicalAssetDescription> entry : adaptersPhysicalAssetDescriptionMap.entrySet()){
+
+                       String adapterId = entry.getKey();
+                       PhysicalAssetDescription physicalAssetDescription = entry.getValue();
+
+                       logger.info("ShadowingModelFunction - Adapter ({}) Physical Asset Description: {}", adapterId, physicalAssetDescription);
+
+                       try{
+                           if(physicalAssetDescription != null && physicalAssetDescription.getProperties() != null && physicalAssetDescription.getProperties().size() > 0){
+                               logger.info("ShadowingModelFunction - Observing Physical Asset Properties: {}", physicalAssetDescription.getProperties());
+                               this.observePhysicalProperties(physicalAssetDescription.getProperties());
+                           }
+                           else
+                               logger.info("ShadowingModelFunction - Empty property list on adapter {}. Nothing to observe !", adapterId);
+                       }catch (Exception e){
+                           e.printStackTrace();
+                       }
+                   }
+
+               }catch (Exception e){
+                   e.printStackTrace();
+               }
             }
 
             @Override
@@ -109,13 +168,7 @@ public class PhysicalAdapterTester {
 
                 logger.info("ShadowingModelFunction Physical Event Received: {}", physicalPropertyEventMessage);
 
-                if(physicalPropertyEventMessage != null
-                        && getPhysicalEventsFilter().contains(physicalPropertyEventMessage.getType())){
-
-                    if(!isShadowed){
-                        isShadowed = true;
-                        notifyShadowingSync();
-                    }
+                if(physicalPropertyEventMessage != null && getPhysicalEventsFilter().contains(physicalPropertyEventMessage.getType())){
 
                     //Check if it is a switch change
                     if(PhysicalPropertyEventMessage.buildEventType(DummyPhysicalAdapter.SWITCH_PROPERTY_KEY).equals(physicalPropertyEventMessage.getType())
@@ -156,13 +209,7 @@ public class PhysicalAdapterTester {
         //Set EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
-        //Create Physical Adapter
-        DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), true);
-
-        //Init the Engine
-        WldtEngine wldtEngine = new WldtEngine(getTargetShadowingFunction(), buildWldtConfiguration());
-
-        wldtEngine.addPhysicalAdapter(dummyPhysicalAdapter);
+        WldtEngine wldtEngine = buildWldtEngine(true);
         wldtEngine.startLifeCycle();
 
         //Wait until all the messages have been received
@@ -189,13 +236,7 @@ public class PhysicalAdapterTester {
         //Set EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
-        //Create Physical Adapter disabling the telemetry since we would like only to test actions and the associated swith events generation
-        DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), false);
-
-        //Init the Engine
-        WldtEngine wldtEngine = new WldtEngine(getTargetShadowingFunction(), buildWldtConfiguration());
-
-        wldtEngine.addPhysicalAdapter(dummyPhysicalAdapter);
+        WldtEngine wldtEngine = buildWldtEngine(false);
         wldtEngine.startLifeCycle();
 
         logger.info("WLDT Started ! Sleeping (5s) before sending actions ...");

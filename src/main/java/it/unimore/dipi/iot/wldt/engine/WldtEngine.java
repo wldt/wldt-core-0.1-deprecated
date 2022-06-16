@@ -1,8 +1,6 @@
 package it.unimore.dipi.iot.wldt.engine;
 
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapter;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAdapterListener;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
+import it.unimore.dipi.iot.wldt.adapter.*;
 import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
 import it.unimore.dipi.iot.wldt.event.EventBus;
 import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
@@ -25,11 +23,13 @@ import java.util.concurrent.Executors;
  * Date: 24/03/2020
  * Project: White Label Digital Twin Java Framework - (whitelabel-digitaltwin)
  */
-public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListener {
+public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListener, DigitalAdapterListener {
 
     private static final Logger logger = LoggerFactory.getLogger(WldtEngine.class);
 
     private static final int PHYSICAL_ADAPTERS_THREAD_POOL_SIZE_LIMIT = 5;
+
+    private static final int DIGITAL_ADAPTERS_THREAD_POOL_SIZE_LIMIT = 5;
 
     private static final String TAG = "[WLDT-Engine]";
 
@@ -41,11 +41,23 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
 
     private ExecutorService physicalAdapterExecutor = null;
 
+    private ExecutorService digitalAdapterExecutor = null;
+
     private List<PhysicalAdapter<?>> physicalAdapterList = null;
+
+    private List<DigitalAdapter<?>> digitalAdapterList = null;
 
     private Map<String, PhysicalAssetDescription> physicalAdaptersPhysicalAssetDescriptionMap;
 
-    private Map<String, Boolean> physicalAdapterBoundStatusMap = null;
+    /**
+     * Data Structure to keep track of the binding status of Physical Adapters
+     */
+    private Map<String, Boolean> physicalAdaptersBoundStatusMap = null;
+
+    /**
+     * Data Structure to keep track of the binding status of Digital Adapters
+     */
+    private Map<String, Boolean> digitalAdaptersBoundStatusMap = null;
 
     private WldtConfiguration wldtConfiguration;
 
@@ -79,7 +91,8 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
 
         //Init Life Cycle Listeners & Status Map
         this.lifeCycleListenerList = new ArrayList<>();
-        this.physicalAdapterBoundStatusMap = new HashMap<>();
+        this.physicalAdaptersBoundStatusMap = new HashMap<>();
+        this.digitalAdaptersBoundStatusMap = new HashMap<>();
 
         //Initialize the Digital Twin State
         this.digitalTwinState = new DefaultDigitalTwinState();
@@ -87,8 +100,9 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
         //Setup EventBus Logger
         EventBus.getInstance().setEventLogger(new DefaultEventLogger());
 
-        //Create List of Physical Adapter
+        //Create List of Physical and Digistal Adapters
         this.physicalAdapterList = new ArrayList<>();
+        this.digitalAdapterList = new ArrayList<>();
 
         //Create a Map to hold the last PhysicalAssetDescription for each active adapter
         this.physicalAdaptersPhysicalAssetDescriptionMap = new HashMap<>();
@@ -146,29 +160,39 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
             listener.onDigitalTwinUnBound(this.physicalAdaptersPhysicalAssetDescriptionMap, errorMessage);
     }
 
-    private void notifyLifeCycleOnAdapterBound(String adapterId, PhysicalAssetDescription physicalAssetDescription){
+    private void notifyLifeCycleOnPhysicalAdapterBound(String adapterId, PhysicalAssetDescription physicalAssetDescription){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
             listener.onPhysicalAdapterBound(adapterId, physicalAssetDescription);
     }
 
-    private void notifyLifeCycleOnAdapterBindingUpdate(String adapterId, PhysicalAssetDescription physicalAssetDescription){
+    private void notifyLifeCycleOnPhysicalAdapterBindingUpdate(String adapterId, PhysicalAssetDescription physicalAssetDescription){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
             listener.onPhysicalAdapterBindingUpdate(adapterId, physicalAssetDescription);
     }
 
-    private void notifyLifeCycleOnAdapterUnBound(String adapterId, PhysicalAssetDescription physicalAssetDescription, String errorMessage){
+    private void notifyLifeCycleOnPhysicalAdapterUnBound(String adapterId, PhysicalAssetDescription physicalAssetDescription, String errorMessage){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
             listener.onPhysicalAdapterUnBound(adapterId, physicalAssetDescription, errorMessage);
     }
 
-    private void notifyLifeCycleOnSync(){
+    private void notifyLifeCycleOnDigitalAdapterBound(String adapterId){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
-            listener.onSync();
+            listener.onDigitalAdapterBound(adapterId);
     }
 
-    private void notifyLifeCycleOnUnSync(){
+    private void notifyLifeCycleOnDigitalAdapterUnBound(String adapterId, String errorMessage){
         for(LifeCycleListener listener : this.lifeCycleListenerList)
-            listener.onUnSync();
+            listener.onDigitalAdapterUnBound(adapterId, errorMessage);
+    }
+
+    private void notifyLifeCycleOnSync(IDigitalTwinState digitalTwinState){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onSync(digitalTwinState);
+    }
+
+    private void notifyLifeCycleOnUnSync(IDigitalTwinState digitalTwinState){
+        for(LifeCycleListener listener : this.lifeCycleListenerList)
+            listener.onUnSync(digitalTwinState);
     }
 
     private void notifyLifeCycleOnStop(){
@@ -199,6 +223,14 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
 
     }
 
+    /**
+     * Add a new Physical Adapter to the WLDT Engine in order to be executed through a dedicated Thread.
+     * The method validates the request checking if the adapter is already in the list and if there is enough
+     * thread to handle it within the thread pool
+     *
+     * @param physicalAdapter
+     * @throws WldtConfigurationException
+     */
     public void addPhysicalAdapter(PhysicalAdapter<?> physicalAdapter) throws WldtConfigurationException {
 
         if(physicalAdapter != null
@@ -209,14 +241,19 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
             this.physicalAdapterList.add(physicalAdapter);
 
             //Save BoundStatus to False. It will be changed through a call back by the adapter
-            this.physicalAdapterBoundStatusMap.put(physicalAdapter.getId(), false);
+            this.physicalAdaptersBoundStatusMap.put(physicalAdapter.getId(), false);
 
-            logger.debug("{} New PhysicalAdapter ({}) Added to the Worker List ! Worker List Size: {}", TAG, physicalAdapter.getClass().getName(), this.physicalAdapterList.size());
+            logger.debug("{} New PhysicalAdapter ({}) Added to the Worker List ! Physical Adapters - Worker List Size: {}", TAG, physicalAdapter.getClass().getName(), this.physicalAdapterList.size());
         }
         else
             throw new WldtConfigurationException("Invalid PhysicalAdapter, Already added or List Limit Reached !");
     }
 
+    /**
+     * Clear the list of configured Physical Adapters
+     *
+     * @throws WldtConfigurationException
+     */
     public void clearPhysicalAdapterList() throws WldtConfigurationException{
         if(this.physicalAdapterList != null){
             this.physicalAdapterList.clear();
@@ -225,10 +262,60 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
             throw new WldtConfigurationException("Error Cleaning Physical Adapters ! List is Null !");
     }
 
+    /**
+     * Add a new Digital Adapter to the WLDT Engine in order to be executed through a dedicated Thread.
+     * The method validates the request checking if the adapter is already in the list and if there is enough
+     * thread to handle it within the thread pool
+     *
+     * @param digitalAdapter
+     * @throws WldtConfigurationException
+     */
+    public void addDigitalAdapter(DigitalAdapter<?> digitalAdapter) throws WldtConfigurationException {
+
+        if(digitalAdapter != null
+                && this.digitalAdapterList != null
+                && !this.digitalAdapterList.contains(digitalAdapter)
+                && this.digitalAdapterList.size() < DIGITAL_ADAPTERS_THREAD_POOL_SIZE_LIMIT) {
+
+            digitalAdapter.setDigitalAdapterListener(this);
+            this.digitalAdapterList.add(digitalAdapter);
+
+            //Save BoundStatus to False. It will be changed through a call back by the adapter
+            this.digitalAdaptersBoundStatusMap.put(digitalAdapter.getId(), false);
+
+            //Save the Model Engine as Digital Twin Life Cycle Listener
+            addLifeCycleListener(digitalAdapter);
+
+            logger.debug("{} New DigitalAdapter ({}) Added to the Worker List ! Digital Adapters - Worker List Size: {}", TAG, digitalAdapter.getClass().getName(), this.physicalAdapterList.size());
+        }
+        else
+            throw new WldtConfigurationException("Invalid PhysicalAdapter, Already added or List Limit Reached !");
+    }
+
+    /**
+     * Clear the list of configured Digital Adapters
+     *
+     * @throws WldtConfigurationException
+     */
+    public void clearDigitalAdapterList() throws WldtConfigurationException{
+        if(this.digitalAdapterList != null){
+
+            for(DigitalAdapter<?> digitalAdapter : this.digitalAdapterList)
+                removeLifeCycleListener(digitalAdapter);
+
+            this.digitalAdapterList.clear();
+        }
+        else
+            throw new WldtConfigurationException("Error Cleaning Physical Adapters ! List is Null !");
+    }
+
     public void startLifeCycle() throws WldtConfigurationException {
 
-        if(this.physicalAdapterList == null || this.physicalAdapterList.isEmpty())
-            throw new WldtConfigurationException("Empty PhysicalAdapter List !");
+        //In order to start its LifeCycle the Digital Twin need at least one Physical and one Digital Adapter in order
+        //to properly bridge the physical and the digital world
+        //TODO Check -> Does it make sense to force to have at least one Digital Adapter in order to start the Life Cycle ?
+        if(this.physicalAdapterList == null || this.physicalAdapterList.isEmpty() || this.digitalAdapterList == null || this.digitalAdapterList.isEmpty())
+            throw new WldtConfigurationException("Empty PhysicalAdapter o DigitalAdapter List !");
 
         notifyLifeCycleOnCreate();
 
@@ -240,12 +327,20 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
             physicalAdapterExecutor.execute(physicalAdapter);
         });
 
-        //When all PhysicalAdapters have been started the DT moves to the Start State
+        //Init DigitalAdapter Executor
+        digitalAdapterExecutor = Executors.newFixedThreadPool(digitalAdapterList.size());
+
+        this.digitalAdapterList.forEach(digitalAdapter -> {
+            logger.info("Executing DigitalAdapter: {}", digitalAdapter.getClass());
+            digitalAdapterExecutor.execute(digitalAdapter);
+        });
+
+        //When all Physical and Digital Adapters have been started the DT moves to the Start State
         notifyLifeCycleOnStart();
 
         physicalAdapterExecutor.shutdown();
 
-        while (!physicalAdapterExecutor.isTerminated()) {}
+        while (!physicalAdapterExecutor.isTerminated() && ! digitalAdapterExecutor.isTerminated()) {}
 
     }
 
@@ -263,6 +358,12 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
             this.physicalAdapterExecutor = null;
             for(PhysicalAdapter<?> physicalAdapter : this.physicalAdapterList)
                 physicalAdapter.onWorkerStop();
+
+            //Stop and Notify Digital Adapters
+            this.digitalAdapterExecutor.shutdownNow();
+            this.digitalAdapterExecutor = null;
+            for(DigitalAdapter<?> digitalAdapter : this.digitalAdapterList)
+                digitalAdapter.onWorkerStop();
 
             notifyLifeCycleOnStop();
             notifyLifeCycleOnDestroy();
@@ -298,20 +399,20 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
      * @return
      */
     private boolean isDtBound(){
-        for(boolean status : this.physicalAdapterBoundStatusMap.values())
+        for(boolean status : this.physicalAdaptersBoundStatusMap.values())
             if(!status)
                 return false;
         return true;
     }
 
     @Override
-    public void onShadowingSync() {
-        notifyLifeCycleOnSync();
+    public void onShadowingSync(IDigitalTwinState digitalTwinState) {
+        notifyLifeCycleOnSync(digitalTwinState);
     }
 
     @Override
-    public void onShadowingOutOfSync() {
-        notifyLifeCycleOnUnSync();
+    public void onShadowingOutOfSync(IDigitalTwinState digitalTwinState) {
+        notifyLifeCycleOnUnSync(digitalTwinState);
     }
 
     @Override
@@ -320,12 +421,12 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
         logger.info("PhysicalAdapter {} BOUND !", adapterId);
 
         //Store the information that the adapter is correctly bound
-        this.physicalAdapterBoundStatusMap.put(adapterId, true);
+        this.physicalAdaptersBoundStatusMap.put(adapterId, true);
 
         //Save the last Physical Asset Description from the adapter
         this.physicalAdaptersPhysicalAssetDescriptionMap.put(adapterId, physicalAssetDescription);
 
-        notifyLifeCycleOnAdapterBound(adapterId, physicalAssetDescription);
+        notifyLifeCycleOnPhysicalAdapterBound(adapterId, physicalAssetDescription);
 
         if(isDtBound()) {
             logger.info("Digital Twin BOUND !");
@@ -336,32 +437,59 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
     @Override
     public void onPhysicalBindingUpdate(String adapterId, PhysicalAssetDescription physicalAssetDescription) {
 
+        logger.info("PhysicalAdapter {} Binding Update ! New PA-Descriptor: {}", adapterId, physicalAssetDescription);
+
         //Update the last Physical Asset Description from the adapter
         this.physicalAdaptersPhysicalAssetDescriptionMap.put(adapterId, physicalAssetDescription);
 
         //Notify Biding Change
-        notifyLifeCycleOnAdapterBindingUpdate(adapterId, physicalAssetDescription);
+        notifyLifeCycleOnPhysicalAdapterBindingUpdate(adapterId, physicalAssetDescription);
     }
 
     @Override
     public void onPhysicalAdapterUnBound(String adapterId, PhysicalAssetDescription physicalAssetDescription, String errorMessage) {
 
         //Set the current adapter to unbound
-        logger.info("PhysicalAdapter {} UN-BOUND ! Reason: {}", adapterId, errorMessage);
+        logger.info("PhysicalAdapter {} UN-BOUND ! Error: {}", adapterId, errorMessage);
 
         //Store the information that the adapter is UnBound
-        this.physicalAdapterBoundStatusMap.put(adapterId, false);
+        this.physicalAdaptersBoundStatusMap.put(adapterId, false);
 
         //Retrieve the last physical asset description of the associated physical asset
         PhysicalAssetDescription currentPhysicalAssetDescription = this.physicalAdaptersPhysicalAssetDescriptionMap.get(adapterId);
 
         //Notify the adapter unbound status
-        notifyLifeCycleOnAdapterUnBound(adapterId, currentPhysicalAssetDescription, errorMessage);
+        notifyLifeCycleOnPhysicalAdapterUnBound(adapterId, currentPhysicalAssetDescription, errorMessage);
 
         //Check if the DT is still bound
         if(!isDtBound()) {
             logger.info("Digital Twin UN-BOUND !");
             notifyLifeCycleOnUnBound(String.format("Adapter %s UnBound - Error ?: %b", adapterId, errorMessage));
         }
+    }
+
+    @Override
+    public void onDigitalAdapterBound(String adapterId) {
+
+        logger.info("DigitalAdapter {} BOUND !", adapterId);
+
+        //Store the information that the adapter is correctly bound
+        this.digitalAdaptersBoundStatusMap.put(adapterId, true);
+
+        //Notify the adapter bound status
+        notifyLifeCycleOnDigitalAdapterBound(adapterId);
+    }
+
+    @Override
+    public void onDigitalAdapterUnBound(String adapterId, String errorMessage) {
+
+        //Set the current adapter to unbound
+        logger.info("DigitalAdapter {} UN-BOUND ! Error: {}", adapterId, errorMessage);
+
+        //Store the information that the adapter is UnBound
+        this.digitalAdaptersBoundStatusMap.put(adapterId, false);
+
+        //Notify the adapter unbound status
+        notifyLifeCycleOnDigitalAdapterUnBound(adapterId, errorMessage);
     }
 }
