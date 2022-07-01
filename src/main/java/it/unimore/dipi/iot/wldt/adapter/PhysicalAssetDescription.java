@@ -8,6 +8,8 @@ public class PhysicalAssetDescription {
 
     private List<PhysicalProperty<?>> properties;
 
+    //TODO Add Physical Event
+
     public PhysicalAssetDescription() {
     }
 
