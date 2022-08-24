@@ -1,8 +1,8 @@
 package it.unimore.dipi.iot.wldt.engine;
 
 import it.unimore.dipi.iot.wldt.adapter.*;
-import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
-import it.unimore.dipi.iot.wldt.event.EventBus;
+import it.unimore.dipi.iot.wldt.event.DefaultWldtEventLogger;
+import it.unimore.dipi.iot.wldt.event.WldtEventBus;
 import it.unimore.dipi.iot.wldt.metrics.MetricsReporterIdentifier;
 import it.unimore.dipi.iot.wldt.metrics.WldtMetricsManager;
 import it.unimore.dipi.iot.wldt.exception.*;
@@ -98,7 +98,7 @@ public class WldtEngine implements ShadowingModelListener, PhysicalAdapterListen
         this.digitalTwinState = new DefaultDigitalTwinState();
 
         //Setup EventBus Logger
-        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+        WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
 
         //Create List of Physical and Digistal Adapters
         this.physicalAdapterList = new ArrayList<>();

@@ -1,27 +1,28 @@
-package it.unimore.dipi.iot.wldt.event;
+package it.unimore.dipi.iot.wldt.event.physical;
 
+import it.unimore.dipi.iot.wldt.event.WldtEvent;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import java.util.Map;
 
-public class PhysicalPropertyEventMessage<T> extends EventMessage <T>{
+public class PhysicalAssetPropertyWldtEvent<T> extends WldtEvent<T> {
 
     public static final String PHYSICAL_EVENT_BASIC_TYPE = "dt.physical.event.property";
 
     private String physicalPropertyId;
 
-    public PhysicalPropertyEventMessage(String physicalPropertyId) throws EventBusException {
+    public PhysicalAssetPropertyWldtEvent(String physicalPropertyId) throws EventBusException {
         super(physicalPropertyId);
         adaptEventType();
         this.physicalPropertyId = physicalPropertyId;
     }
 
-    public PhysicalPropertyEventMessage(String physicalPropertyId, T body) throws EventBusException {
+    public PhysicalAssetPropertyWldtEvent(String physicalPropertyId, T body) throws EventBusException {
         super(physicalPropertyId, body);
         adaptEventType();
         this.physicalPropertyId = physicalPropertyId;
     }
 
-    public PhysicalPropertyEventMessage(String physicalPropertyId, T body, Map<String, Object> metadata) throws EventBusException {
+    public PhysicalAssetPropertyWldtEvent(String physicalPropertyId, T body, Map<String, Object> metadata) throws EventBusException {
         super(physicalPropertyId, body, metadata);
         adaptEventType();
         this.physicalPropertyId = physicalPropertyId;

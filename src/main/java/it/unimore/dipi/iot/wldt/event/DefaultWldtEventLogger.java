@@ -3,22 +3,22 @@ package it.unimore.dipi.iot.wldt.event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultEventLogger implements IEventLogger{
+public class DefaultWldtEventLogger implements IWldtEventLogger {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultEventLogger.class);
+    private static final Logger logger = LoggerFactory.getLogger(DefaultWldtEventLogger.class);
 
     @Override
-    public void logEventPublished(String publisherId, EventMessage<?> eventMessage) {
-        if(eventMessage != null)
-            logger.info("PUBLISHER [{}] -> PUBLISHED EVENT TYPE: {} Message: {}", publisherId, eventMessage.getType(), eventMessage);
+    public void logEventPublished(String publisherId, WldtEvent<?> wldtEvent) {
+        if(wldtEvent != null)
+            logger.info("PUBLISHER [{}] -> PUBLISHED EVENT TYPE: {} Message: {}", publisherId, wldtEvent.getType(), wldtEvent);
         else
             logger.error("PUBLISHER [{}] -> NULL MESSAGE !", publisherId);
     }
 
     @Override
-    public void logEventForwarded(String publisherId, String subscriberId, EventMessage<?> eventMessage) {
-        if(eventMessage != null)
-            logger.info("EVENT-BUS -> FORWARDED from PUBLISHER [{}] to SUBSCRIBER [{}] -> TOPIC: {} Message: {}", publisherId, subscriberId, eventMessage.getType(), eventMessage);
+    public void logEventForwarded(String publisherId, String subscriberId, WldtEvent<?> wldtEvent) {
+        if(wldtEvent != null)
+            logger.info("EVENT-BUS -> FORWARDED from PUBLISHER [{}] to SUBSCRIBER [{}] -> TOPIC: {} Message: {}", publisherId, subscriberId, wldtEvent.getType(), wldtEvent);
         else
             logger.error("EVENT-BUS FORWARDING from PUBLISHER [{}] to SUBSCRIBER [{}] -> NULL MESSAGE ! ", publisherId, subscriberId);
     }

@@ -1,9 +1,9 @@
 package it.unimore.dipi.iot.wldt.model;
 
-import it.unimore.dipi.iot.wldt.event.EventBus;
-import it.unimore.dipi.iot.wldt.event.EventFilter;
-import it.unimore.dipi.iot.wldt.event.EventListener;
-import it.unimore.dipi.iot.wldt.event.EventMessage;
+import it.unimore.dipi.iot.wldt.event.WldtEventBus;
+import it.unimore.dipi.iot.wldt.event.WldtEventFilter;
+import it.unimore.dipi.iot.wldt.event.WldtEventListener;
+import it.unimore.dipi.iot.wldt.event.WldtEvent;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
 import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Author: Marco Picone, Ph.D. (marco.picone@unimore.it)
@@ -25,8 +24,8 @@ public abstract class StateModelFunction {
 
     private String id = null;
 
-    private EventFilter stateEventFilter = null;
-    private EventFilter statePropertyEventsFilter = null;
+    private WldtEventFilter stateWldtEventFilter = null;
+    private WldtEventFilter statePropertyEventsFilter = null;
 
     protected IDigitalTwinState digitalTwinState = null;
 
@@ -39,15 +38,15 @@ public abstract class StateModelFunction {
     protected void observeDigitalTwinState() throws EventBusException {
 
         //Define EventFilter and add the target topic
-        EventFilter eventFilter = new EventFilter();
-        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED);
-        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED);
-        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED);
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED);
+        wldtEventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED);
+        wldtEventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED);
 
         //Save the adopted EventFilter
-        this.stateEventFilter = eventFilter;
+        this.stateWldtEventFilter = wldtEventFilter;
 
-        EventBus.getInstance().subscribe(this.id, eventFilter, new EventListener() {
+        WldtEventBus.getInstance().subscribe(this.id, wldtEventFilter, new WldtEventListener() {
             @Override
             public void onEventSubscribed(String eventType) {
                 //TODO Implement
@@ -59,18 +58,18 @@ public abstract class StateModelFunction {
             }
 
             @Override
-            public void onEvent(EventMessage<?> eventMessage) {
+            public void onEvent(WldtEvent<?> wldtEvent) {
 
-                if(eventMessage != null && eventMessage.getBody() != null && (eventMessage.getBody() instanceof DigitalTwinStateProperty)){
-                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) eventMessage.getBody();
+                if(wldtEvent != null && wldtEvent.getBody() != null && (wldtEvent.getBody() instanceof DigitalTwinStateProperty)){
+                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) wldtEvent.getBody();
 
-                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED))
+                    if(wldtEvent.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED))
                         onStateChangePropertyCreated(digitalTwinStateProperty);
 
-                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED))
+                    if(wldtEvent.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED))
                         onStateChangePropertyUpdated(digitalTwinStateProperty);
 
-                    if(eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED))
+                    if(wldtEvent.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED))
                         onStateChangePropertyDeleted(digitalTwinStateProperty);
                 }
             }
@@ -80,17 +79,17 @@ public abstract class StateModelFunction {
     protected void observeDigitalTwinProperties(List<String> propertyList) throws EventBusException {
 
         //Define EventFilter and add the target topic
-        EventFilter eventFilter = new EventFilter();
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
 
         for(String propertyKey : propertyList) {
-            eventFilter.add(digitalTwinState.getPropertyUpdatedEventMessageType(propertyKey));
-            eventFilter.add(digitalTwinState.getPropertyDeletedEventMessageType(propertyKey));
+            wldtEventFilter.add(digitalTwinState.getPropertyUpdatedEventMessageType(propertyKey));
+            wldtEventFilter.add(digitalTwinState.getPropertyDeletedEventMessageType(propertyKey));
         }
 
         //Save the adopted EventFilter
-        this.statePropertyEventsFilter = eventFilter;
+        this.statePropertyEventsFilter = wldtEventFilter;
 
-        EventBus.getInstance().subscribe(this.id, eventFilter, new EventListener() {
+        WldtEventBus.getInstance().subscribe(this.id, wldtEventFilter, new WldtEventListener() {
             @Override
             public void onEventSubscribed(String eventType) {
                 //TODO Implement
@@ -102,17 +101,17 @@ public abstract class StateModelFunction {
             }
 
             @Override
-            public void onEvent(EventMessage<?> eventMessage) {
-                if(eventMessage != null && eventMessage.getBody() != null && (eventMessage.getBody() instanceof DigitalTwinStateProperty)){
-                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) eventMessage.getBody();
-                    if(eventMessage.getType().equals(digitalTwinState.getPropertyCreatedEventMessageType(digitalTwinStateProperty.getKey())))
+            public void onEvent(WldtEvent<?> wldtEvent) {
+                if(wldtEvent != null && wldtEvent.getBody() != null && (wldtEvent.getBody() instanceof DigitalTwinStateProperty)){
+                    DigitalTwinStateProperty digitalTwinStateProperty = (DigitalTwinStateProperty) wldtEvent.getBody();
+                    if(wldtEvent.getType().equals(digitalTwinState.getPropertyCreatedEventMessageType(digitalTwinStateProperty.getKey())))
                         onStateChangePropertyCreated(digitalTwinStateProperty);
-                    else if(eventMessage.getType().equals(digitalTwinState.getPropertyUpdatedEventMessageType(digitalTwinStateProperty.getKey())))
+                    else if(wldtEvent.getType().equals(digitalTwinState.getPropertyUpdatedEventMessageType(digitalTwinStateProperty.getKey())))
                         onStatePropertyUpdated(digitalTwinStateProperty);
-                    else if(eventMessage.getType().equals(digitalTwinState.getPropertyDeletedEventMessageType(digitalTwinStateProperty.getKey())))
+                    else if(wldtEvent.getType().equals(digitalTwinState.getPropertyDeletedEventMessageType(digitalTwinStateProperty.getKey())))
                         onStatePropertyDeleted(digitalTwinStateProperty);
                     else
-                        logger.error(String.format("ModelFunction(%s) -> observeDigitalTwinProperties: Error received type %s that is not matching", id, eventMessage.getType()));
+                        logger.error(String.format("ModelFunction(%s) -> observeDigitalTwinProperties: Error received type %s that is not matching", id, wldtEvent.getType()));
                 }
             }
         });

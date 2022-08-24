@@ -1,6 +1,5 @@
 package it.unimore.dipi.iot.wldt.adapter;
 
-import it.unimore.dipi.iot.wldt.exception.WldtDigitalTwinStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +15,9 @@ import java.util.Objects;
  * The type of the action can be directly changed by the developer to associate it to a specific ontology or data type.
  *
  */
-public class PhysicalAction {
+public class PhysicalAssetAction {
 
-    private static final Logger logger = LoggerFactory.getLogger(PhysicalAction.class);
+    private static final Logger logger = LoggerFactory.getLogger(PhysicalAssetAction.class);
 
     /**
      * Key uniquely identifying the action in the Digital Twin State
@@ -39,10 +38,10 @@ public class PhysicalAction {
      */
     private String contentType = null;
 
-    private PhysicalAction() {
+    private PhysicalAssetAction() {
     }
 
-    public PhysicalAction(String key, String type, String contentType){
+    public PhysicalAssetAction(String key, String type, String contentType){
         this.key = key;
         this.type = type;
         this.contentType = contentType;
@@ -76,7 +75,7 @@ public class PhysicalAction {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PhysicalAction that = (PhysicalAction) o;
+        PhysicalAssetAction that = (PhysicalAssetAction) o;
         return key.equals(that.key) && type.equals(that.type) && contentType.equals(that.contentType);
     }
 
@@ -87,7 +86,7 @@ public class PhysicalAction {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("PhysicalAction{");
+        final StringBuilder sb = new StringBuilder("PhysicalAssetAction{");
         sb.append("key='").append(key).append('\'');
         sb.append(", type='").append(type).append('\'');
         sb.append(", contentType='").append(contentType).append('\'');

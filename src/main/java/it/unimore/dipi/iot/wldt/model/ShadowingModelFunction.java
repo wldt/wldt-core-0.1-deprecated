@@ -1,8 +1,11 @@
 package it.unimore.dipi.iot.wldt.model;
 
 import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalProperty;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetEvent;
+import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetProperty;
 import it.unimore.dipi.iot.wldt.event.*;
+import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetEventWldtEvent;
+import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetPropertyWldtEvent;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.exception.ModelException;
 import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
@@ -12,20 +15,19 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Author: Marco Picone, Ph.D. (marco.picone@unimore.it)
  * Date: 27/03/2020
  * Project: White Label Digital Twin Java Framework - (whitelabel-digitaltwin)
  */
-public abstract class ShadowingModelFunction implements EventListener {
+public abstract class ShadowingModelFunction implements WldtEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ShadowingModelFunction.class);
 
     private String id = null;
 
-    private EventFilter physicalEventsFilter = null;
+    private WldtEventFilter physicalEventsFilter = null;
 
     protected IDigitalTwinState digitalTwinState = null;
 
@@ -35,96 +37,188 @@ public abstract class ShadowingModelFunction implements EventListener {
 
     public ShadowingModelFunction(String id){
         this.id = id;
-        this.physicalEventsFilter = new EventFilter();
+        this.physicalEventsFilter = new WldtEventFilter();
     }
 
     /**
      *
-     * @param physicalProperty
+     * @param physicalAssetProperty
      * @throws EventBusException
      * @throws ModelException
      */
-    protected void observePhysicalProperty(PhysicalProperty<?> physicalProperty) throws EventBusException, ModelException {
-        if(physicalProperty == null)
+    protected void observePhysicalAssetProperty(PhysicalAssetProperty<?> physicalAssetProperty) throws EventBusException, ModelException {
+        if(physicalAssetProperty == null)
             throw new ModelException("Error ! NULL PhysicalProperty ...");
 
         //Define EventFilter and add the target topics
-        EventFilter eventFilter = new EventFilter();
-        eventFilter.add(PhysicalPropertyEventMessage.buildEventType(physicalProperty.getKey()));
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(PhysicalAssetPropertyWldtEvent.buildEventType(physicalAssetProperty.getKey()));
 
         //Save the adopted EventFilter
-        this.physicalEventsFilter.addAll(eventFilter);
+        this.physicalEventsFilter.addAll(wldtEventFilter);
 
-        EventBus.getInstance().subscribe(this.id, eventFilter, this);
+        WldtEventBus.getInstance().subscribe(this.id, wldtEventFilter, this);
     }
 
     /**
      *
-     * @param physicalPropertyList
+     * @param physicalAssetPropertyList
      * @throws EventBusException
      * @throws ModelException
      */
-    protected void observePhysicalProperties(List<PhysicalProperty<?>> physicalPropertyList) throws EventBusException, ModelException {
+    protected void observePhysicalAssetProperties(List<PhysicalAssetProperty<?>> physicalAssetPropertyList) throws EventBusException, ModelException {
 
-        if(physicalPropertyList == null)
+        if(physicalAssetPropertyList == null)
             throw new ModelException("Error ! NULL PhysicalProperty List ...");
 
         //Define EventFilter and add the target topics
-        EventFilter eventFilter = new EventFilter();
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
 
-        for(PhysicalProperty<?> physicalProperty : physicalPropertyList)
-            eventFilter.add(PhysicalPropertyEventMessage.buildEventType(physicalProperty.getKey()));
+        for(PhysicalAssetProperty<?> physicalAssetProperty : physicalAssetPropertyList)
+            wldtEventFilter.add(PhysicalAssetPropertyWldtEvent.buildEventType(physicalAssetProperty.getKey()));
 
         //Save the adopted EventFilter
-        this.physicalEventsFilter.addAll(eventFilter);
+        this.physicalEventsFilter.addAll(wldtEventFilter);
 
-        EventBus.getInstance().subscribe(this.id, eventFilter, this);
+        WldtEventBus.getInstance().subscribe(this.id, wldtEventFilter, this);
 
     }
 
     /**
      *
-     * @param physicalProperty
+     * @param physicalAssetProperty
      * @throws EventBusException
      * @throws ModelException
      */
-    protected void unObservePhysicalProperty(PhysicalProperty<?> physicalProperty) throws EventBusException, ModelException {
+    protected void unObservePhysicalAssetProperty(PhysicalAssetProperty<?> physicalAssetProperty) throws EventBusException, ModelException {
 
-        if(physicalProperty == null)
+        if(physicalAssetProperty == null)
             throw new ModelException("Error ! NULL PhysicalProperty ...");
 
         //Define EventFilter and add the target topics
-        EventFilter eventFilter = new EventFilter();
-        eventFilter.add(PhysicalPropertyEventMessage.buildEventType(physicalProperty.getKey()));
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(PhysicalAssetPropertyWldtEvent.buildEventType(physicalAssetProperty.getKey()));
 
         //Save the adopted EventFilter
-        this.physicalEventsFilter.removeAll(eventFilter);
+        this.physicalEventsFilter.removeAll(wldtEventFilter);
 
-        EventBus.getInstance().unSubscribe(this.id, eventFilter, this);
+        WldtEventBus.getInstance().unSubscribe(this.id, wldtEventFilter, this);
     }
 
     /**
      *
-     * @param physicalPropertyList
+     * @param physicalAssetPropertyList
      * @throws EventBusException
      * @throws ModelException
      */
-    protected void unObservePhysicalProperties(List<PhysicalProperty<?>> physicalPropertyList) throws EventBusException, ModelException {
+    protected void unObservePhysicalAssetProperties(List<PhysicalAssetProperty<?>> physicalAssetPropertyList) throws EventBusException, ModelException {
 
-        if(physicalPropertyList == null)
+        if(physicalAssetPropertyList == null)
             throw new ModelException("Error ! NULL PhysicalProperty List ...");
 
         //Define EventFilter and add the target topics
-        EventFilter eventFilter = new EventFilter();
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
 
-        for(PhysicalProperty<?> physicalProperty : physicalPropertyList)
-            eventFilter.add(PhysicalPropertyEventMessage.buildEventType(physicalProperty.getKey()));
+        for(PhysicalAssetProperty<?> physicalAssetProperty : physicalAssetPropertyList)
+            wldtEventFilter.add(PhysicalAssetPropertyWldtEvent.buildEventType(physicalAssetProperty.getKey()));
 
         //Save the adopted EventFilter
-        this.physicalEventsFilter.removeAll(eventFilter);
+        this.physicalEventsFilter.removeAll(wldtEventFilter);
 
-        EventBus.getInstance().unSubscribe(this.id, eventFilter, this);
+        WldtEventBus.getInstance().unSubscribe(this.id, wldtEventFilter, this);
     }
+
+    ///////////////////// PHYSICAL ASSET EVENT OBSERVATION MANAGEMENT ////////////////////////////////
+
+    /**
+     *
+     * @param physicalAssetEvent
+     * @throws EventBusException
+     * @throws ModelException
+     */
+    protected void observePhysicalAssetEvent(PhysicalAssetEvent physicalAssetEvent) throws EventBusException, ModelException {
+        if(physicalAssetEvent == null)
+            throw new ModelException("Error ! NULL PhysicalAssetEvent ...");
+
+        //Define EventFilter and add the target topics
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(PhysicalAssetEventWldtEvent.buildEventType(physicalAssetEvent.getKey()));
+
+        //Save the adopted EventFilter
+        this.physicalEventsFilter.addAll(wldtEventFilter);
+
+        WldtEventBus.getInstance().subscribe(this.id, wldtEventFilter, this);
+    }
+
+    /**
+     *
+     * @param physicalAssetEventList
+     * @throws EventBusException
+     * @throws ModelException
+     */
+    protected void observePhysicalAssetEvents(List<PhysicalAssetEvent> physicalAssetEventList) throws EventBusException, ModelException {
+
+        if(physicalAssetEventList == null)
+            throw new ModelException("Error ! NULL PhysicalAssetEvent List ...");
+
+        //Define EventFilter and add the target topics
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+
+        for(PhysicalAssetEvent physicalAssetEvent : physicalAssetEventList)
+            wldtEventFilter.add(PhysicalAssetEventWldtEvent.buildEventType(physicalAssetEvent.getKey()));
+
+        //Save the adopted EventFilter
+        this.physicalEventsFilter.addAll(wldtEventFilter);
+
+        WldtEventBus.getInstance().subscribe(this.id, wldtEventFilter, this);
+
+    }
+
+    /**
+     *
+     * @param physicalAssetEvent
+     * @throws EventBusException
+     * @throws ModelException
+     */
+    protected void unObservePhysicalAssetEvent(PhysicalAssetEvent physicalAssetEvent) throws EventBusException, ModelException {
+
+        if(physicalAssetEvent == null)
+            throw new ModelException("Error ! NULL PhysicalAssetEvent ...");
+
+        //Define EventFilter and add the target topics
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(PhysicalAssetEventWldtEvent.buildEventType(physicalAssetEvent.getKey()));
+
+        //Save the adopted EventFilter
+        this.physicalEventsFilter.removeAll(wldtEventFilter);
+
+        WldtEventBus.getInstance().unSubscribe(this.id, wldtEventFilter, this);
+    }
+
+    /**
+     *
+     * @param physicalAssetEventList
+     * @throws EventBusException
+     * @throws ModelException
+     */
+    protected void unObservePhysicalAssetEvents(List<PhysicalAssetEvent> physicalAssetEventList) throws EventBusException, ModelException {
+
+        if(physicalAssetEventList == null)
+            throw new ModelException("Error ! NULL PhysicalAssetEvent List ...");
+
+        //Define EventFilter and add the target topics
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+
+        for(PhysicalAssetEvent physicalAssetEvent : physicalAssetEventList)
+            wldtEventFilter.add(PhysicalAssetEventWldtEvent.buildEventType(physicalAssetEvent.getKey()));
+
+        //Save the adopted EventFilter
+        this.physicalEventsFilter.removeAll(wldtEventFilter);
+
+        WldtEventBus.getInstance().unSubscribe(this.id, wldtEventFilter, this);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
     public void onEventSubscribed(String eventType) {
@@ -137,11 +231,15 @@ public abstract class ShadowingModelFunction implements EventListener {
     }
 
     @Override
-    public void onEvent(EventMessage<?> eventMessage) {
-        logger.info("Shadowing Model Function -> Received Event: {}", eventMessage);
-        if(eventMessage != null && eventMessage instanceof PhysicalPropertyEventMessage){
-            onPhysicalEvent((PhysicalPropertyEventMessage<?>) eventMessage);
-        }
+    public void onEvent(WldtEvent<?> wldtEvent) {
+
+        logger.info("Shadowing Model Function -> Received Event: {} Class: {}", wldtEvent, wldtEvent.getClass());
+
+        if(wldtEvent != null && wldtEvent instanceof PhysicalAssetPropertyWldtEvent)
+            onPhysicalAssetPropertyWldtEvent((PhysicalAssetPropertyWldtEvent<?>) wldtEvent);
+
+        if(wldtEvent != null && wldtEvent instanceof PhysicalAssetEventWldtEvent)
+            onPhysicalAssetEventWldtEvent((PhysicalAssetEventWldtEvent<?>) wldtEvent);
     }
 
     protected void init(IDigitalTwinState digitalTwinState){
@@ -160,7 +258,9 @@ public abstract class ShadowingModelFunction implements EventListener {
 
     abstract protected void onPhysicalAdapterBidingUpdate(String adapterId, PhysicalAssetDescription adapterPhysicalAssetDescription);
 
-    abstract protected void onPhysicalEvent(PhysicalPropertyEventMessage<?> physicalPropertyEventMessage);
+    abstract protected void onPhysicalAssetPropertyWldtEvent(PhysicalAssetPropertyWldtEvent<?> physicalPropertyEventMessage);
+
+    abstract protected void onPhysicalAssetEventWldtEvent(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent);
 
     public String getId() {
         return id;
@@ -170,7 +270,7 @@ public abstract class ShadowingModelFunction implements EventListener {
         this.id = id;
     }
 
-    public EventFilter getPhysicalEventsFilter() {
+    public WldtEventFilter getPhysicalEventsFilter() {
         return physicalEventsFilter;
     }
 

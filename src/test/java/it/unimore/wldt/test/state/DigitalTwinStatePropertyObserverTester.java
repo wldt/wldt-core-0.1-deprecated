@@ -5,7 +5,6 @@ import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.state.*;
 import org.junit.Test;
 
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -26,13 +25,13 @@ public class DigitalTwinStatePropertyObserverTester {
 
     private CountDownLatch lock = new CountDownLatch(1);
 
-    private EventMessage<?> propertyCreatedReceivedEventMessage;
+    private WldtEvent<?> propertyCreatedReceivedWldtEvent;
     private DigitalTwinStateProperty<?>  propertyCreatedReceivedProperty;
 
-    private EventMessage<?> propertyUpdatedReceivedEventMessage;
+    private WldtEvent<?> propertyUpdatedReceivedWldtEvent;
     private DigitalTwinStateProperty<?> propertyUpdatedReceivedProperty;
 
-    private EventMessage<?> propertyDeletedReceivedEventMessage;
+    private WldtEvent<?> propertyDeletedReceivedWldtEvent;
     private DigitalTwinStateProperty<?> propertyDeletedReceivedProperty;
 
     private void initTestDtState() {
@@ -56,14 +55,14 @@ public class DigitalTwinStatePropertyObserverTester {
         initTestDtState();
 
         //Define EventFilter and add the target topic
-        EventFilter eventFilter = new EventFilter();
-        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED);
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED);
 
         //Set EventBus Logger
-        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+        WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
 
         //Subscribe for target topic
-        EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
+        WldtEventBus.getInstance().subscribe(SUBSCRIBER_ID_1, wldtEventFilter, new WldtEventListener() {
             @Override
             public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
@@ -75,19 +74,19 @@ public class DigitalTwinStatePropertyObserverTester {
             }
 
             @Override
-            public void onEvent(EventMessage<?> eventMessage) {
+            public void onEvent(WldtEvent<?> wldtEvent) {
 
-                propertyCreatedReceivedEventMessage = eventMessage;
+                propertyCreatedReceivedWldtEvent = wldtEvent;
 
-                if(eventMessage != null && eventMessage.getBody() != null){
+                if(wldtEvent != null && wldtEvent.getBody() != null){
 
                     //If New Property Created
-                    if(eventMessage.getBody() instanceof DigitalTwinStateProperty &&
-                            eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED)) {
+                    if(wldtEvent.getBody() instanceof DigitalTwinStateProperty &&
+                            wldtEvent.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED)) {
 
                         //Cast to the right property ! In that case a "simple" String
-                        if((((DigitalTwinStateProperty<?>)eventMessage.getBody()).getValue()) instanceof String){
-                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) eventMessage.getBody();
+                        if((((DigitalTwinStateProperty<?>) wldtEvent.getBody()).getValue()) instanceof String){
+                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) wldtEvent.getBody();
                             propertyCreatedReceivedProperty = digitalTwinStateProperty;
                         }
                     }
@@ -102,9 +101,9 @@ public class DigitalTwinStatePropertyObserverTester {
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
-        assertNotNull(propertyCreatedReceivedEventMessage);
-        assertEquals(propertyCreatedReceivedEventMessage.getType(), DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED);
-        assertEquals(propertyCreatedReceivedEventMessage.getBody(), testProperty1);
+        assertNotNull(propertyCreatedReceivedWldtEvent);
+        assertEquals(propertyCreatedReceivedWldtEvent.getType(), DefaultDigitalTwinState.DT_STATE_PROPERTY_CREATED);
+        assertEquals(propertyCreatedReceivedWldtEvent.getBody(), testProperty1);
         assertEquals(propertyCreatedReceivedProperty, testProperty1);
 
     }
@@ -118,14 +117,14 @@ public class DigitalTwinStatePropertyObserverTester {
         createProperty();
 
         //Define EventFilter and add the target topic
-        EventFilter eventFilter = new EventFilter();
-        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED);
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED);
 
         //Set EventBus Logger
-        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+        WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
 
         //Subscribe for target topic
-        EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
+        WldtEventBus.getInstance().subscribe(SUBSCRIBER_ID_1, wldtEventFilter, new WldtEventListener() {
             @Override
             public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
@@ -137,19 +136,19 @@ public class DigitalTwinStatePropertyObserverTester {
             }
 
             @Override
-            public void onEvent(EventMessage<?> eventMessage) {
+            public void onEvent(WldtEvent<?> wldtEvent) {
 
-                propertyUpdatedReceivedEventMessage = eventMessage;
+                propertyUpdatedReceivedWldtEvent = wldtEvent;
 
-                if(eventMessage != null && eventMessage.getBody() != null){
+                if(wldtEvent != null && wldtEvent.getBody() != null){
 
                     //If New Property Created
-                    if(eventMessage.getBody() instanceof DigitalTwinStateProperty &&
-                            eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED)) {
+                    if(wldtEvent.getBody() instanceof DigitalTwinStateProperty &&
+                            wldtEvent.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED)) {
 
                         //Cast to the right property ! In that case a "simple" String
-                        if((((DigitalTwinStateProperty<?>)eventMessage.getBody()).getValue()) instanceof String){
-                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) eventMessage.getBody();
+                        if((((DigitalTwinStateProperty<?>) wldtEvent.getBody()).getValue()) instanceof String){
+                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) wldtEvent.getBody();
                             propertyUpdatedReceivedProperty = digitalTwinStateProperty;
                         }
                     }
@@ -166,9 +165,9 @@ public class DigitalTwinStatePropertyObserverTester {
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
-        assertNotNull(propertyUpdatedReceivedEventMessage);
-        assertEquals(propertyUpdatedReceivedEventMessage.getType(), DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED);
-        assertEquals(propertyUpdatedReceivedEventMessage.getBody(), updatedProperty);
+        assertNotNull(propertyUpdatedReceivedWldtEvent);
+        assertEquals(propertyUpdatedReceivedWldtEvent.getType(), DefaultDigitalTwinState.DT_STATE_PROPERTY_UPDATED);
+        assertEquals(propertyUpdatedReceivedWldtEvent.getBody(), updatedProperty);
         assertEquals(propertyUpdatedReceivedProperty, updatedProperty);
 
     }
@@ -182,14 +181,14 @@ public class DigitalTwinStatePropertyObserverTester {
         createProperty();
 
         //Define EventFilter and add the target topic
-        EventFilter eventFilter = new EventFilter();
-        eventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED);
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED);
 
         //Set EventBus Logger
-        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+        WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
 
         //Subscribe for target topic
-        EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
+        WldtEventBus.getInstance().subscribe(SUBSCRIBER_ID_1, wldtEventFilter, new WldtEventListener() {
             @Override
             public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
@@ -201,19 +200,19 @@ public class DigitalTwinStatePropertyObserverTester {
             }
 
             @Override
-            public void onEvent(EventMessage<?> eventMessage) {
+            public void onEvent(WldtEvent<?> wldtEvent) {
 
-                propertyDeletedReceivedEventMessage = eventMessage;
+                propertyDeletedReceivedWldtEvent = wldtEvent;
 
-                if(eventMessage != null && eventMessage.getBody() != null){
+                if(wldtEvent != null && wldtEvent.getBody() != null){
 
                     //If New Property Created
-                    if(eventMessage.getBody() instanceof DigitalTwinStateProperty &&
-                            eventMessage.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED)) {
+                    if(wldtEvent.getBody() instanceof DigitalTwinStateProperty &&
+                            wldtEvent.getType().equals(DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED)) {
 
                         //Cast to the right property ! In that case a "simple" String
-                        if((((DigitalTwinStateProperty<?>)eventMessage.getBody()).getValue()) instanceof String){
-                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) eventMessage.getBody();
+                        if((((DigitalTwinStateProperty<?>) wldtEvent.getBody()).getValue()) instanceof String){
+                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) wldtEvent.getBody();
                             propertyDeletedReceivedProperty = digitalTwinStateProperty;
                         }
                     }
@@ -228,9 +227,9 @@ public class DigitalTwinStatePropertyObserverTester {
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
-        assertNotNull(propertyDeletedReceivedEventMessage);
-        assertEquals(propertyDeletedReceivedEventMessage.getType(), DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED);
-        assertEquals(propertyDeletedReceivedEventMessage.getBody(), testProperty1);
+        assertNotNull(propertyDeletedReceivedWldtEvent);
+        assertEquals(propertyDeletedReceivedWldtEvent.getType(), DefaultDigitalTwinState.DT_STATE_PROPERTY_DELETED);
+        assertEquals(propertyDeletedReceivedWldtEvent.getBody(), testProperty1);
         assertEquals(propertyDeletedReceivedProperty, testProperty1);
 
     }
@@ -243,14 +242,14 @@ public class DigitalTwinStatePropertyObserverTester {
         createProperty();
 
         //Define EventFilter and add the target topic
-        EventFilter eventFilter = new EventFilter();
-        eventFilter.add(digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001));
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001));
 
         //Set EventBus Logger
-        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+        WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
 
         //Subscribe for target topic
-        EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
+        WldtEventBus.getInstance().subscribe(SUBSCRIBER_ID_1, wldtEventFilter, new WldtEventListener() {
             @Override
             public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
@@ -262,19 +261,19 @@ public class DigitalTwinStatePropertyObserverTester {
             }
 
             @Override
-            public void onEvent(EventMessage<?> eventMessage) {
+            public void onEvent(WldtEvent<?> wldtEvent) {
 
-                propertyUpdatedReceivedEventMessage = eventMessage;
+                propertyUpdatedReceivedWldtEvent = wldtEvent;
 
-                if(eventMessage != null && eventMessage.getBody() != null){
+                if(wldtEvent != null && wldtEvent.getBody() != null){
 
                     //If New Property Created
-                    if(eventMessage.getBody() instanceof DigitalTwinStateProperty &&
-                            eventMessage.getType().equals(digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001))) {
+                    if(wldtEvent.getBody() instanceof DigitalTwinStateProperty &&
+                            wldtEvent.getType().equals(digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001))) {
 
                         //Cast to the right property ! In that case a "simple" String
-                        if((((DigitalTwinStateProperty<?>)eventMessage.getBody()).getValue()) instanceof String){
-                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) eventMessage.getBody();
+                        if((((DigitalTwinStateProperty<?>) wldtEvent.getBody()).getValue()) instanceof String){
+                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) wldtEvent.getBody();
                             propertyUpdatedReceivedProperty = digitalTwinStateProperty;
                         }
                     }
@@ -290,9 +289,9 @@ public class DigitalTwinStatePropertyObserverTester {
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
-        assertNotNull(propertyUpdatedReceivedEventMessage);
-        assertEquals(propertyUpdatedReceivedEventMessage.getType(), digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001));
-        assertEquals(propertyUpdatedReceivedEventMessage.getBody(), updatedProperty);
+        assertNotNull(propertyUpdatedReceivedWldtEvent);
+        assertEquals(propertyUpdatedReceivedWldtEvent.getType(), digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001));
+        assertEquals(propertyUpdatedReceivedWldtEvent.getBody(), updatedProperty);
         assertEquals(propertyUpdatedReceivedProperty, updatedProperty);
 
     }
@@ -305,14 +304,14 @@ public class DigitalTwinStatePropertyObserverTester {
         createProperty();
 
         //Define EventFilter and add the target topic
-        EventFilter eventFilter = new EventFilter();
-        eventFilter.add(digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001));
+        WldtEventFilter wldtEventFilter = new WldtEventFilter();
+        wldtEventFilter.add(digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001));
 
         //Set EventBus Logger
-        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+        WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
 
         //Subscribe for target topic
-        EventBus.getInstance().subscribe(SUBSCRIBER_ID_1, eventFilter, new EventListener() {
+        WldtEventBus.getInstance().subscribe(SUBSCRIBER_ID_1, wldtEventFilter, new WldtEventListener() {
             @Override
             public void onEventSubscribed(String eventType) {
                 System.out.println(SUBSCRIBER_ID_1  + " -> onSubscribe() called ! Event-Type:" + eventType);
@@ -324,19 +323,19 @@ public class DigitalTwinStatePropertyObserverTester {
             }
 
             @Override
-            public void onEvent(EventMessage<?> eventMessage) {
+            public void onEvent(WldtEvent<?> wldtEvent) {
 
-                propertyDeletedReceivedEventMessage = eventMessage;
+                propertyDeletedReceivedWldtEvent = wldtEvent;
 
-                if(eventMessage != null && eventMessage.getBody() != null){
+                if(wldtEvent != null && wldtEvent.getBody() != null){
 
                     //If New Property Created
-                    if(eventMessage.getBody() instanceof DigitalTwinStateProperty &&
-                            eventMessage.getType().equals(digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001))) {
+                    if(wldtEvent.getBody() instanceof DigitalTwinStateProperty &&
+                            wldtEvent.getType().equals(digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001))) {
 
                         //Cast to the right property ! In that case a "simple" String
-                        if((((DigitalTwinStateProperty<?>)eventMessage.getBody()).getValue()) instanceof String){
-                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) eventMessage.getBody();
+                        if((((DigitalTwinStateProperty<?>) wldtEvent.getBody()).getValue()) instanceof String){
+                            DigitalTwinStateProperty<String> digitalTwinStateProperty = (DigitalTwinStateProperty<String>) wldtEvent.getBody();
                             propertyDeletedReceivedProperty = digitalTwinStateProperty;
                         }
                     }
@@ -350,9 +349,9 @@ public class DigitalTwinStatePropertyObserverTester {
 
         lock.await(2000, TimeUnit.MILLISECONDS);
 
-        assertNotNull(propertyDeletedReceivedEventMessage);
-        assertEquals(propertyDeletedReceivedEventMessage.getType(), digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001));
-        assertEquals(propertyDeletedReceivedEventMessage.getBody(), testProperty1);
+        assertNotNull(propertyDeletedReceivedWldtEvent);
+        assertEquals(propertyDeletedReceivedWldtEvent.getType(), digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001));
+        assertEquals(propertyDeletedReceivedWldtEvent.getBody(), testProperty1);
         assertEquals(propertyDeletedReceivedProperty, testProperty1);
 
     }

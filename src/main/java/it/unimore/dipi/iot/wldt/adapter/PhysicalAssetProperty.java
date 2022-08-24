@@ -3,8 +3,6 @@ package it.unimore.dipi.iot.wldt.adapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Objects;
 
 /**
@@ -20,9 +18,9 @@ import java.util.Objects;
  *
  * @param <T>
  */
-public class PhysicalProperty<T> {
+public class PhysicalAssetProperty<T> {
 
-    private static final Logger logger = LoggerFactory.getLogger(PhysicalProperty.class);
+    private static final Logger logger = LoggerFactory.getLogger(PhysicalAssetProperty.class);
 
     /**
      * Key uniquely identifying the property in the Digital Twin State
@@ -54,16 +52,16 @@ public class PhysicalProperty<T> {
      */
     private boolean writable = true;
 
-    private PhysicalProperty() {
+    private PhysicalAssetProperty() {
     }
 
-    public PhysicalProperty(String key, T initialValue) {
+    public PhysicalAssetProperty(String key, T initialValue) {
         this.key = key;
         this.initialValue = initialValue;
         this.type = initialValue.getClass().getName();
     }
 
-    public PhysicalProperty(String key, T initialValue, boolean immutable, boolean writable) {
+    public PhysicalAssetProperty(String key, T initialValue, boolean immutable, boolean writable) {
         this(key, initialValue);
         this.immutable = immutable;
         this.writable = writable;
@@ -113,7 +111,7 @@ public class PhysicalProperty<T> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        PhysicalProperty<?> that = (PhysicalProperty<?>) o;
+        PhysicalAssetProperty<?> that = (PhysicalAssetProperty<?>) o;
         return immutable == that.immutable && writable == that.writable && key.equals(that.key) && initialValue.equals(that.initialValue);
     }
 
@@ -124,7 +122,7 @@ public class PhysicalProperty<T> {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("PhysicalProperty{");
+        final StringBuilder sb = new StringBuilder("PhysicalAssetProperty{");
         sb.append("key='").append(key).append('\'');
         sb.append(", value=").append(initialValue);
         sb.append(", readable=").append(immutable);

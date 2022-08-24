@@ -4,41 +4,51 @@ import java.util.List;
 
 public class PhysicalAssetDescription {
 
-    private List<PhysicalAction> actions;
+    private List<PhysicalAssetAction> actions;
 
-    private List<PhysicalProperty<?>> properties;
+    private List<PhysicalAssetProperty<?>> properties;
 
-    //TODO Add Physical Event
+    private List<PhysicalAssetEvent> events;
 
     public PhysicalAssetDescription() {
     }
 
-    public PhysicalAssetDescription(List<PhysicalAction> actions, List<PhysicalProperty<?>> properties) {
+    public PhysicalAssetDescription(List<PhysicalAssetAction> actions, List<PhysicalAssetProperty<?>> properties, List<PhysicalAssetEvent> events) {
         this.actions = actions;
         this.properties = properties;
+        this.events = events;
     }
 
-    public List<PhysicalAction> getActions() {
+    public List<PhysicalAssetAction> getActions() {
         return actions;
     }
 
-    public void setActions(List<PhysicalAction> actions) {
+    public void setActions(List<PhysicalAssetAction> actions) {
         this.actions = actions;
     }
 
-    public List<PhysicalProperty<?>> getProperties() {
+    public List<PhysicalAssetProperty<?>> getProperties() {
         return properties;
     }
 
-    public void setProperties(List<PhysicalProperty<?>> properties) {
+    public void setProperties(List<PhysicalAssetProperty<?>> properties) {
         this.properties = properties;
+    }
+
+    public List<PhysicalAssetEvent> getEvents() {
+        return events;
+    }
+
+    public void setEvents(List<PhysicalAssetEvent> events) {
+        this.events = events;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("PhysicalAssetState{");
+        final StringBuilder sb = new StringBuilder("PhysicalAssetDescription{");
         sb.append("actions=").append(actions);
         sb.append(", properties=").append(properties);
+        sb.append(", events=").append(events);
         sb.append('}');
         return sb.toString();
     }

@@ -1,6 +1,9 @@
 package it.unimore.dipi.iot.wldt.adapter;
 
 import it.unimore.dipi.iot.wldt.event.*;
+import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetActionWldtEvent;
+import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetEventWldtEvent;
+import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetPropertyWldtEvent;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.exception.PhysicalAdapterException;
 import it.unimore.dipi.iot.wldt.exception.WldtRuntimeException;
@@ -8,9 +11,8 @@ import it.unimore.dipi.iot.wldt.worker.WldtWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Objects;
-import java.util.Optional;
 
-public abstract class PhysicalAdapter<C> extends WldtWorker implements EventListener{
+public abstract class PhysicalAdapter<C> extends WldtWorker implements WldtEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(PhysicalAdapter.class);
 
@@ -18,7 +20,7 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
 
     private C configuration;
 
-    private EventFilter physicalActionEventsFilter;
+    private WldtEventFilter physicalActionEventsFilter;
 
     private PhysicalAdapterListener physicalAdapterListener;
 
@@ -78,14 +80,18 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
         this.physicalAdapterListener = physicalAdapterListener;
     }
 
-    public abstract void onIncomingPhysicalAction(PhysicalActionEventMessage<?> physicalActionEventMessage);
+    public abstract void onIncomingPhysicalAction(PhysicalAssetActionWldtEvent<?> physicalActionEvent);
 
     public abstract void onAdapterStart();
 
     public abstract void onAdapterStop();
 
-    protected void publishPhysicalEventMessage(PhysicalPropertyEventMessage<?> targetPhysicalPropertyEventMessage) throws EventBusException {
-        EventBus.getInstance().publishEvent(getId(), targetPhysicalPropertyEventMessage);
+    protected void publishPhysicalAssetPropertyWldtEvent(PhysicalAssetPropertyWldtEvent<?> targetPhysicalPropertyEventMessage) throws EventBusException {
+        WldtEventBus.getInstance().publishEvent(getId(), targetPhysicalPropertyEventMessage);
+    }
+
+    protected void publishPhysicalAssetEventWldtEvent(PhysicalAssetEventWldtEvent<?> targetPhysicalAssetEventWldtEvent) throws EventBusException {
+        WldtEventBus.getInstance().publishEvent(getId(), targetPhysicalAssetEventWldtEvent);
     }
 
     public PhysicalAssetDescription getAdapterPhysicalAssetState() {
@@ -161,18 +167,18 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
 
             //Handle PhysicalActionEvent EventFilter
             if(this.physicalActionEventsFilter == null)
-                this.physicalActionEventsFilter = new EventFilter();
+                this.physicalActionEventsFilter = new WldtEventFilter();
             else {
                 //Clean existing subscriptions and the local event filter
-                EventBus.getInstance().unSubscribe(this.id, this.physicalActionEventsFilter, this);
+                WldtEventBus.getInstance().unSubscribe(this.id, this.physicalActionEventsFilter, this);
                 this.physicalActionEventsFilter.clear();
             }
 
             //Create/Update the event filter and handle subscription
-            for(PhysicalAction physicalAction : physicalAssetDescription.getActions())
-                this.physicalActionEventsFilter.add(PhysicalActionEventMessage.buildEventType(physicalAction.getKey()));
+            for(PhysicalAssetAction physicalAssetAction : physicalAssetDescription.getActions())
+                this.physicalActionEventsFilter.add(PhysicalAssetActionWldtEvent.buildEventType(physicalAssetAction.getKey()));
 
-            EventBus.getInstance().subscribe(this.id, this.physicalActionEventsFilter, this);
+            WldtEventBus.getInstance().subscribe(this.id, this.physicalActionEventsFilter, this);
 
         }
         else
@@ -190,10 +196,10 @@ public abstract class PhysicalAdapter<C> extends WldtWorker implements EventList
     }
 
     @Override
-    public void onEvent(EventMessage<?> eventMessage) {
-        logger.debug("{} -> Received Event: {}", id, eventMessage);
-        if (eventMessage != null && eventMessage instanceof PhysicalActionEventMessage) {
-            onIncomingPhysicalAction((PhysicalActionEventMessage<?>) eventMessage);
+    public void onEvent(WldtEvent<?> wldtEvent) {
+        logger.debug("{} -> Received Event: {}", id, wldtEvent);
+        if (wldtEvent != null && wldtEvent instanceof PhysicalAssetActionWldtEvent) {
+            onIncomingPhysicalAction((PhysicalAssetActionWldtEvent<?>) wldtEvent);
         }
     }
 

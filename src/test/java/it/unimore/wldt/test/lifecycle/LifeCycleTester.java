@@ -4,9 +4,10 @@ import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
 import it.unimore.dipi.iot.wldt.engine.LifeCycleListener;
 import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.engine.WldtEngine;
-import it.unimore.dipi.iot.wldt.event.DefaultEventLogger;
-import it.unimore.dipi.iot.wldt.event.EventBus;
-import it.unimore.dipi.iot.wldt.event.PhysicalPropertyEventMessage;
+import it.unimore.dipi.iot.wldt.event.DefaultWldtEventLogger;
+import it.unimore.dipi.iot.wldt.event.WldtEventBus;
+import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetEventWldtEvent;
+import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetPropertyWldtEvent;
 import it.unimore.dipi.iot.wldt.exception.*;
 import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
 import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
@@ -32,9 +33,9 @@ public class LifeCycleTester {
 
     private static CountDownLatch lock = null;
 
-    private static List<PhysicalPropertyEventMessage<Double>> receivedPhysicalTelemetryEventMessageList = null;
+    private static List<PhysicalAssetPropertyWldtEvent<Double>> receivedPhysicalTelemetryEventMessageList = null;
 
-    private static List<PhysicalPropertyEventMessage<String>> receivedPhysicalSwitchEventMessageList = null;
+    private static List<PhysicalAssetPropertyWldtEvent<String>> receivedPhysicalSwitchEventMessageList = null;
 
     private static final String DEMO_MQTT_BODY = "DEMO_BODY_MQTT";
 
@@ -66,7 +67,7 @@ public class LifeCycleTester {
         lock = new CountDownLatch(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES);
 
         //Set EventBus Logger
-        EventBus.getInstance().setEventLogger(new DefaultEventLogger());
+        WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
 
         //Create Physical Adapter
         DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), true);
@@ -106,7 +107,7 @@ public class LifeCycleTester {
                     try{
                         if(physicalAssetDescription != null && physicalAssetDescription.getProperties() != null && physicalAssetDescription.getProperties().size() > 0){
                             logger.info("Observing Physical Asset Properties: {}", physicalAssetDescription.getProperties());
-                            this.observePhysicalProperties(physicalAssetDescription.getProperties());
+                            this.observePhysicalAssetProperties(physicalAssetDescription.getProperties());
                         }
                         else
                             logger.info("Empty property list on adapter {}. Nothing to observe !", adapterId);
@@ -127,7 +128,7 @@ public class LifeCycleTester {
             }
 
             @Override
-            protected void onPhysicalEvent(PhysicalPropertyEventMessage<?> physicalEventMessage) {
+            protected void onPhysicalAssetPropertyWldtEvent(PhysicalAssetPropertyWldtEvent<?> physicalEventMessage) {
 
                 logger.info("onPhysicalEvent()-> {}", physicalEventMessage);
 
@@ -144,10 +145,16 @@ public class LifeCycleTester {
                     }
 
                     lock.countDown();
-                    receivedPhysicalTelemetryEventMessageList.add((PhysicalPropertyEventMessage<Double>) physicalEventMessage);
+                    receivedPhysicalTelemetryEventMessageList.add((PhysicalAssetPropertyWldtEvent<Double>) physicalEventMessage);
                 }
                 else
                     logger.error("WRONG Physical Event Message Received !");
+            }
+
+            @Override
+            protected void onPhysicalAssetEventWldtEvent(PhysicalAssetEventWldtEvent physicalAssetEventWldtEvent) {
+                logger.info("ShadowingModelFunction Physical Asset Event - Event Received: {}", physicalAssetEventWldtEvent);
+                //TODO Handle Event MANAGEMENT ON THE DT
             }
 
         }, buildWldtConfiguration());

@@ -1,7 +1,7 @@
 package it.unimore.dipi.iot.wldt.state;
 
-import it.unimore.dipi.iot.wldt.event.EventBus;
-import it.unimore.dipi.iot.wldt.event.EventMessage;
+import it.unimore.dipi.iot.wldt.event.WldtEventBus;
+import it.unimore.dipi.iot.wldt.event.WldtEvent;
 import it.unimore.dipi.iot.wldt.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,11 +185,11 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
     private void notifyPropertyCreated(String propertyKey, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         try {
 
-            EventMessage<DigitalTwinStateProperty<?>> eventMessage = new EventMessage<>(DT_STATE_PROPERTY_CREATED);
-            eventMessage.setBody(digitalTwinStateProperty);
-            eventMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
+            WldtEvent<DigitalTwinStateProperty<?>> wldtEvent = new WldtEvent<>(DT_STATE_PROPERTY_CREATED);
+            wldtEvent.setBody(digitalTwinStateProperty);
+            wldtEvent.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
 
-            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventMessage);
+            WldtEventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, wldtEvent);
 
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyCreated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
@@ -200,18 +200,18 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
         try {
 
             //Publish the event for state observer
-            EventMessage<DigitalTwinStateProperty<?>> eventStateMessage = new EventMessage<>(DT_STATE_PROPERTY_UPDATED);
+            WldtEvent<DigitalTwinStateProperty<?>> eventStateMessage = new WldtEvent<>(DT_STATE_PROPERTY_UPDATED);
             eventStateMessage.setBody(digitalTwinStateProperty);
             eventStateMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
 
-            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventStateMessage);
+            WldtEventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventStateMessage);
 
             //Publish the event for property observers
-            EventMessage<DigitalTwinStateProperty<?>> eventPropertyMessage = new EventMessage<>(getPropertyUpdatedEventMessageType(propertyKey));
+            WldtEvent<DigitalTwinStateProperty<?>> eventPropertyMessage = new WldtEvent<>(getPropertyUpdatedEventMessageType(propertyKey));
             eventPropertyMessage.setBody(digitalTwinStateProperty);
             eventPropertyMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
 
-            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventPropertyMessage);
+            WldtEventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventPropertyMessage);
 
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyUpdated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
@@ -221,18 +221,18 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
     private void notifyPropertyDeleted(String propertyKey, DigitalTwinStateProperty<?> digitalTwinStateProperty) {
         try {
             //Publish the event for state observer
-            EventMessage<DigitalTwinStateProperty<?>> eventStateMessage = new EventMessage<>(DT_STATE_PROPERTY_DELETED);
+            WldtEvent<DigitalTwinStateProperty<?>> eventStateMessage = new WldtEvent<>(DT_STATE_PROPERTY_DELETED);
             eventStateMessage.setBody(digitalTwinStateProperty);
             eventStateMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
 
-            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventStateMessage);
+            WldtEventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventStateMessage);
 
             //Publish the event for property observers
-            EventMessage<DigitalTwinStateProperty<?>> eventPropertyMessage = new EventMessage<>(getPropertyDeletedEventMessageType(propertyKey));
+            WldtEvent<DigitalTwinStateProperty<?>> eventPropertyMessage = new WldtEvent<>(getPropertyDeletedEventMessageType(propertyKey));
             eventPropertyMessage.setBody(digitalTwinStateProperty);
             eventPropertyMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, propertyKey);
 
-            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventPropertyMessage);
+            WldtEventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventPropertyMessage);
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyDeleted() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
         }
@@ -317,10 +317,10 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
 
     private void notifyActionEnabled(DigitalTwinStateAction digitalTwinStateAction) {
         try {
-            EventMessage<DigitalTwinStateAction> eventMessage = new EventMessage<>(DT_STATE_ACTION_ENABLED);
-            eventMessage.setBody(digitalTwinStateAction);
-            eventMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
-            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventMessage);
+            WldtEvent<DigitalTwinStateAction> wldtEvent = new WldtEvent<>(DT_STATE_ACTION_ENABLED);
+            wldtEvent.setBody(digitalTwinStateAction);
+            wldtEvent.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
+            WldtEventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, wldtEvent);
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyCreated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
         }
@@ -328,10 +328,10 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
 
     private void notifyActionUpdated(DigitalTwinStateAction digitalTwinStateAction) {
         try {
-            EventMessage<DigitalTwinStateAction> eventMessage = new EventMessage<>(DT_STATE_ACTION_UPDATED);
-            eventMessage.setBody(digitalTwinStateAction);
-            eventMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
-            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventMessage);
+            WldtEvent<DigitalTwinStateAction> wldtEvent = new WldtEvent<>(DT_STATE_ACTION_UPDATED);
+            wldtEvent.setBody(digitalTwinStateAction);
+            wldtEvent.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
+            WldtEventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, wldtEvent);
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyCreated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
         }
@@ -339,10 +339,10 @@ public class DefaultDigitalTwinState implements IDigitalTwinState {
 
     private void notifyActionDisabled(DigitalTwinStateAction digitalTwinStateAction) {
         try {
-            EventMessage<DigitalTwinStateAction> eventMessage = new EventMessage<>(DT_STATE_ACTION_DISABLED);
-            eventMessage.setBody(digitalTwinStateAction);
-            eventMessage.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
-            EventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, eventMessage);
+            WldtEvent<DigitalTwinStateAction> wldtEvent = new WldtEvent<>(DT_STATE_ACTION_DISABLED);
+            wldtEvent.setBody(digitalTwinStateAction);
+            wldtEvent.putMetadata(DT_STATE_PROPERTY_METADATA_KEY_PROPERTY_KEY, digitalTwinStateAction.getKey());
+            WldtEventBus.getInstance().publishEvent(DT_STATE_PUBLISHER_ID, wldtEvent);
         } catch (Exception e) {
             logger.error("notifyStateListenersPropertyCreated() -> Error Notifying State Listeners ! Error: {}", e.getLocalizedMessage());
         }

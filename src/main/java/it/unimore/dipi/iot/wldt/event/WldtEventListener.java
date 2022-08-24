@@ -1,13 +1,11 @@
 package it.unimore.dipi.iot.wldt.event;
 
-import java.util.Optional;
-
-public interface EventListener {
+public interface WldtEventListener {
 
     public void onEventSubscribed(String eventType);
 
     public void onEventUnSubscribed(String eventType);
 
-    public void onEvent(EventMessage<?> eventMessage);
+    public void onEvent(WldtEvent<?> wldtEvent);
 
 }

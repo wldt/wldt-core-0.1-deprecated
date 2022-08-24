@@ -4,7 +4,7 @@ import it.unimore.dipi.iot.wldt.exception.EventBusException;
 
 import java.util.*;
 
-public class EventMessage<T> {
+public class WldtEvent<T> {
 
     private String id;
     private String type;
@@ -13,24 +13,24 @@ public class EventMessage<T> {
     private Map<String, Object> metadata;
     private long creationTimestamp;
 
-    private EventMessage() {
+    private WldtEvent() {
         this.metadata = new HashMap<>();
         this.id = UUID.randomUUID().toString();
         this.creationTimestamp = System.currentTimeMillis();
     }
 
-    public EventMessage(String type) throws EventBusException {
+    public WldtEvent(String type) throws EventBusException {
         this();
         this.type = type;
     }
 
-    public EventMessage(String type, T body) throws EventBusException {
+    public WldtEvent(String type, T body) throws EventBusException {
         this(type);
         this.body = body;
         this.contentType = body.getClass().getName();
     }
 
-    public EventMessage(String type, T body, Map<String, Object> metadata) throws EventBusException {
+    public WldtEvent(String type, T body, Map<String, Object> metadata) throws EventBusException {
         this(type);
         this.body = body;
         this.metadata = metadata;
@@ -109,7 +109,7 @@ public class EventMessage<T> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        EventMessage<?> that = (EventMessage<?>) o;
+        WldtEvent<?> that = (WldtEvent<?>) o;
         return id.equals(that.id) && type.equals(that.type);
     }
 
@@ -120,7 +120,7 @@ public class EventMessage<T> {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("EventMessage{");
+        final StringBuilder sb = new StringBuilder("WldtEvent{");
         sb.append("id='").append(id).append('\'');
         sb.append(", type='").append(type).append('\'');
         sb.append(", contentType='").append(contentType).append('\'');
