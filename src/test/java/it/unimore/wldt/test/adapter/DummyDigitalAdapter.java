@@ -1,12 +1,16 @@
 package it.unimore.wldt.test.adapter;
 
-import it.unimore.dipi.iot.wldt.adapter.*;
-import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
-import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
+import it.unimore.dipi.iot.wldt.adapter.digital.DigitalAdapter;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateEventNotification;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateAction;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateEvent;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateProperty;
+import it.unimore.dipi.iot.wldt.core.state.IDigitalTwinState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DummyDigitalAdapter extends DigitalAdapter<DummyDigitalAdapterConfiguration> {
 
@@ -18,6 +22,8 @@ public class DummyDigitalAdapter extends DigitalAdapter<DummyDigitalAdapterConfi
 
     private List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyDeletedMessageList = null;
 
+    private List<DigitalTwinStateEventNotification<?>> receivedDigitalTwinStateEventNotificationList = null;
+
     private List<IDigitalTwinState> receivedDigitalAdapterSyncDigitalTwinStateList = null;
 
     public DummyDigitalAdapter(String id, DummyDigitalAdapterConfiguration configuration) {
@@ -28,6 +34,7 @@ public class DummyDigitalAdapter extends DigitalAdapter<DummyDigitalAdapterConfi
                                List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyCreatedMessageList,
                                List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyUpdateMessageList,
                                List<DigitalTwinStateProperty<?>> receivedDigitalTwinPropertyDeletedMessageList,
+                               List<DigitalTwinStateEventNotification<?>> receivedDigitalTwinStateEventNotificationList,
                                List<IDigitalTwinState> receivedDigitalAdapterSyncDigitalTwinStateList
                                ) {
 
@@ -36,6 +43,7 @@ public class DummyDigitalAdapter extends DigitalAdapter<DummyDigitalAdapterConfi
         this.receivedDigitalTwinPropertyCreatedMessageList = receivedDigitalTwinPropertyCreatedMessageList;
         this.receivedDigitalTwinPropertyUpdateMessageList = receivedDigitalTwinPropertyUpdateMessageList;
         this.receivedDigitalTwinPropertyDeletedMessageList = receivedDigitalTwinPropertyDeletedMessageList;
+        this.receivedDigitalTwinStateEventNotificationList = receivedDigitalTwinStateEventNotificationList;
         this.receivedDigitalAdapterSyncDigitalTwinStateList = receivedDigitalAdapterSyncDigitalTwinStateList;
     }
 
@@ -51,10 +59,20 @@ public class DummyDigitalAdapter extends DigitalAdapter<DummyDigitalAdapterConfi
 
     @Override
     public void onDigitalTwinSync(IDigitalTwinState digitalTwinState) {
+
         logger.info("DummyDigitalTwinAdapter -> onDigitalTwinSync() - DT State: {}", digitalTwinState);
 
         if(this.receivedDigitalAdapterSyncDigitalTwinStateList != null)
             this.receivedDigitalAdapterSyncDigitalTwinStateList.add(digitalTwinState);
+
+        //Observe for notification of all the available events
+        try {
+            if(digitalTwinState != null && digitalTwinState.getEventList().isPresent())
+                this.observeDigitalTwinEventsNotifications(digitalTwinState.getEventList().get().stream().map(DigitalTwinStateEvent::getKey).collect(Collectors.toList()));
+        }catch (Exception e){
+            //logger.error("ERROR OBSERVING TARGET EVENT LIST ! Error: {}", e.getLocalizedMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -91,6 +109,33 @@ public class DummyDigitalAdapter extends DigitalAdapter<DummyDigitalAdapterConfi
 
     @Override
     protected void onStatePropertyDeleted(DigitalTwinStateProperty<?> digitalTwinStateProperty) {}
+
+    @Override
+    protected void onStateChangeActionEnabled(DigitalTwinStateAction digitalTwinStateAction) {}
+
+    @Override
+    protected void onStateChangeActionUpdated(DigitalTwinStateAction digitalTwinStateAction) {}
+
+    @Override
+    protected void onStateChangeActionDisabled(DigitalTwinStateAction digitalTwinStateAction) {}
+
+    @Override
+    protected void onStateChangeEventRegistered(DigitalTwinStateEvent digitalTwinStateEvent) {
+    }
+
+    @Override
+    protected void onStateChangeEventRegistrationUpdated(DigitalTwinStateEvent digitalTwinStateEvent) {}
+
+    @Override
+    protected void onStateChangeEventUnregistered(DigitalTwinStateEvent digitalTwinStateEvent) {}
+
+    @Override
+    protected void onDigitalTwinStateEventNotificationReceived(DigitalTwinStateEventNotification<?> digitalTwinStateEventNotification) {
+        logger.info("DummyDigitalTwinAdapter -> onDigitalTwinStateEventNotification() - EVENT NOTIFICATION RECEIVED: {}", digitalTwinStateEventNotification);
+
+        if(receivedDigitalTwinStateEventNotificationList != null)
+            receivedDigitalTwinStateEventNotificationList.add(digitalTwinStateEventNotification);
+    }
 
     public List<DigitalTwinStateProperty<?>> getReceivedDigitalTwinPropertyCreatedMessageList() {
         return receivedDigitalTwinPropertyCreatedMessageList;

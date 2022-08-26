@@ -1,9 +1,9 @@
 package it.unimore.wldt.test.state;
 
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
-import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
-import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
+import it.unimore.dipi.iot.wldt.core.state.DefaultDigitalTwinState;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateProperty;
+import it.unimore.dipi.iot.wldt.core.state.IDigitalTwinState;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

@@ -1,16 +1,16 @@
 package it.unimore.wldt.test.lifecycle;
 
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
-import it.unimore.dipi.iot.wldt.engine.LifeCycleListener;
-import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
-import it.unimore.dipi.iot.wldt.engine.WldtEngine;
-import it.unimore.dipi.iot.wldt.event.DefaultWldtEventLogger;
-import it.unimore.dipi.iot.wldt.event.WldtEventBus;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetEventWldtEvent;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetPropertyWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetDescription;
+import it.unimore.dipi.iot.wldt.core.engine.LifeCycleListener;
+import it.unimore.dipi.iot.wldt.core.engine.WldtConfiguration;
+import it.unimore.dipi.iot.wldt.core.engine.WldtEngine;
+import it.unimore.dipi.iot.wldt.core.event.DefaultWldtEventLogger;
+import it.unimore.dipi.iot.wldt.core.event.WldtEventBus;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
-import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
+import it.unimore.dipi.iot.wldt.core.model.ShadowingModelFunction;
+import it.unimore.dipi.iot.wldt.core.state.IDigitalTwinState;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapter;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapterConfiguration;
 import org.junit.FixMethodOrder;
@@ -128,7 +128,7 @@ public class LifeCycleTester {
             }
 
             @Override
-            protected void onPhysicalAssetPropertyWldtEvent(PhysicalAssetPropertyWldtEvent<?> physicalEventMessage) {
+            protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalEventMessage) {
 
                 logger.info("onPhysicalEvent()-> {}", physicalEventMessage);
 
@@ -152,7 +152,7 @@ public class LifeCycleTester {
             }
 
             @Override
-            protected void onPhysicalAssetEventWldtEvent(PhysicalAssetEventWldtEvent physicalAssetEventWldtEvent) {
+            protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent physicalAssetEventWldtEvent) {
                 logger.info("ShadowingModelFunction Physical Asset Event - Event Received: {}", physicalAssetEventWldtEvent);
                 //TODO Handle Event MANAGEMENT ON THE DT
             }

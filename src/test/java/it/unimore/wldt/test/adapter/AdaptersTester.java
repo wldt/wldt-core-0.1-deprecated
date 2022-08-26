@@ -1,19 +1,23 @@
 package it.unimore.wldt.test.adapter;
 
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetAction;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetProperty;
-import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
-import it.unimore.dipi.iot.wldt.engine.WldtEngine;
-import it.unimore.dipi.iot.wldt.event.*;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetActionWldtEvent;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetEventWldtEvent;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetPropertyWldtEvent;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateEventNotification;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetAction;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetDescription;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetProperty;
+import it.unimore.dipi.iot.wldt.core.engine.WldtConfiguration;
+import it.unimore.dipi.iot.wldt.core.engine.WldtEngine;
+import it.unimore.dipi.iot.wldt.core.event.DefaultWldtEventLogger;
+import it.unimore.dipi.iot.wldt.core.event.WldtEventBus;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetActionWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateEvent;
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
-import it.unimore.dipi.iot.wldt.state.DigitalTwinStateAction;
-import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
-import it.unimore.dipi.iot.wldt.state.IDigitalTwinState;
+import it.unimore.dipi.iot.wldt.core.model.ShadowingModelFunction;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateAction;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateProperty;
+import it.unimore.dipi.iot.wldt.core.state.IDigitalTwinState;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -47,6 +51,8 @@ public class AdaptersTester {
 
     private static List<DigitalTwinStateProperty<?>> receivedDigitalAdapterPropertyDeletedMessageList = null;
 
+    private static List<DigitalTwinStateEventNotification<?>> receivedDigitalTwinStateEventNotificationList = null;
+
     private static List<IDigitalTwinState> receivedDigitalAdapterSyncDigitalTwinStateList = null;
 
     private WldtConfiguration buildWldtConfiguration() throws WldtConfigurationException, ModelException {
@@ -72,10 +78,11 @@ public class AdaptersTester {
         DummyPhysicalAdapter dummyPhysicalAdapter = new DummyPhysicalAdapter("dummy-physical-adapter", new DummyPhysicalAdapterConfiguration(), physicalTelemetryOn);
 
         //Create Digital Adapter
-        DummyDigitalAdapter dummyDigitalAdapter = new DummyDigitalAdapter("dummy-physical-adapter", new DummyDigitalAdapterConfiguration(),
+        DummyDigitalAdapter dummyDigitalAdapter = new DummyDigitalAdapter("dummy-digital-adapter", new DummyDigitalAdapterConfiguration(),
                 receivedDigitalAdapterPropertyCreatedMessageList,
                 receivedDigitalAdapterPropertyUpdateMessageList,
                 receivedDigitalAdapterPropertyDeletedMessageList,
+                receivedDigitalTwinStateEventNotificationList,
                 receivedDigitalAdapterSyncDigitalTwinStateList
         );
 
@@ -135,7 +142,8 @@ public class AdaptersTester {
                                        physicalAssetAction.getType(),
                                        physicalAssetAction.getContentType()));
 
-                           //TODO ADD EVENTS
+                           for(PhysicalAssetEvent physicalAssetEvent: physicalAssetDescription.getEvents())
+                               this.digitalTwinState.registerEvent(new DigitalTwinStateEvent(physicalAssetEvent.getKey(), physicalAssetEvent.getType()));
                        }
 
                        //Notify Shadowing Completed
@@ -199,7 +207,7 @@ public class AdaptersTester {
             }
 
             @Override
-            protected void onPhysicalAssetPropertyWldtEvent(PhysicalAssetPropertyWldtEvent<?> physicalPropertyEventMessage) {
+            protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalPropertyEventMessage) {
 
                 try {
 
@@ -245,14 +253,24 @@ public class AdaptersTester {
             }
 
             @Override
-            protected void onPhysicalAssetEventWldtEvent(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
+            protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
+                try {
 
-                if(wldtEventsLock != null)
-                    wldtEventsLock.countDown();
+                    logger.info("ShadowingModelFunction Physical Asset Event Notification - Event Received: {}", physicalAssetEventWldtEvent);
+                    receivedPhysicalEventEventMessageList.add(physicalAssetEventWldtEvent);
 
-                logger.info("ShadowingModelFunction Physical Asset Event - Event Received: {}", physicalAssetEventWldtEvent);
-                receivedPhysicalEventEventMessageList.add(physicalAssetEventWldtEvent);
-                //TODO Handle Event MANAGEMENT ON THE DT
+                    //Handle the received physical event notification and map into a digital notification for digital adapters
+                    this.digitalTwinState.notifyDigitalTwinStateEvent(
+                            new DigitalTwinStateEventNotification<String>(
+                                    physicalAssetEventWldtEvent.getPhysicalEventKey(),
+                                    (String)physicalAssetEventWldtEvent.getBody()));
+
+                    if(wldtEventsLock != null)
+                        wldtEventsLock.countDown();
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             }
         };
     }
@@ -267,6 +285,7 @@ public class AdaptersTester {
         receivedDigitalAdapterPropertyUpdateMessageList = new ArrayList<>();
         receivedDigitalAdapterPropertyDeletedMessageList = new ArrayList<>();
         receivedDigitalAdapterSyncDigitalTwinStateList = new ArrayList<>();
+        receivedDigitalTwinStateEventNotificationList = new ArrayList<>();
 
         wldtEventsLock = new CountDownLatch(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES + DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_EVENT_UPDATES);
 
@@ -284,11 +303,14 @@ public class AdaptersTester {
         //Check Received Physical Event on the Shadowing Function
         assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES, receivedPhysicalTelemetryEventMessageList.size());
 
-        //Check Received Physical Asset Events correctly received by the Shadowing Function
+        //Check Received Physical Asset Events Availability correctly received by the Shadowing Function
         assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_EVENT_UPDATES, receivedPhysicalEventEventMessageList.size());
 
         //Check Correct Digital Twin State Property Update Events have been received on the Digital Adapter
         assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_PROPERTY_UPDATE_MESSAGES, receivedDigitalAdapterPropertyUpdateMessageList.size());
+
+        //Check if Digital Twin State Events Notifications have been correctly received by the Digital Adapter after passing through the Shadowing Function
+        assertEquals(DummyPhysicalAdapter.TARGET_PHYSICAL_ASSET_EVENT_UPDATES, receivedDigitalTwinStateEventNotificationList.size());
 
         Thread.sleep(2000);
 

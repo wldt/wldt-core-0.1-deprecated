@@ -1,11 +1,11 @@
 package it.unimore.wldt.test.model;
 
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
-import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetEventWldtEvent;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetPropertyWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetDescription;
+import it.unimore.dipi.iot.wldt.core.engine.WldtConfiguration;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
+import it.unimore.dipi.iot.wldt.core.model.ShadowingModelFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.*;
@@ -56,12 +56,12 @@ public class ModelTester {
         }
 
         @Override
-        protected void onPhysicalAssetPropertyWldtEvent(PhysicalAssetPropertyWldtEvent<?> physicalPropertyEventMessage) {
+        protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalPropertyEventMessage) {
             logger.debug("DigitalTwin - LifeCycleListener - onPhysicalAdapterBidingUpdate()");
         }
 
         @Override
-        protected void onPhysicalAssetEventWldtEvent(PhysicalAssetEventWldtEvent physicalAssetEventWldtEvent) {
+        protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent physicalAssetEventWldtEvent) {
             logger.info("ShadowingModelFunction Physical Asset Event - Event Received: {}", physicalAssetEventWldtEvent);
             //TODO Handle Event MANAGEMENT ON THE DT
         }

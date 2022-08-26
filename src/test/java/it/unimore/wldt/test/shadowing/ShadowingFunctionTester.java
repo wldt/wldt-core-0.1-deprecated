@@ -1,18 +1,17 @@
 package it.unimore.wldt.test.shadowing;
 
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetDescription;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetEvent;
-import it.unimore.dipi.iot.wldt.adapter.PhysicalAssetProperty;
-import it.unimore.dipi.iot.wldt.engine.WldtConfiguration;
-import it.unimore.dipi.iot.wldt.engine.WldtEngine;
-import it.unimore.dipi.iot.wldt.event.*;
-import it.unimore.dipi.iot.wldt.event.WldtEventListener;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetEventWldtEvent;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetPropertyWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetDescription;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetProperty;
+import it.unimore.dipi.iot.wldt.core.engine.WldtConfiguration;
+import it.unimore.dipi.iot.wldt.core.engine.WldtEngine;
+import it.unimore.dipi.iot.wldt.core.event.*;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.model.ShadowingModelFunction;
-import it.unimore.dipi.iot.wldt.state.DefaultDigitalTwinState;
-import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
+import it.unimore.dipi.iot.wldt.core.model.ShadowingModelFunction;
+import it.unimore.dipi.iot.wldt.core.state.DefaultDigitalTwinState;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateProperty;
 import it.unimore.wldt.test.adapter.DummyDigitalAdapter;
 import it.unimore.wldt.test.adapter.DummyDigitalAdapterConfiguration;
 import it.unimore.wldt.test.adapter.DummyPhysicalAdapter;
@@ -174,7 +173,7 @@ public class ShadowingFunctionTester {
             }
 
             @Override
-            protected void onPhysicalAssetPropertyWldtEvent(PhysicalAssetPropertyWldtEvent<?> physicalPropertyEventMessage) {
+            protected void onPhysicalAssetPropertyVariation(PhysicalAssetPropertyWldtEvent<?> physicalPropertyEventMessage) {
 
                 try{
 
@@ -210,7 +209,7 @@ public class ShadowingFunctionTester {
             }
 
             @Override
-            protected void onPhysicalAssetEventWldtEvent(PhysicalAssetEventWldtEvent physicalAssetEventWldtEvent) {
+            protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent physicalAssetEventWldtEvent) {
 
                 logger.info("ShadowingModelFunction Physical Asset Event - Event Received: {}", physicalAssetEventWldtEvent);
 

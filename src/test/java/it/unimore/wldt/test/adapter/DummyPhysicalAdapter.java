@@ -1,10 +1,10 @@
 package it.unimore.wldt.test.adapter;
 
-import it.unimore.dipi.iot.wldt.adapter.*;
-import it.unimore.dipi.iot.wldt.event.WldtEventBus;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetActionWldtEvent;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetEventWldtEvent;
-import it.unimore.dipi.iot.wldt.event.physical.PhysicalAssetPropertyWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.*;
+import it.unimore.dipi.iot.wldt.core.event.WldtEventBus;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetActionWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;

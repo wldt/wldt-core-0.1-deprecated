@@ -1,7 +1,6 @@
 package it.unimore.wldt.test.event;
 
-import it.unimore.dipi.iot.wldt.event.*;
-import it.unimore.dipi.iot.wldt.event.WldtEventListener;
+import it.unimore.dipi.iot.wldt.core.event.*;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import org.junit.Test;
 

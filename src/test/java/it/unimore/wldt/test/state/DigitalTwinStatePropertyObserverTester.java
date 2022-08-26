@@ -1,8 +1,10 @@
 package it.unimore.wldt.test.state;
 
-import it.unimore.dipi.iot.wldt.event.*;
+import it.unimore.dipi.iot.wldt.core.event.*;
+import it.unimore.dipi.iot.wldt.core.state.DefaultDigitalTwinState;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateProperty;
+import it.unimore.dipi.iot.wldt.core.state.IDigitalTwinState;
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.state.*;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -243,7 +245,7 @@ public class DigitalTwinStatePropertyObserverTester {
 
         //Define EventFilter and add the target topic
         WldtEventFilter wldtEventFilter = new WldtEventFilter();
-        wldtEventFilter.add(digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001));
+        wldtEventFilter.add(digitalTwinState.getPropertyUpdatedWldtEventMessageType(TEST_PROPERTY_KEY_0001));
 
         //Set EventBus Logger
         WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
@@ -269,7 +271,7 @@ public class DigitalTwinStatePropertyObserverTester {
 
                     //If New Property Created
                     if(wldtEvent.getBody() instanceof DigitalTwinStateProperty &&
-                            wldtEvent.getType().equals(digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001))) {
+                            wldtEvent.getType().equals(digitalTwinState.getPropertyUpdatedWldtEventMessageType(TEST_PROPERTY_KEY_0001))) {
 
                         //Cast to the right property ! In that case a "simple" String
                         if((((DigitalTwinStateProperty<?>) wldtEvent.getBody()).getValue()) instanceof String){
@@ -290,7 +292,7 @@ public class DigitalTwinStatePropertyObserverTester {
         lock.await(2000, TimeUnit.MILLISECONDS);
 
         assertNotNull(propertyUpdatedReceivedWldtEvent);
-        assertEquals(propertyUpdatedReceivedWldtEvent.getType(), digitalTwinState.getPropertyUpdatedEventMessageType(TEST_PROPERTY_KEY_0001));
+        assertEquals(propertyUpdatedReceivedWldtEvent.getType(), digitalTwinState.getPropertyUpdatedWldtEventMessageType(TEST_PROPERTY_KEY_0001));
         assertEquals(propertyUpdatedReceivedWldtEvent.getBody(), updatedProperty);
         assertEquals(propertyUpdatedReceivedProperty, updatedProperty);
 
@@ -305,7 +307,7 @@ public class DigitalTwinStatePropertyObserverTester {
 
         //Define EventFilter and add the target topic
         WldtEventFilter wldtEventFilter = new WldtEventFilter();
-        wldtEventFilter.add(digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001));
+        wldtEventFilter.add(digitalTwinState.getPropertyDeletedWldtEventMessageType(TEST_PROPERTY_KEY_0001));
 
         //Set EventBus Logger
         WldtEventBus.getInstance().setEventLogger(new DefaultWldtEventLogger());
@@ -331,7 +333,7 @@ public class DigitalTwinStatePropertyObserverTester {
 
                     //If New Property Created
                     if(wldtEvent.getBody() instanceof DigitalTwinStateProperty &&
-                            wldtEvent.getType().equals(digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001))) {
+                            wldtEvent.getType().equals(digitalTwinState.getPropertyDeletedWldtEventMessageType(TEST_PROPERTY_KEY_0001))) {
 
                         //Cast to the right property ! In that case a "simple" String
                         if((((DigitalTwinStateProperty<?>) wldtEvent.getBody()).getValue()) instanceof String){
@@ -350,7 +352,7 @@ public class DigitalTwinStatePropertyObserverTester {
         lock.await(2000, TimeUnit.MILLISECONDS);
 
         assertNotNull(propertyDeletedReceivedWldtEvent);
-        assertEquals(propertyDeletedReceivedWldtEvent.getType(), digitalTwinState.getPropertyDeletedEventMessageType(TEST_PROPERTY_KEY_0001));
+        assertEquals(propertyDeletedReceivedWldtEvent.getType(), digitalTwinState.getPropertyDeletedWldtEventMessageType(TEST_PROPERTY_KEY_0001));
         assertEquals(propertyDeletedReceivedWldtEvent.getBody(), testProperty1);
         assertEquals(propertyDeletedReceivedProperty, testProperty1);
 

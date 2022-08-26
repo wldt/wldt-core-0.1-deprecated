@@ -3,7 +3,7 @@ package it.unimore.dipi.iot.wldt.metrics;
 import com.codahale.metrics.*;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import it.unimore.dipi.iot.wldt.worker.WldtWorker;
+import it.unimore.dipi.iot.wldt.core.worker.WldtWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;

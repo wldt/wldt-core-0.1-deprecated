@@ -1,8 +1,8 @@
 package it.unimore.wldt.test.model;
 
 import it.unimore.dipi.iot.wldt.exception.*;
-import it.unimore.dipi.iot.wldt.model.StateModelFunction;
-import it.unimore.dipi.iot.wldt.state.DigitalTwinStateProperty;
+import it.unimore.dipi.iot.wldt.core.model.StateModelFunction;
+import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
